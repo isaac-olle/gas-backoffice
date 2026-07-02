@@ -1,0 +1,113 @@
+formatter: goimports
+template: testify
+require-template-schema-exists: true
+force-file-write: true
+
+packages:
+  github.com/isaac-olle/gas/internal/shared/buses/command:
+    interfaces:
+      Bus:
+        config:
+          dir: internal/shared/buses/command/mocks
+          filename: mock_command_bus.go
+          pkgname: commandmocks
+          structname: MockCommandBus
+
+  github.com/isaac-olle/gas/internal/shared/buses/query:
+    interfaces:
+      Bus:
+        config:
+          dir: internal/shared/buses/query/mocks
+          filename: mock_query_bus.go
+          pkgname: querymocks
+          structname: MockQueryBus
+
+  github.com/isaac-olle/gas/internal/shared/buses/event:
+    interfaces:
+      Bus:
+        config:
+          dir: internal/shared/buses/event/mocks
+          filename: bus.go
+          pkgname: eventmocks
+          structname: MockBus
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/admins/mocks
+          filename: repository.go
+          pkgname: adminmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/clients/mocks
+          filename: repository.go
+          pkgname: clientmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/protected_resources/mocks
+          filename: repository.go
+          pkgname: prmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/scopes/mocks
+          filename: repository.go
+          pkgname: scopemocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/tenants/mocks
+          filename: repository.go
+          pkgname: tenantmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/security/admin_assertion_keys/mocks
+          filename: repository.go
+          pkgname: aakmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/security/key_pairs/mocks
+          filename: repository.go
+          pkgname: kpmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/security/client_secrets/mocks
+          filename: repository.go
+          pkgname: csmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/domain_services:
+    interfaces:
+      ClientAssertionKeyRepository:
+        config:
+          dir: internal/bounded_contexts/security/client_assertion_keys/domain_services/mocks
+          filename: repository.go
+          pkgname: cakmocks
+          structname: MockClientAssertionKeyRepository

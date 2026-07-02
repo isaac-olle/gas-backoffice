@@ -1,0 +1,52 @@
+package path_params_test
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/isaac-olle/gas/internal/server/middlewares/path_params"
+	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+)
+
+func init() { gin.SetMode(gin.TestMode) }
+
+func TestClientIdParam(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name      string
+		param     string
+		wantNext  bool
+		wantInCtx bool
+	}{
+		{name: "valid_uuid_sets_id_in_context", param: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", wantNext: true, wantInCtx: true},
+		{name: "invalid_uuid_aborts", param: "not-a-uuid", wantNext: false, wantInCtx: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var gotId ids.ClientId
+			var gotInCtx bool
+			nextCalled := false
+
+			r := gin.New()
+			r.GET("/clients/:client_id", path_params.ClientIdParam(), func(c *gin.Context) {
+				nextCalled = true
+				gotId, gotInCtx = ids.ClientIdFromContext(c.Request.Context())
+				c.Status(http.StatusOK)
+			})
+
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest(http.MethodGet, "/clients/"+tt.param, nil)
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantNext, nextCalled)
+			assert.Equal(t, tt.wantInCtx, gotInCtx)
+			if tt.wantInCtx {
+				assert.Equal(t, tt.param, gotId.String())
+			}
+		})
+	}
+}

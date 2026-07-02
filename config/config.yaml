@@ -1,0 +1,13 @@
+environment: ${ENV}
+
+server:
+  host: ${API_HOST}
+  port: ${API_PORT}
+  shutdown_timeout: 30
+
+application:
+  name: gas
+  signing_key_id: ${SIGNING_KEY_ID}
+
+databases:
+  postgres: ${POSTGRES_DSN}

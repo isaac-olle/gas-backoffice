@@ -1,0 +1,32 @@
+package add_redirect_uri
+
+import (
+	"context"
+	"github.com/isaac-olle/gas/internal/shared/buses/command"
+	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+)
+
+const CommandType command.Type = "command.backoffice.client.add_redirect_uri"
+
+type Command struct {
+	clientId    ids.ClientId
+	redirectUri string
+}
+
+func NewCommand(clientId ids.ClientId, redirectUri string) *Command {
+	return &Command{clientId: clientId, redirectUri: redirectUri}
+}
+
+func (c *Command) Type() command.Type { return CommandType }
+
+type CommandHandler struct {
+	service *Service
+}
+
+func NewCommandHandler(service *Service) *CommandHandler {
+	return &CommandHandler{service: service}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd command.Command) error {
+	return command.Process[*Command, context.Context](ctx, cmd, h.service.Add)
+}

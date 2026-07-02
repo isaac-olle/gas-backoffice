@@ -1,0 +1,66 @@
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gas_admin -d gas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: migrate/migrate:v4.17.1
+    volumes:
+      - ./sql/migrations:/migrations
+    env_file:
+      - .env
+    command: >
+      -path=/migrations
+      -database=postgres://${ADMIN_USER}:${ADMIN_PASSWORD}@postgres:5432/${DATABASE_NAME}?sslmode=disable
+      up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  # gas:
+  #   build:
+  #     context: ..
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     ENV: production
+  #     PORT: 8080
+  #     POSTGRES_DSN: postgres://gas_admin:gas_admin@postgres:5432/gas?sslmode=disable
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  krakend:
+    image: devopsfaith/krakend:2
+    volumes:
+      - ./krakend/krakend.json:/etc/krakend/krakend.json
+    #depends_on:
+      #- gas
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - krakend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

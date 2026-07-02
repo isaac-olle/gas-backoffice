@@ -1,0 +1,48 @@
+package protected_resources
+
+import (
+	"context"
+	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources"
+	prGet "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources/application/get"
+)
+
+type GetProtectedResourceHandler struct {
+	queryBus query.Bus
+	prId     func(context.Context) (ids.ProtectedResourceId, bool)
+}
+
+func NewGetProtectedResourceHandler(
+	queryBus query.Bus,
+	prId func(context.Context) (ids.ProtectedResourceId, bool),
+) *GetProtectedResourceHandler {
+	return &GetProtectedResourceHandler{queryBus: queryBus, prId: prId}
+}
+
+func (h *GetProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
+	prId, ok := h.prId(c.Request.Context())
+	if !ok {
+		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
+	}
+	pr, err := query.DispatchTyped[*protected_resources.ProtectedResource](
+		c.Request.Context(), h.queryBus, prGet.NewQuery(prId),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return pr.ToPrimitives(), nil
+}
+
+func (h *GetProtectedResourceHandler) Success(c *gin.Context, result any) error {
+	c.JSON(http.StatusOK, result)
+	return nil
+}
+
+func (h *GetProtectedResourceHandler) Default(c *gin.Context) {
+	c.Status(http.StatusInternalServerError)
+}

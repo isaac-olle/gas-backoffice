@@ -1,0 +1,14 @@
+linters:
+  enable:
+    - lll
+
+linters-settings:
+  lll:
+    line-length: 118
+    tab-width: 4
+
+issues:
+  exclude-rules:
+    - source: '^\s*"github\.com'
+      linters:
+        - lll
