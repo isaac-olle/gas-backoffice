@@ -3,11 +3,6 @@ resource "github_branch" "environment" {
   branch     = var.env
 }
 
-resource "github_repository_environment" "environment" {
-  repository  = var.github_repo
-  environment = var.env
-}
-
 resource "github_repository_file" "pipeline_trigger" {
   repository          = var.github_repo
   branch              = github_branch.environment.branch
@@ -26,8 +21,6 @@ resource "github_repository_file" "pipeline_trigger" {
     jobs:
       pipeline:
         uses: ./.github/workflows/_pipeline.yml
-        with:
-          environment: ${var.env}
         secrets: inherit
   YAML
 }
