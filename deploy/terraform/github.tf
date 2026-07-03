@@ -47,5 +47,5 @@ resource "github_actions_secret" "do_app_id" {
 resource "github_actions_secret" "do_registry" {
   repository      = var.github_repo
   secret_name     = "DO_REGISTRY"
-  plaintext_value = "registry.digitalocean.com/${data.digitalocean_container_registry.gas.name}"
+  plaintext_value = "registry.digitalocean.com/${var.registry_name}"
 }
