@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 )
 
 // stubPrivKeyHex and stubPubKeyHex are valid hex-encoded RSA 2048-bit DER keys.

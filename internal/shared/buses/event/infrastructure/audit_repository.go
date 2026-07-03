@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

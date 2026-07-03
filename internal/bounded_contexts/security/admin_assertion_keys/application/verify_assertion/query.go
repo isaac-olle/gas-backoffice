@@ -2,7 +2,7 @@ package verify_assertion
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 const QueryType query.Type = "query.security.admin_assertion_key.verify_assertion"

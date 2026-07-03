@@ -3,7 +3,7 @@ package middlewares
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 var errInvalidErrorType app_errors.ErrorCode = "INVALID_ERROR_TYPE"

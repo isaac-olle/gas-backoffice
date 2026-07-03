@@ -2,11 +2,11 @@ package infrastructure
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets"
 )
 
 type Argon2SecretVerifier struct {

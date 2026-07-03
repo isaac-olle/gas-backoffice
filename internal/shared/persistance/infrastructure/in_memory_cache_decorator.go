@@ -2,10 +2,10 @@ package infrastructure
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	"github.com/isaac-olle/gas/internal/shared/domain/criteria"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	"github.com/isaac-olle/gas/internal/shared/persistance"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 )
 
 // InMemoryContextDecorator wraps a Repository and caches SearchById results

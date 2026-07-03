@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/admins"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 )
 
 func TestTokenHandler(t *testing.T) {

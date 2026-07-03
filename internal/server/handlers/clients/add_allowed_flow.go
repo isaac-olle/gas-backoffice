@@ -2,13 +2,13 @@ package clients
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	clientAddFlow "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/application/add_allowed_flow"
+	clientAddFlow "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_allowed_flow"
 )
 
 type AddAllowedFlowHandler struct {

@@ -2,9 +2,9 @@ package _event_handlers
 
 import (
 	"context"
-	protocolEvents "github.com/isaac-olle/gas/internal/shared/events/protocol"
+	protocolEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/protocol"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 )
 
 type PersistClientCredentialsSessionOnCreatedEventHandler struct {

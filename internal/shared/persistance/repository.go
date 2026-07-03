@@ -2,9 +2,9 @@ package persistance
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	"github.com/isaac-olle/gas/internal/shared/domain/criteria"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type Repository[T aggregate.Aggregate, I ids.Id] interface {

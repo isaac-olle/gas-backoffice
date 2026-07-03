@@ -1,10 +1,10 @@
 package modules
 
 import (
-	event2 "github.com/isaac-olle/gas/internal/shared/buses/event"
-	eventInfra "github.com/isaac-olle/gas/internal/shared/buses/event/infrastructure"
-	shared_logger "github.com/isaac-olle/gas/internal/shared/logger"
-	"github.com/isaac-olle/gas/internal/shared/workers"
+	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	eventInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/infrastructure"
+	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
 )
 
 type SubscriptionManager struct {

@@ -3,16 +3,16 @@ package clients_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	clientAggregate "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	"github.com/isaac-olle/gas/internal/server/handlers/clients"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
+	clientAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 )
 
 func TestGetClientHandler(t *testing.T) {

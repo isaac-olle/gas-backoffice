@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares/ownership"
-	querymocks "github.com/isaac-olle/gas/internal/shared/buses/query/mocks"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/actors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
+	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func fullScopeSetup(c *gin.Context) {

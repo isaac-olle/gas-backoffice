@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	shared_logger "github.com/isaac-olle/gas/internal/shared/logger"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
 type Server struct {

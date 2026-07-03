@@ -2,8 +2,8 @@ package get
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const QueryType query.Type = "query.backoffice.protected_resource.get"

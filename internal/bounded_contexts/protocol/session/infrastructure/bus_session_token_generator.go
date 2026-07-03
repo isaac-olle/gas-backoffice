@@ -3,11 +3,11 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"time"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	generateJwt "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	generateJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
 )
 
 type BusSessionTokenGenerator struct {

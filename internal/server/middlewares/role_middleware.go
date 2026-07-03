@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 func RoleMiddleware(allowed ...vo2.Role) gin.HandlerFunc {

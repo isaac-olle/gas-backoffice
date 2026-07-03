@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

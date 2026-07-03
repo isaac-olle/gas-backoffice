@@ -1,9 +1,9 @@
 package actors
 
 import (
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type TenantActor struct {

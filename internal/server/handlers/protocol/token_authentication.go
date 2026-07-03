@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/server/handlers/protocol/authentication_methods"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 )
 
 type tokenAuthContextKey struct{}

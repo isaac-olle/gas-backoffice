@@ -2,8 +2,8 @@ package client_secrets
 
 import (
 	"context"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	"github.com/isaac-olle/gas/internal/shared/persistance"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 )
 
 type Repository interface {

@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/create"
-	kpmocks "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/mocks"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	eventmocks "github.com/isaac-olle/gas/internal/shared/buses/event/mocks"
-	securityEvents "github.com/isaac-olle/gas/internal/shared/events/security"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
+	kpmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	securityEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

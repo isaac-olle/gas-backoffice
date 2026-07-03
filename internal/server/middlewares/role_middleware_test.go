@@ -1,8 +1,8 @@
 package middlewares_test
 
 import (
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	actors2 "github.com/isaac-olle/gas/internal/shared/domain/vo/actors"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	actors2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
 const testAdminID = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"

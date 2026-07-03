@@ -7,7 +7,7 @@ package querymocks
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	mock "github.com/stretchr/testify/mock"
 )
 

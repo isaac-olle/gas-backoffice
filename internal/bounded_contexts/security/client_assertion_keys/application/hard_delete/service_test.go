@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/application/hard_delete"
-	cakmocks "github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/domain_services/mocks"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/application/hard_delete"
+	cakmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/domain_services/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

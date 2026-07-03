@@ -3,16 +3,16 @@ package domain_services_test
 import (
 	"context"
 	"fmt"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes/domain_services"
-	scopemocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
+	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
 
 func TestScopeFinder_Find(t *testing.T) {

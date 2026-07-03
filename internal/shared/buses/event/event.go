@@ -1,7 +1,7 @@
 package event
 
 import (
-	sharedtypes "github.com/isaac-olle/gas/internal/shared/types"
+	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 	"time"
 
 	"github.com/google/uuid"

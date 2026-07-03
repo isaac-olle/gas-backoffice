@@ -2,8 +2,8 @@ package add_redirect_uri
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const CommandType command.Type = "command.backoffice.client.add_redirect_uri"

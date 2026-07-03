@@ -2,7 +2,7 @@ package generate_jwt
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"time"
 )
 

@@ -3,13 +3,13 @@ package get_test
 import (
 	"context"
 	"fmt"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/application/get"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/domain_services"
-	adminmocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/domain_services"
+	adminmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

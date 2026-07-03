@@ -1,7 +1,7 @@
 package scopes
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

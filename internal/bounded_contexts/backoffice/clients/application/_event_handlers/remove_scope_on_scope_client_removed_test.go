@@ -3,19 +3,19 @@ package _event_handlers_test
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	backofficeevents "github.com/isaac-olle/gas/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	event_handlers "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
-	clientmocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	event_handlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
+	clientmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/mocks"
 )
 
 func TestRemoveScopeOnScopeClientRemoved(t *testing.T) {

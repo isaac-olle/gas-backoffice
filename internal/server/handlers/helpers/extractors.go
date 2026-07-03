@@ -2,12 +2,12 @@ package helpers
 
 import (
 	"context"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	actors2 "github.com/isaac-olle/gas/internal/shared/domain/vo/actors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	actors2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 )
 
 func AdminIdFromActor(ctx context.Context) (ids2.AdminId, bool) {

@@ -3,15 +3,15 @@ package tenants_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas/internal/server/handlers/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/tenants"
 )
 
 func TestSoftDeleteTenantHandler(t *testing.T) {

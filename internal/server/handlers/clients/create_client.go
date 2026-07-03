@@ -2,16 +2,16 @@ package clients
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	clientCreate "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/application/create"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 )
 
 type CreateClientHandler struct {

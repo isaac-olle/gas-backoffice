@@ -7,9 +7,9 @@ package kpmocks
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
-	"github.com/isaac-olle/gas/internal/shared/domain/criteria"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	mock "github.com/stretchr/testify/mock"
 )
 

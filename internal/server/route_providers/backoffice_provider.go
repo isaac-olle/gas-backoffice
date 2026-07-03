@@ -2,9 +2,9 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/server/middlewares"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

@@ -1,10 +1,10 @@
 package session
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"strings"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
 type Scope struct {

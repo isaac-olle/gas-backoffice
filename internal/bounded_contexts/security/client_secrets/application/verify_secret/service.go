@@ -3,7 +3,7 @@ package verify_secret
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets"
 )
 
 type Service struct {

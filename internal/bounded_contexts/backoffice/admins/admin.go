@@ -1,11 +1,11 @@
 package admins
 
 import (
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/vos"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 var adminAggregateName = aggregate2.Admin

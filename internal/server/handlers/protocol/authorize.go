@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	buildAuthResponse "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/build_authorization_response"
-	sessionCreate "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/create_authorization_session"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	buildAuthResponse "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/build_authorization_response"
+	sessionCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_authorization_session"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type authorizeRequest struct {

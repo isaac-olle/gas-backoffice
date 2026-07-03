@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/isaac-olle/gas/cmd/api/bootstrap"
+	"github.com/isaac-olle/gas-backoffice/cmd/api/bootstrap"
 	"log"
 )
 

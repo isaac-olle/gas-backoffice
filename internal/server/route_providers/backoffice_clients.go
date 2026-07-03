@@ -2,10 +2,10 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
-	clientHandlers "github.com/isaac-olle/gas/internal/server/handlers/clients"
-	"github.com/isaac-olle/gas/internal/server/handlers/helpers"
-	"github.com/isaac-olle/gas/internal/server/middlewares"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
+	clientHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 func registerClients(g *gin.RouterGroup, p *Backoffice) {

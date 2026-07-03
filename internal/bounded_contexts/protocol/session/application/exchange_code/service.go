@@ -3,9 +3,9 @@ package exchange_code
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/domain_services"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 type Service struct {

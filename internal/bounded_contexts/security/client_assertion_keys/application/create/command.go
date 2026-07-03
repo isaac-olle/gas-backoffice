@@ -2,8 +2,8 @@ package create
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const CommandType command.Type = "command.security.client_assertion_key.create"

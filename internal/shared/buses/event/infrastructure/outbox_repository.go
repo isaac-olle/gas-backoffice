@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	event2 "github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
-	persistance "github.com/isaac-olle/gas/internal/shared/persistance/infrastructure"
+	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	persistance "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

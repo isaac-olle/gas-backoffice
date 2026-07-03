@@ -2,9 +2,9 @@ package domain_services
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type AdminFinder struct {

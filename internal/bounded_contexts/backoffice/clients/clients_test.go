@@ -1,14 +1,14 @@
 package clients_test
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
 )
 
 func TestNewClient(t *testing.T) {

@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	sharedtypes "github.com/isaac-olle/gas/internal/shared/types"
+	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

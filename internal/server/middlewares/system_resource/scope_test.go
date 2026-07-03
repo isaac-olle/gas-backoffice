@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares/system_resource"
-	querymocks "github.com/isaac-olle/gas/internal/shared/buses/query/mocks"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/system_resource"
+	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func withScopeId(c *gin.Context) {

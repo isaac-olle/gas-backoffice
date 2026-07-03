@@ -9,10 +9,10 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 )
 
 type Service struct {

@@ -1,7 +1,7 @@
 package vos
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 type RedirectURI struct{ value vo.Url }

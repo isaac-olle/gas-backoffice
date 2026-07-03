@@ -1,7 +1,7 @@
 package security
 
 import (
-	event2 "github.com/isaac-olle/gas/internal/shared/buses/event"
+	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 )
 
 type adminAssertionKeyCreatedBuilder struct{}

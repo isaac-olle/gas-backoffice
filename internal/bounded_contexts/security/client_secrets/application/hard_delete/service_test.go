@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets/application/hard_delete"
-	csmocks "github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets/mocks"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/hard_delete"
+	csmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

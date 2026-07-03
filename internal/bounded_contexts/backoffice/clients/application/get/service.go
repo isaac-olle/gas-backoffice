@@ -2,11 +2,11 @@ package get
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 )
 
 type Service struct {

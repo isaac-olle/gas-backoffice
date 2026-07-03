@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
 func TestNewPkce_NilWhenBothEmpty(t *testing.T) {

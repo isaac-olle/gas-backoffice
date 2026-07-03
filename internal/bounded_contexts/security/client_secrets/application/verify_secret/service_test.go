@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets/application/verify_secret"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/verify_secret"
 )
 
 func TestVerifySecretService(t *testing.T) {

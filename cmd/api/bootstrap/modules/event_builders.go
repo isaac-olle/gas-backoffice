@@ -1,9 +1,9 @@
 package modules
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/events/backoffice"
-	"github.com/isaac-olle/gas/internal/shared/events/security"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 )
 
 func RegisterEventBuilders(registry *event.BuilderRegistry) {

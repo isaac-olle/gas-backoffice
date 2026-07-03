@@ -2,7 +2,7 @@ package workers
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"sync"
 
 	"github.com/google/uuid"

@@ -1,11 +1,11 @@
 package key_pairs
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	securityevents "github.com/isaac-olle/gas/internal/shared/events/security"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	securityevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 )
 
 var keyPairAggregateName aggregate2.Name = aggregate2.KeyPair

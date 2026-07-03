@@ -1,8 +1,8 @@
 package aggregate
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	sharedtypes "github.com/isaac-olle/gas/internal/shared/types"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 	"testing"
 	"time"
 

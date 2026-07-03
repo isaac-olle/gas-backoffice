@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 type stubPresenter struct {

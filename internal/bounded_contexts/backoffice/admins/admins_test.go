@@ -1,11 +1,11 @@
 package admins_test
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,12 +1,12 @@
 package tenants
 
 import (
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants/vos"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	"github.com/isaac-olle/gas/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
 func NewTenant(tenantId ids2.TenantId, name string, ownership Ownership) (*Tenant, error) {

@@ -1,10 +1,10 @@
 package get_test
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/stretchr/testify/require"
 )
 

@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	command2 "github.com/isaac-olle/gas/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	command2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"sync"
 )
 

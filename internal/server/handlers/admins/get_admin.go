@@ -2,14 +2,14 @@ package admins
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
-	adminGet "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
+	adminGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/get"
 )
 
 type GetAdminHandler struct {

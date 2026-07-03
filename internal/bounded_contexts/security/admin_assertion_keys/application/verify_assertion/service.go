@@ -2,10 +2,10 @@ package verify_assertion
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys/domain_services"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const grantTypeJwtBearer = "urn:ietf:params:oauth:grant-type:jwt-bearer"

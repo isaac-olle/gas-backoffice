@@ -1,10 +1,10 @@
 package session
 
 import (
-	aggregate2 "github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
 type BaseSession struct {

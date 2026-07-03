@@ -3,10 +3,10 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 
 	"github.com/golang-jwt/jwt/v5"
-	verifyJwt "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
+	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 )
 
 type BusTokenVerifier struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
 )
 
 func TestNewClientName(t *testing.T) {

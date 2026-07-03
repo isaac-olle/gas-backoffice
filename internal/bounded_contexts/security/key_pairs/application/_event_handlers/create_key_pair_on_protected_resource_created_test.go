@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/_event_handlers"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/create"
-	kpmocks "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/mocks"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	eventmocks "github.com/isaac-olle/gas/internal/shared/buses/event/mocks"
-	backofficeevents "github.com/isaac-olle/gas/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/_event_handlers"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
+	kpmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

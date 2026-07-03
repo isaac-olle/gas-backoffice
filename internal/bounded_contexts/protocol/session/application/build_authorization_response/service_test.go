@@ -3,16 +3,16 @@ package build_authorization_response_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/build_authorization_response"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/build_authorization_response"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

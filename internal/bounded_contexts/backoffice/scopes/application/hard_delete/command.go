@@ -2,8 +2,8 @@ package hard_delete
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const CommandType command.Type = "command.backoffice.scope.hard_delete"

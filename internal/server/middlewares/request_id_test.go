@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
 func TestRequestID_GeneratesIDWhenNotProvided(t *testing.T) {

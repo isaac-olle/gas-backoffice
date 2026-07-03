@@ -2,10 +2,10 @@ package authentication_methods
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 
-	verifyAssertion "github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/application/verify_assertion"
+	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/application/verify_assertion"
 )
 
 const jwtBearerAssertionType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"

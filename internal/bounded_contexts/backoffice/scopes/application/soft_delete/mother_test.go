@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/scopes/application/soft_delete"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/soft_delete"
 )
 
 // commandOpt is a functional option for commandBuilder.

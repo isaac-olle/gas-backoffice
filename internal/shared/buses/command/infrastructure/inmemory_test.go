@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

@@ -2,12 +2,12 @@ package create_authorization_session_test
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/google/uuid"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 )
 
 type mockSessionRepo struct {

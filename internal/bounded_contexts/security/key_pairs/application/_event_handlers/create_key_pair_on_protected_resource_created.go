@@ -2,10 +2,10 @@ package _event_handlers
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	backofficeevents "github.com/isaac-olle/gas/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
 )
 
 type CreateKeyPairOnProtectedResourceCreatedEventHandler struct {

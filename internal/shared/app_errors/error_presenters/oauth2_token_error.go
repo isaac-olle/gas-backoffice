@@ -1,7 +1,7 @@
 package error_presenters
 
 import (
-	app_errors2 "github.com/isaac-olle/gas/internal/shared/app_errors"
+	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

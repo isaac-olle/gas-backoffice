@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas/internal/server/handlers/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
 )
 
 func init() {

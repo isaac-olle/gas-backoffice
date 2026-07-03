@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 type Subscriber struct {

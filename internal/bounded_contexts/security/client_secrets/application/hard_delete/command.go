@@ -2,7 +2,7 @@ package hard_delete
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 )
 
 const CommandType command.Type = "command.security.client_secret.hard_delete"

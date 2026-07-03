@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	persistance "github.com/isaac-olle/gas/internal/shared/persistance/infrastructure"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	persistance "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5"
 )
 

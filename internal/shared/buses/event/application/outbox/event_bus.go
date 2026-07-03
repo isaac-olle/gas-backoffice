@@ -3,8 +3,8 @@ package outbox
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	shared_logger "github.com/isaac-olle/gas/internal/shared/logger"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 )
 
 type EventBus struct {

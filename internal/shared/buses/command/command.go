@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
-	errorDomain "github.com/isaac-olle/gas/internal/shared/app_errors"
+	errorDomain "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 var (

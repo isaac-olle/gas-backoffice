@@ -1,8 +1,8 @@
 package vos
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 var ErrInvalidRedirectUri app_errors.ErrorCode = "INVALID_REDIRECT_URI"

@@ -1,11 +1,11 @@
 package change_name_test
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants/application/change_name"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/change_name"
 	"github.com/stretchr/testify/require"
 )
 

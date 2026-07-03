@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"context"
 	"errors"
-	query2 "github.com/isaac-olle/gas/internal/shared/buses/query"
+	query2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

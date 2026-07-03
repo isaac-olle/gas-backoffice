@@ -2,10 +2,10 @@ package system_resource
 
 import (
 	"github.com/gin-gonic/gin"
-	adminCheckSystem "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins/application/check_system_resource"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	adminCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/check_system_resource"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func Admin(qryBus query.Bus) gin.HandlerFunc {

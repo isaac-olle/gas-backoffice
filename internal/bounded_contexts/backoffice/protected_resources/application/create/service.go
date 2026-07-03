@@ -2,10 +2,10 @@ package create
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 )
 
 type Service struct {

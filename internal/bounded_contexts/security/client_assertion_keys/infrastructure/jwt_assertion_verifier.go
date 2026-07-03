@@ -3,13 +3,13 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	jwt2 "github.com/isaac-olle/gas/internal/shared/jwt"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	jwt2 "github.com/isaac-olle/gas-backoffice/internal/shared/jwt"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/domain_services"
 )
 
 type JwtAssertionVerifier struct {

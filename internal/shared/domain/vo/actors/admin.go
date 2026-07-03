@@ -1,8 +1,8 @@
 package actors
 
 import (
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type AdminActor struct {

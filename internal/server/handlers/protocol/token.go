@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	exchangeCode "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/exchange_code"
-	issueCC "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	exchangeCode "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/exchange_code"
+	issueCC "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 type grantTypeRequest struct {

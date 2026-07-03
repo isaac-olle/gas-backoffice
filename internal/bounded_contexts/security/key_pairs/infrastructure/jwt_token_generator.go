@@ -3,10 +3,10 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/jwt"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/jwt"
 	"time"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 )
 
 type JwtTokenGenerator struct {

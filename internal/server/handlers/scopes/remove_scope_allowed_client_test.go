@@ -3,15 +3,15 @@ package scopes_test
 import (
 	"context"
 	"errors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	scopeHandlers "github.com/isaac-olle/gas/internal/server/handlers/scopes"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
 )
 
 func TestRemoveScopeAllowedClientHandler(t *testing.T) {

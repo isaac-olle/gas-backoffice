@@ -1,10 +1,10 @@
 package hard_delete_test
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/application/hard_delete"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/hard_delete"
 )
 
 // ── Command Mother ─────────────────────────────────────────────────────────────

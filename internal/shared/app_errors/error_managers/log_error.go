@@ -2,8 +2,8 @@ package error_managers
 
 import (
 	"encoding/json"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	shared_logger "github.com/isaac-olle/gas/internal/shared/logger"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 )
 
 type LogErrorPresenter struct {

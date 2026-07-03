@@ -2,10 +2,10 @@ package system_resource
 
 import (
 	"github.com/gin-gonic/gin"
-	prCheckSystem "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources/application/check_system_resource"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	prCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/check_system_resource"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func ProtectedResource(qryBus query.Bus) gin.HandlerFunc {

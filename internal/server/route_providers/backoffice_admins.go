@@ -2,18 +2,18 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/server/handlers/admins"
-	clientHandlers "github.com/isaac-olle/gas/internal/server/handlers/clients"
-	"github.com/isaac-olle/gas/internal/server/handlers/helpers"
-	prHandlers "github.com/isaac-olle/gas/internal/server/handlers/protected_resources"
-	scopeHandlers "github.com/isaac-olle/gas/internal/server/handlers/scopes"
-	tenantHandlers "github.com/isaac-olle/gas/internal/server/handlers/tenants"
-	"github.com/isaac-olle/gas/internal/server/middlewares"
-	"github.com/isaac-olle/gas/internal/server/middlewares/ownership"
-	"github.com/isaac-olle/gas/internal/server/middlewares/path_params"
-	"github.com/isaac-olle/gas/internal/server/middlewares/system_resource"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/admins"
+	clientHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
+	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
+	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
+	tenantHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/path_params"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/system_resource"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func registerAdmins(g *gin.RouterGroup, p *Backoffice) {

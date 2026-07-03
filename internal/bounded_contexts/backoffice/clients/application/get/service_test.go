@@ -2,17 +2,17 @@ package get_test
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/application/get"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/domain_services"
-	clientmocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
+	clientmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/mocks"
 )
 
 func TestGet(t *testing.T) {

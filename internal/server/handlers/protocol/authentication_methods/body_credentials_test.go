@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas/internal/server/handlers/protocol/authentication_methods"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 )
 
 func bodyCredCtx(form url.Values, alreadyAuthenticated bool) *gin.Context {

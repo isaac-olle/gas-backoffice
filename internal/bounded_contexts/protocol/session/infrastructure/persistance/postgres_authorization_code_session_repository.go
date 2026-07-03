@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	"github.com/isaac-olle/gas/internal/shared/persistance/infrastructure"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

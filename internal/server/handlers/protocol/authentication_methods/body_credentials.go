@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 
-	verifySecret "github.com/isaac-olle/gas/internal/bounded_contexts/security/client_secrets/application/verify_secret"
+	verifySecret "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/verify_secret"
 )
 
 type BodyCredentialsMethod struct {

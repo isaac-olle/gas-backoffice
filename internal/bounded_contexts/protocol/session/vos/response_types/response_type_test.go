@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	responsetypes "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos/response_types"
+	responsetypes "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos/response_types"
 )
 
 // --- mock code generator ---

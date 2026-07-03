@@ -1,11 +1,11 @@
 package create_test
 
 import (
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/create"
 )
 
 type cmdOpt func(*cmdBuilder)

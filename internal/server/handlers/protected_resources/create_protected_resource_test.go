@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"io"
 	"net/http"
 	"testing"
@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	prHandlers "github.com/isaac-olle/gas/internal/server/handlers/protected_resources"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 )
 
 func TestCreateProtectedResourceHandler(t *testing.T) {

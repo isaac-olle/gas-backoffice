@@ -3,13 +3,13 @@ package check_ownership_test
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources/application/check_ownership"
-	prmocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/protected_resources/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/check_ownership"
+	prmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

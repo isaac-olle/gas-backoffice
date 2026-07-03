@@ -2,8 +2,8 @@ package key_pairs
 
 import (
 	"fmt"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/actors"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
 )
 
 type TokenClaims struct {

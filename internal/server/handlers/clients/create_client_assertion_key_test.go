@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"io"
 	"net/http"
 	"testing"
@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/clients"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 )
 
 const assertionKeyID = "f1b2c3d4-e5f6-7890-abcd-ef1234567890"

@@ -3,16 +3,16 @@ package tenants_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	tenantAggregate "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas/internal/server/handlers/tenants"
+	tenantAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/tenants"
 )
 
 func TestGetTenantHandler(t *testing.T) {

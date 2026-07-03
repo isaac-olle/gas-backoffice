@@ -3,8 +3,8 @@ package handlerstest
 import (
 	"github.com/stretchr/testify/mock"
 
-	commandmocks "github.com/isaac-olle/gas/internal/shared/buses/command/mocks"
-	querymocks "github.com/isaac-olle/gas/internal/shared/buses/query/mocks"
+	commandmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/command/mocks"
+	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
 )
 
 func NewCommandBus(err error) *commandmocks.MockCommandBus {

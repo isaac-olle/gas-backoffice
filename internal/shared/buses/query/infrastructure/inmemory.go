@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	query2 "github.com/isaac-olle/gas/internal/shared/buses/query"
+	query2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"sync"
 )
 

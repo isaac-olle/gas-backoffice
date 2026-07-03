@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
 // stubHandler records which methods were called and can be configured to return errors.

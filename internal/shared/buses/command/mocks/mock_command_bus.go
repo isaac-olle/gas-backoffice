@@ -7,7 +7,7 @@ package commandmocks
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	mock "github.com/stretchr/testify/mock"
 )
 

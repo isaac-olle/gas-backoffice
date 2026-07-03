@@ -1,18 +1,18 @@
 package modules
 
 import (
-	sessionEventHandlers "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/_event_handlers"
-	buildAuthResponse "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/build_authorization_response"
-	createAuthSession "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/create_authorization_session"
-	exchangeCode "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/exchange_code"
-	issueCC "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/domain_services"
-	sessionInfra "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/infrastructure"
-	sessionPersistance "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/infrastructure/persistance"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	event2 "github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	protocolEvents "github.com/isaac-olle/gas/internal/shared/events/protocol"
+	sessionEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/_event_handlers"
+	buildAuthResponse "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/build_authorization_response"
+	createAuthSession "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_authorization_session"
+	exchangeCode "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/exchange_code"
+	issueCC "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
+	sessionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure"
+	sessionPersistance "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/persistance"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	protocolEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/protocol"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

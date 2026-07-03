@@ -1,8 +1,8 @@
 package protocol
 
 import (
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 func unsupportedGrantTypeError(grantType string) error {

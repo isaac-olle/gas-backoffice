@@ -1,7 +1,7 @@
 package aggregate
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 )
 
 type Aggregate interface {

@@ -2,7 +2,7 @@ package check_ownership
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 const QueryType query.Type = "query.backoffice.scope.check_ownership"

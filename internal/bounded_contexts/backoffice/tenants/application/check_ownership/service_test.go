@@ -2,18 +2,18 @@ package check_ownership_test
 
 import (
 	"context"
-	app_errors2 "github.com/isaac-olle/gas/internal/shared/app_errors"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants/application/check_ownership"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants/domain_services"
-	tenantmocks "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/check_ownership"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/domain_services"
+	tenantmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/mocks"
 )
 
 func TestCheckOwnership(t *testing.T) {

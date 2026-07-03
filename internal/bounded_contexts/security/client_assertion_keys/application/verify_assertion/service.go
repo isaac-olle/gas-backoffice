@@ -3,7 +3,7 @@ package verify_assertion
 import (
 	"context"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
 )
 
 type ClientClaims struct {

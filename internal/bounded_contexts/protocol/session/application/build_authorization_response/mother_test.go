@@ -2,13 +2,13 @@ package build_authorization_response_test
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 )
 
 // mockSessionRepo stubs session.Repository for build_authorization_response tests.

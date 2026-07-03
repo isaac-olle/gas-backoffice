@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
 func TestNewConsumed(t *testing.T) {

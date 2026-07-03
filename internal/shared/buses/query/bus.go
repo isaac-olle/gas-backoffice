@@ -2,7 +2,7 @@ package query
 
 import (
 	"context"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 var ErrInvalidResponse app_errors.ErrorCode = "INVALID_RESPONSE"

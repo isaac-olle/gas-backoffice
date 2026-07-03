@@ -3,16 +3,16 @@ package domain_services_test
 import (
 	"context"
 	"errors"
-	app_errors2 "github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
 )
 
 // --- stubs ---

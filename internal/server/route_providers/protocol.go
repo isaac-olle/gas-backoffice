@@ -2,13 +2,13 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	protocolHandler "github.com/isaac-olle/gas/internal/server/handlers/protocol"
-	"github.com/isaac-olle/gas/internal/server/handlers/protocol/authentication_methods"
-	"github.com/isaac-olle/gas/internal/server/middlewares"
-	error_presenters "github.com/isaac-olle/gas/internal/shared/app_errors/error_presenters"
-	"github.com/isaac-olle/gas/internal/shared/buses/command"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	protocolHandler "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	error_presenters "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_presenters"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 type Protocol struct {

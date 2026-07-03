@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/criteria"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	"github.com/isaac-olle/gas/internal/shared/persistance/infrastructure"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

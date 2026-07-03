@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"io"
 	"net/http"
 	"testing"
@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	scopeHandlers "github.com/isaac-olle/gas/internal/server/handlers/scopes"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
 )
 
 func TestAddScopeAllowedClientHandler(t *testing.T) {

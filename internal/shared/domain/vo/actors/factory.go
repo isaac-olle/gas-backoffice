@@ -2,8 +2,8 @@ package actors
 
 import (
 	"fmt"
-	vo2 "github.com/isaac-olle/gas/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func NewActorForRole(role vo2.Role, sub string) (vo2.Actor, error) {

@@ -1,14 +1,14 @@
 package admins
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	verifyAssertion "github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys/application/verify_assertion"
-	generateJwt "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
+	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys/application/verify_assertion"
+	generateJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
 )
 
 type TokenHandler struct {

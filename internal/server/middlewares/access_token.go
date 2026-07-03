@@ -1,13 +1,13 @@
 package middlewares
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/buses/query"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	verifyJwt "github.com/isaac-olle/gas/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
+	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 )
 
 func AccessToken(queryBus query.Bus) gin.HandlerFunc {

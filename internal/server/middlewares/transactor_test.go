@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/isaac-olle/gas/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
 type stubTx struct {

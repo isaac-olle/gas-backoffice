@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
-	"github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/domain_services"
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

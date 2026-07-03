@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	event2 "github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/logger"
-	sharedtypes "github.com/isaac-olle/gas/internal/shared/types"
-	"github.com/isaac-olle/gas/internal/shared/workers"
+	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
+	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
 )
 
 type noopLogger struct{}

@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	verifyAssertion "github.com/isaac-olle/gas/internal/bounded_contexts/security/client_assertion_keys/application/verify_assertion"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas/internal/server/handlers/protocol/authentication_methods"
+	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/application/verify_assertion"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 )
 
 const jwtBearerType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"

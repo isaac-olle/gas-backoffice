@@ -3,9 +3,9 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas/internal/shared/jwt"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/jwt"
 
-	"github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys"
 )
 
 type JwtAssertionVerifier struct {

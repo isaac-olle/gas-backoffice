@@ -1,7 +1,7 @@
 package aggregate
 
 import (
-	sharedtypes "github.com/isaac-olle/gas/internal/shared/types"
+	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 )
 
 type Name = sharedtypes.AggregateName

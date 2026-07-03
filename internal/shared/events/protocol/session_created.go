@@ -1,8 +1,8 @@
 package protocol
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/buses/event"
-	"github.com/isaac-olle/gas/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 )
 
 const SessionCreatedType event.Type = "protocol.session.created"

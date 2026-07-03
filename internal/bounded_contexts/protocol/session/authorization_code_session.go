@@ -1,13 +1,13 @@
 package session
 
 import (
-	"github.com/isaac-olle/gas/internal/shared/app_errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	protocolEvents "github.com/isaac-olle/gas/internal/shared/events/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	protocolEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/protocol"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
-	responsetypes "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos/response_types"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
+	responsetypes "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos/response_types"
 )
 
 type AuthorizationCodeSession struct {

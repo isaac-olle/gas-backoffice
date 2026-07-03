@@ -3,16 +3,16 @@ package admins_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	adminAggregate "github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/admins"
-	"github.com/isaac-olle/gas/internal/server/handlers/admins"
-	"github.com/isaac-olle/gas/internal/server/handlers/handlerstest"
+	adminAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/admins"
+	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 )
 
 func TestGetAdminHandler(t *testing.T) {

@@ -3,12 +3,12 @@ package session
 import (
 	"time"
 
-	app_errors "github.com/isaac-olle/gas/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas/internal/shared/domain/aggregate"
-	ids2 "github.com/isaac-olle/gas/internal/shared/domain/vo/ids"
-	protocoEvents "github.com/isaac-olle/gas/internal/shared/events/protocol"
+	app_errors "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	protocoEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/protocol"
 
-	sessionvos "github.com/isaac-olle/gas/internal/bounded_contexts/protocol/session/vos"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
 type ClientCredentialsSession struct {
