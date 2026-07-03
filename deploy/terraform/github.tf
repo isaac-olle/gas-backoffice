@@ -1,6 +1,7 @@
 resource "github_branch" "environment" {
-  repository = var.github_repo
-  branch     = var.env
+  repository    = var.github_repo
+  branch        = var.env
+  source_branch = var.source_branch
 }
 
 resource "github_repository_file" "pipeline_trigger" {

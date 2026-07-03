@@ -49,3 +49,8 @@ variable "image_tag" {
 variable "github_repo" {
   type = string
 }
+
+variable "source_branch" {
+  type    = string
+  default = "main"
+}

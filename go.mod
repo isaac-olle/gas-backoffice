@@ -1,6 +1,6 @@
-module github.com/isaac-olle/gas
+module github.com/isaac-olle/gas-backoffice
 
-replace gas => github.com/isaac-olle/gas v0.0.0
+replace gas-backoffice => github.com/isaac-olle/gas-backoffice v0.0.0
 
 go 1.25.7
 
