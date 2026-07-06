@@ -6,6 +6,15 @@ on:
       environment:
         type: string
         required: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+          - prod
 
 env:
   REGISTRY: ${{ secrets.DO_REGISTRY }}
