@@ -1,0 +1,12 @@
+name: CI/CD - dev
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/_pipeline.yml
+    secrets: inherit
