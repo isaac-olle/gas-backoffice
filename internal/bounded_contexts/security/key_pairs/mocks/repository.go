@@ -290,6 +290,71 @@ func (_c *MockRepository_SearchById_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// SearchByProtectedResourceId provides a mock function for the type MockRepository
+func (_mock *MockRepository) SearchByProtectedResourceId(ctx context.Context, id ids.ProtectedResourceId) (*key_pairs.KeyPair, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchByProtectedResourceId")
+	}
+
+	var r0 *key_pairs.KeyPair
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.ProtectedResourceId) (*key_pairs.KeyPair, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.ProtectedResourceId) *key_pairs.KeyPair); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*key_pairs.KeyPair)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ids.ProtectedResourceId) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_SearchByProtectedResourceId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchByProtectedResourceId'
+type MockRepository_SearchByProtectedResourceId_Call struct {
+	*mock.Call
+}
+
+// SearchByProtectedResourceId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id ids.ProtectedResourceId
+func (_e *MockRepository_Expecter) SearchByProtectedResourceId(ctx interface{}, id interface{}) *MockRepository_SearchByProtectedResourceId_Call {
+	return &MockRepository_SearchByProtectedResourceId_Call{Call: _e.mock.On("SearchByProtectedResourceId", ctx, id)}
+}
+
+func (_c *MockRepository_SearchByProtectedResourceId_Call) Run(run func(ctx context.Context, id ids.ProtectedResourceId)) *MockRepository_SearchByProtectedResourceId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ids.ProtectedResourceId
+		if args[1] != nil {
+			arg1 = args[1].(ids.ProtectedResourceId)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *MockRepository_SearchByProtectedResourceId_Call) Return(keyPair *key_pairs.KeyPair, err error) *MockRepository_SearchByProtectedResourceId_Call {
+	_c.Call.Return(keyPair, err)
+	return _c
+}
+
+func (_c *MockRepository_SearchByProtectedResourceId_Call) RunAndReturn(run func(ctx context.Context, id ids.ProtectedResourceId) (*key_pairs.KeyPair, error)) *MockRepository_SearchByProtectedResourceId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SoftDelete provides a mock function for the type MockRepository
 func (_mock *MockRepository) SoftDelete(ctx context.Context, id ids.KeyPairId) error {
 	ret := _mock.Called(ctx, id)
