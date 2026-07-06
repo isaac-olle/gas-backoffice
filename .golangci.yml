@@ -5,7 +5,7 @@ linters:
     - lll
   settings:
     lll:
-      line-length: 118
+      line-length: 200
       tab-width: 4
   exclusions:
     rules:

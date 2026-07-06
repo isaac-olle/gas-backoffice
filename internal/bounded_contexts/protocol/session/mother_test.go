@@ -31,18 +31,3 @@ func newSessionMother(t *testing.T) *session.AuthorizationCodeSession {
 	require.NoError(t, err)
 	return sess
 }
-
-// newClientMother creates a Client with the given clientID, redirect URIs and scopes.
-func newClientMother(clientID, redirectURI string, flows, scopes []string) *session.Client {
-	scopeObjs := make([]*session.Scope, len(scopes))
-	for i, s := range scopes {
-		scopeObjs[i] = &session.Scope{ScopeName: s}
-	}
-	return session.NewClient(
-		clientID, "Test Client",
-		uuid.New().String(), uuid.New().String(),
-		flows,
-		[]string{redirectURI},
-		scopeObjs,
-	)
-}

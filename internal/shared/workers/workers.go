@@ -8,8 +8,8 @@ type Workers struct {
 }
 
 // NewWorkers inicialitza N workers amb UUIDs
-func NewWorkers(num int) Workers {
-	w := Workers{
+func NewWorkers(num int) *Workers {
+	w := &Workers{
 		workers: make(map[string]*Worker, num),
 	}
 	for i := 0; i < num; i++ {

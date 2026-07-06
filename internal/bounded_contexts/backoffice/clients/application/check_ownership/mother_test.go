@@ -28,10 +28,6 @@ func withAdminId(id ids2.AdminId) queryOpt {
 	return func(b *queryBuilder) { b.adminId = id }
 }
 
-func withTenantId(id ids2.TenantId) queryOpt {
-	return func(b *queryBuilder) { b.tenantId = id }
-}
-
 func aQuery(t *testing.T, opts ...queryOpt) *check_ownership.Query {
 	t.Helper()
 	b := &queryBuilder{

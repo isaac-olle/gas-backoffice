@@ -20,10 +20,6 @@ func withPrId(id string) prPrimOpt {
 	return func(p *protected_resources.ProtectedResourcePrimitives) { p.Id = id }
 }
 
-func withPrName(name string) prPrimOpt {
-	return func(p *protected_resources.ProtectedResourcePrimitives) { p.Name = name }
-}
-
 func withPrTenantId(tenantId string) prPrimOpt {
 	return func(p *protected_resources.ProtectedResourcePrimitives) { p.TenantId = tenantId }
 }

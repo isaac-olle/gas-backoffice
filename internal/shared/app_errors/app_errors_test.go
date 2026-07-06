@@ -78,8 +78,8 @@ func TestWithDetails(t *testing.T) {
 func TestAppError_Is(t *testing.T) {
 	t.Parallel()
 	err := BadRequestError(testCode)
-	assert.True(t, err.Is(testCode))
-	assert.False(t, err.Is(anotherCode))
+	assert.True(t, err.Is(BadRequestError(testCode)))
+	assert.False(t, err.Is(BadRequestError(anotherCode)))
 }
 
 func TestAppError_Error_ReturnsJSON(t *testing.T) {

@@ -36,20 +36,6 @@ func aQuery(t *testing.T, opts ...queryOpt) *get.Query {
 
 // ── Client Mother ──────────────────────────────────────────────────────────────
 
-func aClient(t *testing.T) *clients.Client {
-	t.Helper()
-	c, err := clients.NewClient(
-		ids2.NewClientId(),
-		"valid-client",
-		clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()),
-		nil,
-		nil,
-	)
-	require.NoError(t, err)
-	c.PullDomainEvents() // clear creation event
-	return c
-}
-
 func aClientWithId(t *testing.T, name string) (*clients.Client, ids2.ClientId) {
 	t.Helper()
 	clientId := ids2.NewClientId()

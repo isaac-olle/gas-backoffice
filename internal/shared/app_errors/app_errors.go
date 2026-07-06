@@ -94,8 +94,12 @@ func (e *AppError) WithCause(cause error) *AppError {
 	return e
 }
 
-func (e *AppError) Is(target ErrorCode) bool {
-	return e.Code == target
+func (e *AppError) Is(target error) bool {
+	var t *AppError
+	if errors.As(target, &t) {
+		return e.Code == t.Code
+	}
+	return false
 }
 
 func AddTrace(err error) error {

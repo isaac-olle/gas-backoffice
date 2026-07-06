@@ -22,10 +22,6 @@ func withName(name string) commandOpt {
 	return func(b *commandBuilder) { b.name = name }
 }
 
-func withAdminId(adminId string) commandOpt {
-	return func(b *commandBuilder) { b.adminId = adminId }
-}
-
 // aCommand builds a create.Command using the Object Mother pattern.
 func aCommand(t *testing.T, opts ...commandOpt) *create.Command {
 	t.Helper()

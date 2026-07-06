@@ -14,10 +14,7 @@ import (
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
-	name                string
-	protectedResourceId string
-	tenantId            string
-	adminId             string
+	name string
 }
 
 func withName(name string) commandOpt {

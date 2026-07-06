@@ -12,12 +12,11 @@ type PoolStats struct {
 }
 
 type Pool struct {
-	availableWorkers Workers
-	activeWorkers    Workers
+	availableWorkers *Workers
+	activeWorkers    *Workers
 	mu               sync.Mutex
 	pendingTasks     PendingTasks
 	totalWorkers     int
-	autoScaler       *AutoScaler
 }
 
 // NewPool inicialitza N workers
