@@ -16,14 +16,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterProtocol(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager, signingKeyId string, issuer string) {
+func RegisterProtocol(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager, issuer string) {
 	sessionRepo := sessionPersistance.NewPostgresAuthorizationCodeSessionRepository(pool)
 	ccSessionRepo := sessionPersistance.NewPostgresClientCredentialsSessionRepository(pool)
 	clientRepo := sessionInfra.NewPostgresClientRepository(pool)
 	codeGenerator := sessionInfra.NewRandomCodeGenerator()
 	clientFinder := domain_services.NewClientFinder(clientRepo)
 	sessionFinder := domain_services.NewSessionFinder(sessionRepo)
-	sessionTokenGenerator := sessionInfra.NewBusSessionTokenGenerator(qryBus, signingKeyId, issuer)
+	sessionTokenGenerator := sessionInfra.NewBusSessionTokenGenerator(qryBus, issuer)
 
 	cmdBus.Register(createAuthSession.CommandType, createAuthSession.NewCommandHandler(
 		createAuthSession.NewService(sessionRepo, clientFinder, evtBus, codeGenerator),

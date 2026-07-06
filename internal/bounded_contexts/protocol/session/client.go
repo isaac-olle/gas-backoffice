@@ -72,39 +72,76 @@ func (c *Client) HasScope(scopeName string) bool {
 	return false
 }
 
-func (c *Client) CheckAuthorizationRequest(responseType, redirectURI, scope string) error {
+func (c *Client) CheckAuthorizationRequest(responseType, redirectURI, scope string) (string, error) {
 	flow, err := sessionvos.DetermineFlow(responseType)
 	if err != nil {
-		return app_errors.BadRequestError(ErrFlowNotAllowed).
+		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
 			WithDescription("unsupported response_type: " + responseType)
 	}
 	if !c.HasFlow(flow.String()) {
-		return app_errors.BadRequestError(ErrFlowNotAllowed).
+		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
 			WithDescription("flow not allowed for this client: " + flow.String())
 	}
 	if !c.HasRedirectURI(redirectURI) {
-		return app_errors.BadRequestError(ErrInvalidRedirectURI).
+		return "", app_errors.BadRequestError(ErrInvalidRedirectURI).
 			WithDescription("redirect_uri not registered for this client")
 	}
-	for _, scopeName := range strings.Fields(scope) {
+	requestedScopes := strings.Fields(scope)
+	for _, scopeName := range requestedScopes {
 		if !c.HasScope(scopeName) {
-			return app_errors.BadRequestError(ErrInvalidScope).
+			return "", app_errors.BadRequestError(ErrInvalidScope).
 				WithDescription("scope not allowed for this client: " + scopeName)
 		}
 	}
-	return nil
+	return c.ResolveProtectedResourceId(requestedScopes)
 }
 
-func (c *Client) CheckClientCredentials(scope string) error {
+func (c *Client) CheckClientCredentials(scope string) (string, error) {
 	if !c.HasFlow(sessionvos.ClientCredentialsFlow) {
-		return app_errors.BadRequestError(ErrFlowNotAllowed).
+		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
 			WithDescription("client_credentials flow is not allowed for this client")
 	}
-	for _, scopeName := range strings.Fields(scope) {
+	requestedScopes := strings.Fields(scope)
+	for _, scopeName := range requestedScopes {
 		if !c.HasScope(scopeName) {
-			return app_errors.BadRequestError(ErrInvalidScope).
+			return "", app_errors.BadRequestError(ErrInvalidScope).
 				WithDescription("scope not allowed for this client: " + scopeName)
 		}
 	}
-	return nil
+	return c.ResolveProtectedResourceId(requestedScopes)
+}
+
+// ResolveProtectedResourceId validates that all requested scopes are unambiguous and belong
+// to the same ProtectedResource, then returns that ProtectedResource ID.
+// A scope is ambiguous if the same name exists under multiple ProtectedResources — in that
+// case the client must specify the `resource` parameter (RFC 8707).
+func (c *Client) ResolveProtectedResourceId(requestedScopes []string) (string, error) {
+	var resolvedPrId string
+
+	for _, scopeName := range requestedScopes {
+		seen := map[string]string{} // protectedResourceId -> protectedResourceName
+		for _, s := range c.Scopes {
+			if s.ScopeName == scopeName {
+				seen[s.ProtectedResourceID] = s.ProtectedResourceName
+			}
+		}
+		if len(seen) > 1 {
+			resources := make([]string, 0, len(seen))
+			for _, name := range seen {
+				resources = append(resources, name)
+			}
+			return "", app_errors.BadRequestError(ErrAmbiguousScope).
+				WithDescription("scope \"" + scopeName + "\" exists in multiple protected resources: " + strings.Join(resources, ", ") + ". Use the `resource` parameter (RFC 8707) to specify which one.")
+		}
+		for prId := range seen {
+			if resolvedPrId == "" {
+				resolvedPrId = prId
+			} else if resolvedPrId != prId {
+				return "", app_errors.BadRequestError(ErrScopesFromMultipleResources).
+					WithDescription("requested scopes belong to different protected resources. Request scopes from one resource at a time.")
+			}
+		}
+	}
+
+	return resolvedPrId, nil
 }

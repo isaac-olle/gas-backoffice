@@ -23,10 +23,10 @@ type mockTokenGen struct {
 	err   error
 }
 
-func (m *mockTokenGen) GenerateFromSession(_ context.Context, _ *session.AuthorizationCodeSession, _ *session.Client) (string, error) {
+func (m *mockTokenGen) GenerateFromSession(_ context.Context, _ *session.AuthorizationCodeSession, _ *session.Client, _ string) (string, error) {
 	return m.token, m.err
 }
-func (m *mockTokenGen) GenerateFromClientCredentials(_ context.Context, _ *session.ClientCredentialsSession) (string, error) {
+func (m *mockTokenGen) GenerateFromClientCredentials(_ context.Context, _ *session.ClientCredentialsSession, _ string) (string, error) {
 	return m.token, m.err
 }
 
@@ -46,6 +46,8 @@ func newClientWithCCMother(clientID string) *session.Client {
 		uuid.New().String(), uuid.New().String(),
 		[]string{"client_credentials"},
 		[]string{},
-		[]*session.Scope{{ScopeName: "openid"}},
+		[]*session.Scope{
+			session.NewScope(uuid.New().String(), "openid", uuid.New().String(), "Resource A"),
+		},
 	)
 }

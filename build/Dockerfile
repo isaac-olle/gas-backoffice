@@ -17,6 +17,5 @@ COPY --from=builder /gas /gas
 COPY --from=builder /app/config/config.yaml /config/config.yaml
 
 ENV CONFIG_FILE_PATH=/config/config.yaml
-ENV ENVIRONMENT=production
 
 ENTRYPOINT ["/gas"]

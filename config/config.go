@@ -27,8 +27,8 @@ func (s ServerConfig) ShutdownTimeout() time.Duration {
 }
 
 type ApplicationConfig struct {
-	Name         string `yaml:"name"`
-	SigningKeyId string `yaml:"signing_key_id"`
+	Name           string `yaml:"name"`
+	BackofficePrId string `yaml:"backoffice_pr_id"`
 }
 
 type DatabasesConfig struct {

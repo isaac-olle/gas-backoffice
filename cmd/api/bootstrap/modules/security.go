@@ -18,6 +18,7 @@ import (
 	keyPairEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/_event_handlers"
 	keyPairCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
 	generateJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
+	generateJwtByPrId "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt_by_pr_id"
 	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 	keyPairDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/domain_services"
 	keyPairInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure"
@@ -62,6 +63,7 @@ func RegisterSecurity(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, 
 	keyPairTokenVerifier := keyPairInfra.NewJwtTokenVerifier(jwtService)
 	keyPairJwtDecoder := keyPairInfra.NewJwtDecoder()
 	qryBus.Register(generateJwt.QueryType, generateJwt.NewQueryHandler(generateJwt.NewService(keyPairFinder, keyPairTokenGenerator)))
+	qryBus.Register(generateJwtByPrId.QueryType, generateJwtByPrId.NewQueryHandler(generateJwtByPrId.NewService(keyPairFinder, keyPairTokenGenerator)))
 	qryBus.Register(verifyJwt.QueryType, verifyJwt.NewQueryHandler(verifyJwt.NewService(keyPairFinder, keyPairTokenVerifier, keyPairJwtDecoder, appName)))
 
 	createKeyPairOnPRCreated := keyPairEventHandlers.NewCreateKeyPairOnProtectedResourceCreatedEventHandler(createKeyPairService)

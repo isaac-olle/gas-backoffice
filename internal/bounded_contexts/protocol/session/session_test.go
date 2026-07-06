@@ -290,9 +290,10 @@ func TestCheckAuthorizationRequest(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+			prId := uuid.New().String()
 			scopeObjs := make([]*session.Scope, len(tc.scopes))
 			for i, s := range tc.scopes {
-				scopeObjs[i] = &session.Scope{ScopeName: s}
+				scopeObjs[i] = session.NewScope(uuid.New().String(), s, prId, "Resource A")
 			}
 			client := session.NewClient(
 				uuid.New().String(), "TC",
@@ -300,7 +301,7 @@ func TestCheckAuthorizationRequest(t *testing.T) {
 				tc.flows, tc.uris, scopeObjs,
 			)
 
-			err := client.CheckAuthorizationRequest(responseType, redirectURI, scope)
+			_, err := client.CheckAuthorizationRequest(responseType, redirectURI, scope)
 			if tc.wantErr {
 				assertErrCode(t, err, tc.wantErrCode)
 				return

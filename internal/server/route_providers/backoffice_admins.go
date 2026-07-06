@@ -19,7 +19,7 @@ import (
 func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	a := g.Group("/admins")
 	a.POST("/token",
-		p.executor.Run(admins.NewTokenHandler(p.queryBus, p.signingKeyId, p.jwtIssuer)),
+		p.executor.Run(admins.NewTokenHandler(p.queryBus, p.backofficePrId, p.jwtIssuer)),
 	)
 
 	authenticated := a.Group("")

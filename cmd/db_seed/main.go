@@ -33,7 +33,7 @@ import (
 // Amb --env-file escriu també els outputs al fitxer .env indicat (ús local).
 //
 // go run ./cmd/seed
-// go run ./cmd/seed --env-file config/.env
+// go run ./cmd/db_seed --env-file config/.env
 func main() {
 	envFile := flag.String("env-file", "", "path to a .env file to load and update (optional, local use)")
 	flag.Parse()
@@ -142,10 +142,9 @@ func main() {
 	adminPrivKeyB64 := base64.StdEncoding.EncodeToString([]byte(adminPrivKeyPEM))
 
 	outputs := map[string]string{
-		"SIGNING_KEY_ID":              keyPairID,
+		"BACKOFFICE_PR_ID":            prID,
 		"SEED_ADMIN_ID":               adminID,
 		"SEED_TENANT_ID":              tenantID,
-		"SEED_PROTECTED_RESOURCE_ID":  prID,
 		"ADMIN_ASSERTION_KEY_ID":      adminAssertionKeyID,
 		"ADMIN_ASSERTION_PRIVATE_KEY": adminPrivKeyB64,
 	}

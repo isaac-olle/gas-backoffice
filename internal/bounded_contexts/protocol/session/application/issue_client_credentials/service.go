@@ -33,7 +33,8 @@ func (s *Service) IssueClientCredentials(ctx context.Context, qry *Query) (any, 
 		return nil, err
 	}
 
-	if err = client.CheckClientCredentials(qry.scope); err != nil {
+	protectedResourceId, err := client.CheckClientCredentials(qry.scope)
+	if err != nil {
 		return nil, err
 	}
 
@@ -42,7 +43,7 @@ func (s *Service) IssueClientCredentials(ctx context.Context, qry *Query) (any, 
 		return nil, err
 	}
 
-	token, err := s.tokenGenerator.GenerateFromClientCredentials(ctx, ccSession)
+	token, err := s.tokenGenerator.GenerateFromClientCredentials(ctx, ccSession, protectedResourceId)
 	if err != nil {
 		return nil, app_errors.InternalError(session.ErrCannotSignToken).
 			WithDescription("failed to generate token").

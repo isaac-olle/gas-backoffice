@@ -9,6 +9,7 @@ import (
 
 type Repository interface {
 	persistance.Repository[*KeyPair, ids.KeyPairId]
+	SearchByProtectedResourceId(ctx context.Context, id ids.ProtectedResourceId) (*KeyPair, error)
 }
 
 type TokenVerifier interface {

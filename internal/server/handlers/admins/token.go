@@ -1,24 +1,24 @@
 package admins
 
 import (
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys/application/verify_assertion"
-	generateJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt"
+	generateJwtByPrId "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt_by_pr_id"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
 )
 
 type TokenHandler struct {
-	queryBus     query.Bus
-	signingKeyId string
-	jwtIssuer    string
+	queryBus       query.Bus
+	backofficePrId string
+	jwtIssuer      string
 }
 
-func NewTokenHandler(queryBus query.Bus, signingKeyId, jwtIssuer string) *TokenHandler {
-	return &TokenHandler{queryBus: queryBus, signingKeyId: signingKeyId, jwtIssuer: jwtIssuer}
+func NewTokenHandler(queryBus query.Bus, backofficePrId, jwtIssuer string) *TokenHandler {
+	return &TokenHandler{queryBus: queryBus, backofficePrId: backofficePrId, jwtIssuer: jwtIssuer}
 }
 
 type adminTokenRequest struct {
@@ -46,8 +46,8 @@ func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 	tokenString, err := query.DispatchTyped[string](
 		c.Request.Context(),
 		h.queryBus,
-		generateJwt.NewQuery(
-			h.signingKeyId, map[string]any{
+		generateJwtByPrId.NewQuery(
+			h.backofficePrId, map[string]any{
 				"iss":  h.jwtIssuer,
 				"sub":  p.Id,
 				"aud":  h.jwtIssuer,
