@@ -54,7 +54,7 @@ func Run() error {
 
 	modules.RegisterBackoffice(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager)
 	modules.RegisterSecurity(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
-	modules.RegisterProtocol(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.SigningKeyId, cfg.Application.Name)
+	modules.RegisterProtocol(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
 
 	eventBus := subsManager.Build(log, workerPool)
 
@@ -80,7 +80,7 @@ func Run() error {
 		log,
 		presenter,
 		managers,
-		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, cfg.Application.SigningKeyId, cfg.Application.Name),
+		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, cfg.Application.BackofficePrId, cfg.Application.Name),
 		route_providers.NewProtocol(hm, cmdBus, qryBus),
 	)
 

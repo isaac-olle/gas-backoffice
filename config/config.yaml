@@ -7,7 +7,7 @@ server:
 
 application:
   name: gas
-  signing_key_id: ${SIGNING_KEY_ID}
+  backoffice_pr_id: ${BACKOFFICE_PR_ID}
 
 databases:
   postgres: ${POSTGRES_DSN}

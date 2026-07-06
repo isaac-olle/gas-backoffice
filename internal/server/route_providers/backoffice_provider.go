@@ -9,12 +9,12 @@ import (
 )
 
 type Backoffice struct {
-	executor     *middlewares.HandlerMiddleware
-	queryBus     query.Bus
-	commandBus   command.Bus
-	pgxPool      *pgxpool.Pool
-	signingKeyId string
-	jwtIssuer    string
+	executor       *middlewares.HandlerMiddleware
+	queryBus       query.Bus
+	commandBus     command.Bus
+	pgxPool        *pgxpool.Pool
+	backofficePrId string
+	jwtIssuer      string
 }
 
 func NewBackoffice(
@@ -22,15 +22,15 @@ func NewBackoffice(
 	queryBus query.Bus,
 	commandBus command.Bus,
 	pgxPool *pgxpool.Pool,
-	signingKeyId, jwtIssuer string,
+	backofficePrId, jwtIssuer string,
 ) *Backoffice {
 	return &Backoffice{
-		executor:     executor,
-		queryBus:     queryBus,
-		commandBus:   commandBus,
-		pgxPool:      pgxPool,
-		signingKeyId: signingKeyId,
-		jwtIssuer:    jwtIssuer,
+		executor:       executor,
+		queryBus:       queryBus,
+		commandBus:     commandBus,
+		pgxPool:        pgxPool,
+		backofficePrId: backofficePrId,
+		jwtIssuer:      jwtIssuer,
 	}
 }
 

@@ -1,7 +1,6 @@
 package session_test
 
 import (
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,6 +9,12 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+)
+
+const (
+	pr1 = "pr-1"
+	pr2 = "pr-2"
 )
 
 func newFullClient() *session.Client {
@@ -19,8 +24,8 @@ func newFullClient() *session.Client {
 		[]string{"authorization_code", "client_credentials"},
 		[]string{"https://example.com/cb"},
 		[]*session.Scope{
-			{ScopeName: "openid"},
-			{ScopeName: "profile"},
+			session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
+			session.NewScope(uuid.New().String(), "profile", pr1, "Resource A"),
 		},
 	)
 }
@@ -93,38 +98,60 @@ func TestClient_HasScope(t *testing.T) {
 	}
 }
 
-func TestClient_CheckClientCredentials(t *testing.T) {
+func TestClient_ResolveProtectedResourceId(t *testing.T) {
 	t.Parallel()
 
+	clientWithScopes := func(scopes []*session.Scope) *session.Client {
+		return session.NewClient(
+			uuid.New().String(), "TC",
+			uuid.New().String(), uuid.New().String(),
+			[]string{"client_credentials"},
+			[]string{},
+			scopes,
+		)
+	}
+
 	tests := []struct {
-		name         string
-		flows        []string
-		scopes       []string
-		requestScope string
-		wantErr      bool
-		wantErrCode  app_errors.ErrorCode
+		name            string
+		scopes          []*session.Scope
+		requestedScopes []string
+		wantPrId        string
+		wantErrCode     app_errors.ErrorCode
 	}{
 		{
-			name:         "accepts valid flow and scopes",
-			flows:        []string{"client_credentials"},
-			scopes:       []string{"openid", "profile"},
-			requestScope: "openid profile",
+			name: "resolves single scope to its PR",
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+			},
+			requestedScopes: []string{"users:read"},
+			wantPrId:        pr1,
 		},
 		{
-			name:         "rejects client without client_credentials flow",
-			flows:        []string{"authorization_code"},
-			scopes:       []string{"openid"},
-			requestScope: "openid",
-			wantErr:      true,
-			wantErrCode:  session.ErrFlowNotAllowed,
+			name: "resolves multiple scopes from same PR",
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "users:write", pr1, "Resource A"),
+			},
+			requestedScopes: []string{"users:read", "users:write"},
+			wantPrId:        pr1,
 		},
 		{
-			name:         "rejects scope not registered for client",
-			flows:        []string{"client_credentials"},
-			scopes:       []string{"openid"},
-			requestScope: "email",
-			wantErr:      true,
-			wantErrCode:  session.ErrInvalidScope,
+			name: "rejects scope name present in multiple PRs",
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "users:read", pr2, "Resource B"),
+			},
+			requestedScopes: []string{"users:read"},
+			wantErrCode:     session.ErrAmbiguousScope,
+		},
+		{
+			name: "rejects scopes from different PRs",
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "orders:read", pr2, "Resource B"),
+			},
+			requestedScopes: []string{"users:read", "orders:read"},
+			wantErrCode:     session.ErrScopesFromMultipleResources,
 		},
 	}
 
@@ -133,25 +160,112 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			scopeObjs := make([]*session.Scope, len(tc.scopes))
-			for i, s := range tc.scopes {
-				scopeObjs[i] = &session.Scope{ScopeName: s}
-			}
-			c := session.NewClient(
-				uuid.New().String(), "TC",
-				uuid.New().String(), uuid.New().String(),
-				tc.flows, []string{},
-				scopeObjs,
-			)
+			c := clientWithScopes(tc.scopes)
+			prId, err := c.ResolveProtectedResourceId(tc.requestedScopes)
 
-			err := c.CheckClientCredentials(tc.requestScope)
-			if tc.wantErr {
+			if tc.wantErrCode != "" {
 				var appErr *app_errors.AppError
 				require.ErrorAs(t, err, &appErr)
 				assert.Equal(t, tc.wantErrCode, appErr.Code)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantPrId, prId)
+		})
+	}
+}
+
+func TestClient_CheckClientCredentials(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		flows        []string
+		scopes       []*session.Scope
+		requestScope string
+		wantPrId     string
+		wantErrCode  app_errors.ErrorCode
+	}{
+		{
+			name:  "returns PR id for valid single scope",
+			flows: []string{"client_credentials"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
+			},
+			requestScope: "openid",
+			wantPrId:     pr1,
+		},
+		{
+			name:  "returns PR id for multiple scopes from same PR",
+			flows: []string{"client_credentials"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "profile", pr1, "Resource A"),
+			},
+			requestScope: "openid profile",
+			wantPrId:     pr1,
+		},
+		{
+			name:  "rejects client without client_credentials flow",
+			flows: []string{"authorization_code"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
+			},
+			requestScope: "openid",
+			wantErrCode:  session.ErrFlowNotAllowed,
+		},
+		{
+			name:  "rejects scope not registered for client",
+			flows: []string{"client_credentials"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
+			},
+			requestScope: "email",
+			wantErrCode:  session.ErrInvalidScope,
+		},
+		{
+			name:  "rejects ambiguous scope name across PRs",
+			flows: []string{"client_credentials"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "users:read", pr2, "Resource B"),
+			},
+			requestScope: "users:read",
+			wantErrCode:  session.ErrAmbiguousScope,
+		},
+		{
+			name:  "rejects scopes from different PRs",
+			flows: []string{"client_credentials"},
+			scopes: []*session.Scope{
+				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
+				session.NewScope(uuid.New().String(), "orders:read", pr2, "Resource B"),
+			},
+			requestScope: "users:read orders:read",
+			wantErrCode:  session.ErrScopesFromMultipleResources,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := session.NewClient(
+				uuid.New().String(), "TC",
+				uuid.New().String(), uuid.New().String(),
+				tc.flows, []string{},
+				tc.scopes,
+			)
+
+			prId, err := c.CheckClientCredentials(tc.requestScope)
+			if tc.wantErrCode != "" {
+				var appErr *app_errors.AppError
+				require.ErrorAs(t, err, &appErr)
+				assert.Equal(t, tc.wantErrCode, appErr.Code)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantPrId, prId)
 		})
 	}
 }

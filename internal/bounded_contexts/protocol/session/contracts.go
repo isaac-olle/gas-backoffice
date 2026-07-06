@@ -26,6 +26,6 @@ type ClientCredentialsSessionRepository interface {
 }
 
 type TokenGenerator interface {
-	GenerateFromSession(ctx context.Context, sess *AuthorizationCodeSession, client *Client) (string, error)
-	GenerateFromClientCredentials(ctx context.Context, sess *ClientCredentialsSession) (string, error)
+	GenerateFromSession(ctx context.Context, sess *AuthorizationCodeSession, client *Client, protectedResourceId string) (string, error)
+	GenerateFromClientCredentials(ctx context.Context, sess *ClientCredentialsSession, protectedResourceId string) (string, error)
 }

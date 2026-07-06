@@ -42,6 +42,11 @@ func (r *PostgresKeyPairRepository) SearchById(ctx context.Context, id ids.KeyPa
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
+func (r *PostgresKeyPairRepository) SearchByProtectedResourceId(ctx context.Context, id ids.ProtectedResourceId) (*key_pairs.KeyPair, error) {
+	query := `SELECT id, protected_resource_id, algorithm, public_key, private_key FROM key_pairs WHERE protected_resource_id = $1 AND deleted_at IS NULL`
+	return r.postgres.Find(ctx, query, r.fromRow, id.String())
+}
+
 func (r *PostgresKeyPairRepository) Matching(ctx context.Context, _ criteria.Criteria) ([]*key_pairs.KeyPair, error) {
 	return nil, fmt.Errorf("not implemented")
 }

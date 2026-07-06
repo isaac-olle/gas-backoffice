@@ -2,6 +2,7 @@ package exchange_code
 
 import (
 	"context"
+	"strings"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
@@ -48,6 +49,11 @@ func (s *Service) ExchangeCode(ctx context.Context, qry *Query) (any, error) {
 		return nil, err
 	}
 
+	protectedResourceId, err := client.ResolveProtectedResourceId(strings.Fields(sess.ToPrimitives().Scope))
+	if err != nil {
+		return nil, err
+	}
+
 	sess.Consume()
 	if err = s.repository.Save(ctx, sess); err != nil {
 		return nil, app_errors.InternalError(session.ErrCannotSaveSession).
@@ -55,7 +61,7 @@ func (s *Service) ExchangeCode(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	token, err := s.tokenGenerator.GenerateFromSession(ctx, sess, client)
+	token, err := s.tokenGenerator.GenerateFromSession(ctx, sess, client, protectedResourceId)
 	if err != nil {
 		return nil, app_errors.InternalError(session.ErrCannotSignToken).
 			WithDescription("failed to generate token").

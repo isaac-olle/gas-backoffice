@@ -32,7 +32,7 @@ func (s *Service) Create(ctx context.Context, cmd *Command) error {
 		return err
 	}
 
-	if err = client.CheckAuthorizationRequest(cmd.responseType, cmd.redirectUri, cmd.scope); err != nil {
+	if _, err = client.CheckAuthorizationRequest(cmd.responseType, cmd.redirectUri, cmd.scope); err != nil {
 		return err
 	}
 
