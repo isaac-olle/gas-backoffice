@@ -45,6 +45,12 @@ variable "image_tag" {
   type = string
 }
 
+# App environment
+variable "backoffice_pr_id" {
+  type      = string
+  sensitive = true
+}
+
 # GitHub
 variable "github_repo" {
   type = string

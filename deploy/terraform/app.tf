@@ -9,6 +9,43 @@ resource "digitalocean_app" "backoffice" {
       instance_size_slug = var.instance_size_slug
       http_port          = var.http_port
 
+      health_check {
+        http_path             = "/health"
+        initial_delay_seconds = 10
+        period_seconds        = 30
+        timeout_seconds       = 5
+        success_threshold     = 1
+        failure_threshold     = 3
+        port                  = var.http_port
+      }
+
+      env {
+        key   = "ENV"
+        value = var.env
+      }
+
+      env {
+        key   = "API_HOST"
+        value = "0.0.0.0"
+      }
+
+      env {
+        key   = "API_PORT"
+        value = tostring(var.http_port)
+      }
+
+      env {
+        key   = "BACKOFFICE_PR_ID"
+        value = var.backoffice_pr_id
+        type  = "SECRET"
+      }
+
+      env {
+        key   = "POSTGRES_DSN"
+        value = "postgresql://${data.digitalocean_database_cluster.postgres.user}:${data.digitalocean_database_cluster.postgres.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+        type  = "SECRET"
+      }
+
       image {
         registry_type = "DOCR"
         registry      = data.digitalocean_container_registry.gas.name
