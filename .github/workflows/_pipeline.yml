@@ -83,7 +83,7 @@ jobs:
           soft_fail: true
 
       - name: Trigger infrastructure deploy
-        if: steps.tf_changes.outputs.changed == 'true'
+        if: true
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GAS_REPO_TOKEN }}" \
