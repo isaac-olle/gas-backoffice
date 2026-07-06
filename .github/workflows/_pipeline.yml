@@ -77,10 +77,10 @@ jobs:
           fi
 
       - name: tfsec
-        uses: aquasecurity/tfsec-action@v1.0.3
-        with:
-          working_directory: deploy/terraform
-          soft_fail: true
+        run: |
+          curl -sL https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o tfsec
+          chmod +x tfsec
+          ./tfsec deploy/terraform --soft-fail
 
       - name: Trigger infrastructure deploy
         if: true
