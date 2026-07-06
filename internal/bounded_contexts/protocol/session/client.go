@@ -130,8 +130,9 @@ func (c *Client) ResolveProtectedResourceId(requestedScopes []string) (string, e
 			for _, name := range seen {
 				resources = append(resources, name)
 			}
-			return "", app_errors.BadRequestError(ErrAmbiguousScope).
-				WithDescription("scope \"" + scopeName + "\" exists in multiple protected resources: " + strings.Join(resources, ", ") + ". Use the `resource` parameter (RFC 8707) to specify which one.")
+			desc := "scope \"" + scopeName + "\" exists in multiple protected resources: " +
+				strings.Join(resources, ", ") + ". Use the `resource` parameter (RFC 8707) to specify which one."
+			return "", app_errors.BadRequestError(ErrAmbiguousScope).WithDescription(desc)
 		}
 		for prId := range seen {
 			if resolvedPrId == "" {
