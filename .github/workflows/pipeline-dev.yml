@@ -9,4 +9,6 @@ on:
 jobs:
   pipeline:
     uses: ./.github/workflows/_pipeline.yml
+    with:
+      environment: dev
     secrets: inherit
