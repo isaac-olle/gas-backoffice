@@ -134,13 +134,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
       - name: Install golang-migrate
         run: |
           curl -sL https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.tar.gz | tar xz
           sudo mv migrate /usr/local/bin/migrate
 
+      - name: Allow GitHub Actions IP
+        run: |
+          IP=$(curl -s https://api.ipify.org)
+          doctl databases firewalls append ${{ secrets.DO_DB_CLUSTER_ID }} --rule ip_addr:$IP
+
       - name: Run migrations
         run: migrate -path deploy/sql/migrations -database "${{ secrets.POSTGRES_DSN }}" up
+
+      - name: Remove GitHub Actions IP
+        if: always()
+        run: |
+          IP=$(curl -s https://api.ipify.org)
+          doctl databases firewalls delete ${{ secrets.DO_DB_CLUSTER_ID }} --rule ip_addr:$IP
 
   deploy:
     name: Deploy
