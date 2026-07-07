@@ -39,7 +39,7 @@ func Run() error {
 		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	m, err := migrate.New("file:///migrations", "pgx5://"+cfg.Databases.Postgres[len("postgresql://"):])
+	m, err := migrate.New("file:///golang-migrate", "pgx5://"+cfg.Databases.Postgres[len("postgresql://"):])
 	if err != nil {
 		return fmt.Errorf("failed to init migrations: %w", err)
 	}
