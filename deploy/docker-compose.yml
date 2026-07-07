@@ -6,7 +6,7 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d
+      - ./sql/00-users.sh:/docker-entrypoint-initdb.d/00-users.sh
     ports:
       - "5432:5432"
     healthcheck:
@@ -18,7 +18,7 @@ services:
   migrate:
     image: migrate/migrate:v4.17.1
     volumes:
-      - ./sql/migrations:/migrations
+      - ./golang-migrate:/migrations
     env_file:
       - .env
     command: >

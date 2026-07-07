@@ -10,6 +10,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE admins (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
+    is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
     tenant_ids TEXT[]      NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -21,6 +22,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON admins
 CREATE TABLE tenants (
     id                     TEXT        NOT NULL PRIMARY KEY,
     name                   TEXT        NOT NULL,
+    is_system              BOOLEAN     NOT NULL DEFAULT FALSE,
     admin_id               TEXT        NOT NULL,
     client_ids             TEXT[]      NOT NULL DEFAULT '{}',
     protected_resource_ids TEXT[]      NOT NULL DEFAULT '{}',
@@ -34,6 +36,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON tenants
 CREATE TABLE protected_resources (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
+    is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
     tenant_id  TEXT        NOT NULL,
     admin_id   TEXT        NOT NULL,
     scope_ids  TEXT[]      NOT NULL DEFAULT '{}',
@@ -47,6 +50,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON protected_resources
 CREATE TABLE scopes (
     id                    TEXT        NOT NULL PRIMARY KEY,
     name                  TEXT        NOT NULL,
+    is_system             BOOLEAN     NOT NULL DEFAULT FALSE,
     protected_resource_id TEXT        NOT NULL,
     tenant_id             TEXT        NOT NULL,
     admin_id              TEXT        NOT NULL,
@@ -66,6 +70,8 @@ CREATE TABLE clients (
     allowed_flows  TEXT[]      NOT NULL DEFAULT '{}',
     allowed_scopes TEXT[]      NOT NULL DEFAULT '{}',
     redirect_uris  TEXT[]      NOT NULL DEFAULT '{}',
+    key_ids        TEXT[]      NOT NULL DEFAULT '{}',
+    secret_ids     TEXT[]      NOT NULL DEFAULT '{}',
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at     TIMESTAMPTZ
