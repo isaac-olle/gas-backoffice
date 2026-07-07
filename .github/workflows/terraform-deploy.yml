@@ -1,0 +1,27 @@
+name: Deploy after Terraform
+
+on:
+  repository_dispatch:
+    types: [terraform-apply-result]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event.client_payload.success == true
+    environment: ${{ github.event.client_payload.environment }}
+
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Pin image to sha-${{ github.event.client_payload.sha }}
+        run: |
+          doctl apps spec get ${{ secrets.DO_APP_ID }} | \
+            sed "s/tag:.*/tag: sha-${{ github.event.client_payload.sha }}/" | \
+            doctl apps update ${{ secrets.DO_APP_ID }} --spec -
+
+      - name: Create deployment
+        run: doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait
