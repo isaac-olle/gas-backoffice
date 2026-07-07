@@ -18,10 +18,13 @@ resource "github_repository_file" "pipeline_trigger" {
         branches: [${var.env}]
       pull_request:
         branches: [${var.env}]
+      workflow_dispatch:
 
     jobs:
       pipeline:
         uses: ./.github/workflows/_pipeline.yml
+        with:
+          environment: ${var.env}
         secrets: inherit
   YAML
 }

@@ -45,6 +45,12 @@ variable "image_tag" {
   type = string
 }
 
+# Database
+variable "postgres_admin_dsn" {
+  type      = string
+  sensitive = true
+}
+
 # App environment
 variable "backoffice_pr_id" {
   type      = string
