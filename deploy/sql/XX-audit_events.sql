@@ -1,4 +1,3 @@
-\connect gas
 
 CREATE TABLE public.audit_events (
     event_id       UUID        NOT NULL PRIMARY KEY,

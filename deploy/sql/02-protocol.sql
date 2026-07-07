@@ -1,4 +1,3 @@
-\connect gas
 
 CREATE TABLE protocol_sessions (
     session_id     TEXT        NOT NULL PRIMARY KEY,

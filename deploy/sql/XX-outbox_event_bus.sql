@@ -1,4 +1,3 @@
-\connect gas
 
 CREATE TABLE public.outbox_event_bus (
     event_id     UUID        NOT NULL PRIMARY KEY,

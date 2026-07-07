@@ -1,4 +1,3 @@
-\connect gas
 
 CREATE TABLE key_pairs (
     id                    TEXT        NOT NULL PRIMARY KEY,
