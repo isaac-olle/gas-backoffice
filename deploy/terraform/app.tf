@@ -34,10 +34,13 @@ resource "digitalocean_app" "backoffice" {
         value = tostring(var.http_port)
       }
 
-      env {
-        key   = "BACKOFFICE_PR_ID"
-        value = var.backoffice_pr_id
-        type  = "SECRET"
+      dynamic "env" {
+        for_each = var.backoffice_pr_id != "" ? [1] : []
+        content {
+          key   = "BACKOFFICE_PR_ID"
+          value = var.backoffice_pr_id
+          type  = "SECRET"
+        }
       }
 
       env {

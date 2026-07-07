@@ -49,6 +49,7 @@ variable "image_tag" {
 variable "backoffice_pr_id" {
   type      = string
   sensitive = true
+  default   = ""
 }
 
 # GitHub
