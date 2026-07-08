@@ -2,8 +2,8 @@ package ownership
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
-	tenantCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/check_ownership"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	userCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_ownership"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
@@ -11,7 +11,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func Tenant(queryBus query.Bus) gin.HandlerFunc {
+func User(queryBus query.Bus) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		actor, ok := vo2.ActorFromContext[*actors.AdminActor](c.Request.Context())
 		if !ok {
@@ -20,15 +20,15 @@ func Tenant(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		tenantId, ok := ids.TenantIdFromContext(c.Request.Context())
+		userId, ok := ids.UserIdFromContext(c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.BadRequestError("MISSING_TENANT_ID"))
+			_ = c.Error(app_errors.BadRequestError("MISSING_USER_ID"))
 			c.Abort()
 			return
 		}
 
-		result, err := query.DispatchTyped[tenants.Ownership](c.Request.Context(), queryBus,
-			tenantCheckOwnership.NewQuery(tenantId.String(), actor.Id),
+		result, err := query.DispatchTyped[users.Ownership](c.Request.Context(), queryBus,
+			userCheckOwnership.NewQuery(userId.String(), actor.Id),
 		)
 		if err != nil {
 			_ = c.Error(err)

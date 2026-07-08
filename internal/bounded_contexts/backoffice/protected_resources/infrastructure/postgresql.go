@@ -26,17 +26,17 @@ func NewPostgresProtectedResourceRepository(db *pgxpool.Pool) *PostgresProtected
 func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *protected_resources.ProtectedResource) error {
 	p := pr.ToPrimitives()
 	query := `
-		INSERT INTO protected_resources (id, name, tenant_id, admin_id, scope_ids, is_system)
+		INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			scope_ids = EXCLUDED.scope_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.TenantId, p.AdminId, p.ScopeIds, p.IsSystem)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserId, p.AdminId, p.ScopeIds, p.IsSystem)
 }
 
 func (r *PostgresProtectedResourceRepository) SearchById(ctx context.Context, id ids.ProtectedResourceId) (*protected_resources.ProtectedResource, error) {
-	query := `SELECT id, name, tenant_id, admin_id, scope_ids, is_system FROM protected_resources WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, user_id, admin_id, scope_ids, is_system FROM protected_resources WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -56,7 +56,7 @@ func (r *PostgresProtectedResourceRepository) HardDelete(ctx context.Context, id
 
 func (r *PostgresProtectedResourceRepository) fromRow(row pgx.Row) (*protected_resources.ProtectedResource, error) {
 	var p protected_resources.ProtectedResourcePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.TenantId, &p.AdminId, &p.ScopeIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.UserId, &p.AdminId, &p.ScopeIds, &p.IsSystem)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

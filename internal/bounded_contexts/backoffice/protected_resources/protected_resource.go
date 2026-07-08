@@ -39,7 +39,7 @@ func NewProtectedResource(prId ids2.ProtectedResourceId, name string, ownership 
 		ownership: ownership,
 		scopeIds:  vo.NewEmptySetVo[ids2.ScopeId](),
 	}
-	pr.Record(backoffice.NewProtectedResourceCreated(pr.id.String(), pr.name.String(), pr.ownership.TenantId.String()))
+	pr.Record(backoffice.NewProtectedResourceCreated(pr.id.String(), pr.name.String(), pr.ownership.UserId.String()))
 	return pr, nil
 }
 
@@ -58,7 +58,7 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 
 	name := vos.ProtectedResourceNameFromPrimitives(p.Name)
 
-	ownership, err := NewOwnershipFromStrings(p.TenantId, p.AdminId)
+	ownership, err := NewOwnershipFromStrings(p.UserId, p.AdminId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -91,7 +91,7 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 func (pr *ProtectedResource) IsSystemResource() bool { return pr.isSystem }
 
 func (pr *ProtectedResource) Delete() {
-	pr.Record(backoffice.NewProtectedResourceDeleted(pr.id.String(), pr.ownership.TenantId.String()))
+	pr.Record(backoffice.NewProtectedResourceDeleted(pr.id.String(), pr.ownership.UserId.String()))
 }
 
 func (pr *ProtectedResource) CheckOwnership(o Ownership) bool {

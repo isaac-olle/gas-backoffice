@@ -222,7 +222,7 @@ func cleanup(ctx context.Context, pool *pgxpool.Pool, adminID, signingKeyID stri
 	exec(`DELETE FROM key_pairs            WHERE id = $1`, signingKeyID)
 	exec(`DELETE FROM clients              WHERE admin_id = $1`, adminID)
 	exec(`DELETE FROM protected_resources  WHERE admin_id = $1`, adminID)
-	exec(`DELETE FROM tenants              WHERE admin_id = $1`, adminID)
+	exec(`DELETE FROM users              WHERE admin_id = $1`, adminID)
 	exec(`DELETE FROM admin_assertion_keys WHERE admin_id = $1`, adminID)
 	exec(`DELETE FROM admins               WHERE id = $1`, adminID)
 }

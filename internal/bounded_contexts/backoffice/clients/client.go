@@ -66,7 +66,7 @@ func NewClient(id ids2.ClientId, name string, ownership Ownership, redirectUris 
 		keyIds:        vo.NewEmptySetVo[ids2.ClientAssertionKeyId](),
 		secretIds:     vo.NewEmptySetVo[ids2.ClientSecretId](),
 	}
-	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.AdminId.String(), c.ownership.TenantId.String()))
+	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.AdminId.String(), c.ownership.UserId.String()))
 	return c, nil
 }
 
@@ -88,7 +88,7 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		errArr.AddError(err)
 	}
 
-	tenantId, err := ids2.NewTenantIdFromString(p.TenantId)
+	userId, err := ids2.NewUserIdFromString(p.UserId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -151,7 +151,7 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		Root:          aggregate2.NewRoot(clientAggregateName),
 		id:            id,
 		name:          name,
-		ownership:     NewOwnership(adminId, tenantId),
+		ownership:     NewOwnership(adminId, userId),
 		allowedFlows:  allowedFlows,
 		allowedScopes: allowedScopes,
 		redirectUris:  redirectUris,
@@ -162,7 +162,7 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 }
 
 func (c *Client) Delete() {
-	c.Record(backoffice.NewClientDeleted(c.id.String(), c.ownership.TenantId.String()))
+	c.Record(backoffice.NewClientDeleted(c.id.String(), c.ownership.UserId.String()))
 }
 
 func (c *Client) CheckOwnership(o Ownership) bool {

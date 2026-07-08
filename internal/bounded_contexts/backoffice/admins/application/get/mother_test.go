@@ -12,21 +12,21 @@ import (
 func anAdmin(t *testing.T, adminId ids2.AdminId) *admins.Admin {
 	t.Helper()
 	a, err := admins.FromPrimitives(admins.AdminPrimitives{
-		Id:        adminId.String(),
-		Name:      "Test",
-		TenantIds: []string{},
+		Id:      adminId.String(),
+		Name:    "Test",
+		UserIds: []string{},
 	})
 	require.NoError(t, err)
 	return a
 }
 
-// anAdminWithTenant builds an Admin that already owns one tenant.
-func anAdminWithTenant(t *testing.T, adminId ids2.AdminId, tenantId ids2.TenantId) *admins.Admin {
+// anAdminWithUser builds an Admin that already owns one user.
+func anAdminWithUser(t *testing.T, adminId ids2.AdminId, userId ids2.UserId) *admins.Admin {
 	t.Helper()
 	a, err := admins.FromPrimitives(admins.AdminPrimitives{
-		Id:        adminId.String(),
-		Name:      "Test",
-		TenantIds: []string{tenantId.String()},
+		Id:      adminId.String(),
+		Name:    "Test",
+		UserIds: []string{userId.String()},
 	})
 	require.NoError(t, err)
 	return a

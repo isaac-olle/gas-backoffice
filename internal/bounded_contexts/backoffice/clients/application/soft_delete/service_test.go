@@ -70,7 +70,7 @@ func TestSoftDelete(t *testing.T) {
 			desc: "wraps repository soft delete failure",
 			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()), nil, nil)
+				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()), nil, nil)
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().SoftDelete(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(fmt.Errorf("db error"))

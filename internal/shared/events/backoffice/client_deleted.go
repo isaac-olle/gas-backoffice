@@ -8,20 +8,20 @@ import (
 const ClientDeletedType event.Type = "backoffice.client.deleted"
 
 type ClientDeleted struct {
-	TenantId string
+	UserId string
 	event.BaseEvent
 }
 
 func (e ClientDeleted) Type() event.Type { return ClientDeletedType }
 
-func NewClientDeleted(aggregateId, tenantId string) ClientDeleted {
+func NewClientDeleted(aggregateId, userId string) ClientDeleted {
 	return ClientDeleted{
-		TenantId: tenantId,
+		UserId: userId,
 		BaseEvent: event.NewEvent(
 			aggregateId,
 			ClientDeletedType,
 			false,
-			map[string]any{"tenant_id": tenantId},
+			map[string]any{"user_id": userId},
 			aggregate.Client,
 		),
 	}

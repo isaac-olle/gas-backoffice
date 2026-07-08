@@ -43,7 +43,7 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, prId.String(), prims.Id)
 		assert.Equal(t, "My Resource", prims.Name)
 		assert.Empty(t, prims.ScopeIds)
-		assert.NotEmpty(t, prims.TenantId)
+		assert.NotEmpty(t, prims.UserId)
 		assert.NotEmpty(t, prims.AdminId)
 	})
 

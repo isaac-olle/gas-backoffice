@@ -65,7 +65,7 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		errArr.AddError(err)
 	}
 
-	tenantId, err := ids2.NewTenantIdFromString(p.TenantId)
+	userId, err := ids2.NewUserIdFromString(p.UserId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -93,7 +93,7 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		Root:             aggregate2.NewRoot(scopeAggregateName),
 		id:               id,
 		name:             name,
-		ownership:        newOwnership(protectedResourceId, tenantId, adminId),
+		ownership:        newOwnership(protectedResourceId, userId, adminId),
 		allowedClientIds: allowedClientIds,
 		isSystem:         p.IsSystem,
 	}

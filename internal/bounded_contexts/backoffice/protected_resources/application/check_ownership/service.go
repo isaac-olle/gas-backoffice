@@ -17,14 +17,14 @@ func NewService(repository protected_resources.Repository) *Service {
 }
 
 func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
-	tenantId, err := ids2.NewTenantIdFromString(qry.tenantId)
+	userId, err := ids2.NewUserIdFromString(qry.userId)
 	if err != nil {
-		return nil, app_errors.BadRequestError(protected_resources.ErrInvalidTenantId).
-			WithDescription("invalid tenant id").
+		return nil, app_errors.BadRequestError(protected_resources.ErrInvalidUserId).
+			WithDescription("invalid user id").
 			WithCause(err)
 	}
 
-	ownership := protected_resources.NewOwnership(tenantId, qry.adminId)
+	ownership := protected_resources.NewOwnership(userId, qry.adminId)
 
 	prId, err := ids2.NewProtectedResourceIdFromString(qry.protectedResourceId)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 
 	if !pr.CheckOwnership(ownership) {
 		return nil, app_errors.ForbiddenError(protected_resources.ErrInvalidOwnership).
-			WithDescription("protected resource does not belong to the provided tenant")
+			WithDescription("protected resource does not belong to the provided user")
 	}
 
 	return ownership, nil

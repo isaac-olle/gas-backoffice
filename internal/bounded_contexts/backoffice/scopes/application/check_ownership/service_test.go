@@ -24,9 +24,9 @@ func TestCheckOwnership(t *testing.T) {
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids2.NewScopeId()
 		prId := ids2.NewProtectedResourceId()
-		tenantId := ids2.NewTenantId()
+		userId := ids2.NewUserId()
 		adminId := ids2.NewAdminId()
-		scope := aScope(t, scopeId, prId, tenantId, adminId)
+		scope := aScope(t, scopeId, prId, userId, adminId)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 
@@ -34,7 +34,7 @@ func TestCheckOwnership(t *testing.T) {
 		result, err := svc.CheckOwnership(context.Background(), aQuery(t,
 			withScopeId(scopeId.String()),
 			withProtectedResourceId(prId.String()),
-			withTenantId(tenantId.String()),
+			withUserId(userId.String()),
 			withAdminId(adminId.String()),
 		))
 
@@ -43,7 +43,7 @@ func TestCheckOwnership(t *testing.T) {
 		require.True(t, ok)
 		prims := ownership.ToPrimitives()
 		assert.Equal(t, prId.String(), prims.ProtectedResourceId)
-		assert.Equal(t, tenantId.String(), prims.TenantId)
+		assert.Equal(t, userId.String(), prims.UserId)
 		assert.Equal(t, adminId.String(), prims.AdminId)
 	})
 
@@ -82,9 +82,9 @@ func TestCheckOwnership(t *testing.T) {
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				scopeId := ids2.NewScopeId()
 				prId := ids2.NewProtectedResourceId()
-				tenantId := ids2.NewTenantId()
+				userId := ids2.NewUserId()
 				adminId := ids2.NewAdminId()
-				scope := aScope(t, scopeId, prId, tenantId, adminId)
+				scope := aScope(t, scopeId, prId, userId, adminId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)

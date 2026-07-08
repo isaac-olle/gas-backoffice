@@ -49,7 +49,7 @@ func TestScopeFinder_Find(t *testing.T) {
 
 func aScope(t *testing.T) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewTenantId(), ids2.NewAdminId())
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewAdminId())
 	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:users", ownership)
 	require.NoError(t, err)
 	scope.PullDomainEvents()

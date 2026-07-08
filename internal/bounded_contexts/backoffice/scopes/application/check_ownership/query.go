@@ -10,12 +10,12 @@ const QueryType query.Type = "query.backoffice.scope.check_ownership"
 type Query struct {
 	scopeId             string
 	protectedResourceId string
-	tenantId            string
+	userId              string
 	adminId             string
 }
 
-func NewQuery(scopeId, protectedResourceId, tenantId, adminId string) *Query {
-	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId, tenantId: tenantId, adminId: adminId}
+func NewQuery(scopeId, protectedResourceId, userId, adminId string) *Query {
+	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId, userId: userId, adminId: adminId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

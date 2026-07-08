@@ -57,7 +57,7 @@ func TestBaseSubscriber_On_WrongType_ReturnsNil(t *testing.T) {
 	})
 
 	// Pass a raw BaseEvent (not concreteEvent) — type assertion should fail silently.
-	rawEvt := NewEvent("agg-wrong", Type("other.event"), false, nil, sharedtypes.AggregateTenant)
+	rawEvt := NewEvent("agg-wrong", Type("other.event"), false, nil, sharedtypes.AggregateUser)
 	err := sub.On(context.Background(), rawEvt)
 	assert.NoError(t, err)
 }

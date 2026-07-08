@@ -23,7 +23,7 @@ CREATE TABLE protocol_client_credentials_sessions (
     session_id  TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     client_id   TEXT        NOT NULL,
-    tenant_id   TEXT        NOT NULL,
+    user_id   TEXT        NOT NULL,
     admin_id    TEXT        NOT NULL,
     -- data
     scope       TEXT        NOT NULL,

@@ -25,7 +25,7 @@ import (
 // makePR builds a valid ProtectedResource with the creation event drained.
 func makePR(t *testing.T) *protected_resources.ProtectedResource {
 	t.Helper()
-	ownership := protected_resources.NewOwnership(ids2.NewTenantId(), ids2.NewAdminId())
+	ownership := protected_resources.NewOwnership(ids2.NewUserId(), ids2.NewAdminId())
 	pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "R", ownership)
 	require.NoError(t, err)
 	pr.PullDomainEvents() // drain creation event

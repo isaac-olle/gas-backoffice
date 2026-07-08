@@ -11,11 +11,11 @@ const QueryType query.Type = "query.backoffice.client.check_ownership"
 type Query struct {
 	clientId string
 	adminId  ids2.AdminId
-	tenantId ids2.TenantId
+	userId   ids2.UserId
 }
 
-func NewQuery(clientId string, adminId ids2.AdminId, tenantId ids2.TenantId) *Query {
-	return &Query{clientId: clientId, adminId: adminId, tenantId: tenantId}
+func NewQuery(clientId string, adminId ids2.AdminId, userId ids2.UserId) *Query {
+	return &Query{clientId: clientId, adminId: adminId, userId: userId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

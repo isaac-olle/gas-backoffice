@@ -10,6 +10,6 @@ var (
 	ErrProtectedResourceNotSaved   app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_SAVED"
 	ErrProtectedResourceNotUpdated app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_UPDATED"
 	ErrInvalidOwnership            app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_OWNERSHIP"
-	ErrInvalidTenantId             app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_TENANT_ID"
+	ErrInvalidUserId               app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_USER_ID"
 	ErrSystemResource              app_errors.ErrorCode = "PROTECTED_RESOURCE_IS_SYSTEM_RESOURCE"
 )

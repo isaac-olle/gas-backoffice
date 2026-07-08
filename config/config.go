@@ -32,7 +32,8 @@ type ApplicationConfig struct {
 }
 
 type DatabasesConfig struct {
-	Postgres string `yaml:"postgres"`
+	Postgres      string `yaml:"postgres"`
+	MigrationsDSN string `yaml:"migrations_dsn"`
 }
 
 func Load() (*Config, error) {

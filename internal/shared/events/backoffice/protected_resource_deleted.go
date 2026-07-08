@@ -8,20 +8,20 @@ import (
 const ProtectedResourceDeletedType event.Type = "backoffice.protected_resource.deleted"
 
 type ProtectedResourceDeleted struct {
-	TenantId string
+	UserId string
 	event.BaseEvent
 }
 
 func (e ProtectedResourceDeleted) Type() event.Type { return ProtectedResourceDeletedType }
 
-func NewProtectedResourceDeleted(aggregateId, tenantId string) ProtectedResourceDeleted {
+func NewProtectedResourceDeleted(aggregateId, userId string) ProtectedResourceDeleted {
 	return ProtectedResourceDeleted{
-		TenantId: tenantId,
+		UserId: userId,
 		BaseEvent: event.NewEvent(
 			aggregateId,
 			ProtectedResourceDeletedType,
 			false,
-			map[string]any{"tenant_id": tenantId},
+			map[string]any{"user_id": userId},
 			aggregate.ProtectedResource,
 		),
 	}

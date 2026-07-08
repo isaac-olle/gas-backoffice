@@ -72,7 +72,7 @@ func TestAddRedirectUri(t *testing.T) {
 			setupRepo: func(repo *clientmocks.MockRepository) {
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(
 					func() *clients.Client {
-						c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()), nil, nil)
+						c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()), nil, nil)
 						c.PullDomainEvents()
 						return c
 					}(),

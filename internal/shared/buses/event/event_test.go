@@ -28,7 +28,7 @@ func TestNewEvent_Fields(t *testing.T) {
 
 func TestNewEvent_NilDataBecomesEmptyMap(t *testing.T) {
 	t.Parallel()
-	evt := NewEvent("agg-1", Type("x"), false, nil, sharedtypes.AggregateTenant)
+	evt := NewEvent("agg-1", Type("x"), false, nil, sharedtypes.AggregateUser)
 	assert.NotNil(t, evt.Data())
 }
 

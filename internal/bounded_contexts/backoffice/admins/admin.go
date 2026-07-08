@@ -15,7 +15,7 @@ type Admin struct {
 	id        ids2.AdminId
 	name      vos.AdminName
 	ownership Ownership
-	tenantIds *vo.SetVo[ids2.TenantId]
+	userIds   *vo.SetVo[ids2.UserId]
 	isSystem  bool
 }
 
@@ -29,13 +29,13 @@ func FromPrimitives(p AdminPrimitives) (*Admin, error) {
 
 	name := vos.AdminNameFromPrimitives(p.Name)
 
-	tenantIds := vo.NewEmptySetVo[ids2.TenantId]()
-	for _, rawId := range p.TenantIds {
-		tenantId, tErr := ids2.NewTenantIdFromString(rawId)
+	userIds := vo.NewEmptySetVo[ids2.UserId]()
+	for _, rawId := range p.UserIds {
+		userId, tErr := ids2.NewUserIdFromString(rawId)
 		if tErr != nil {
 			errArr.AddError(tErr)
 		} else {
-			tenantIds.Add(tenantId)
+			userIds.Add(userId)
 		}
 	}
 
@@ -48,7 +48,7 @@ func FromPrimitives(p AdminPrimitives) (*Admin, error) {
 		id:        id,
 		name:      name,
 		ownership: newOwnership(id),
-		tenantIds: tenantIds,
+		userIds:   userIds,
 		isSystem:  p.IsSystem,
 	}
 	return a, nil
@@ -56,10 +56,10 @@ func FromPrimitives(p AdminPrimitives) (*Admin, error) {
 
 func (a *Admin) IsSystemResource() bool { return a.isSystem }
 
-func (a *Admin) AddTenantId(tenantId ids2.TenantId) {
-	a.tenantIds.Add(tenantId)
+func (a *Admin) AddUserId(userId ids2.UserId) {
+	a.userIds.Add(userId)
 }
 
-func (a *Admin) RemoveTenantId(tenantId ids2.TenantId) {
-	a.tenantIds.Remove(tenantId)
+func (a *Admin) RemoveUserId(userId ids2.UserId) {
+	a.userIds.Remove(userId)
 }

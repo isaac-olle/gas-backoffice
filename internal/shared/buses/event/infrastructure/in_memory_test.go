@@ -38,7 +38,7 @@ const otherEventType event2.Type = "other.event"
 func (otherEvent) Type() event2.Type { return otherEventType }
 
 func newOtherEvent(aggID string) otherEvent {
-	return otherEvent{event2.NewEvent(aggID, otherEventType, false, nil, sharedtypes.AggregateTenant)}
+	return otherEvent{event2.NewEvent(aggID, otherEventType, false, nil, sharedtypes.AggregateUser)}
 }
 
 func makebus() *InMemoryEventBus {

@@ -26,16 +26,16 @@ func ProtectedResource(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		tenantId, ok := ids.TenantIdFromContext(c.Request.Context())
+		userId, ok := ids.UserIdFromContext(c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.BadRequestError("MISSING_TENANT_ID"))
+			_ = c.Error(app_errors.BadRequestError("MISSING_USER_ID"))
 			c.Abort()
 			return
 		}
 
 		result, err := queryBus.Dispatch(
 			c.Request.Context(),
-			prCheckOwnership.NewQuery(protectedResourceId.String(), tenantId.String(), actor.Id),
+			prCheckOwnership.NewQuery(protectedResourceId.String(), userId.String(), actor.Id),
 		)
 		if err != nil {
 			_ = c.Error(err)

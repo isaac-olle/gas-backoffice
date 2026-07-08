@@ -14,7 +14,7 @@ import (
 func TestAdminEndpoints(t *testing.T) {
 	auth := withBearer(testAdminToken)
 
-	tenantID := newID()
+	userID := newID()
 	prID := newID()
 	scopeID := newID()
 	clientID := newID()
@@ -30,31 +30,31 @@ func TestAdminEndpoints(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
-	t.Run("CreateTenant", func(t *testing.T) {
+	t.Run("CreateUser", func(t *testing.T) {
 		resp := do(http.MethodPut,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s", tenantID),
-			map[string]any{"name": "e2e-tenant"},
+			fmt.Sprintf("/v1/backoffice/admins/users/%s", userID),
+			map[string]any{"name": "e2e-user"},
 			auth,
 		)
 		drain(resp)
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 	})
 
-	t.Run("GetTenant", func(t *testing.T) {
+	t.Run("GetUser", func(t *testing.T) {
 		resp := do(http.MethodGet,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s", tenantID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s", userID),
 			nil, auth,
 		)
 		var body map[string]any
 		decodeBody(resp, &body)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		assert.Equal(t, tenantID, body["id"])
+		assert.Equal(t, userID, body["id"])
 	})
 
-	t.Run("ChangeTenantName", func(t *testing.T) {
+	t.Run("ChangeUserName", func(t *testing.T) {
 		resp := do(http.MethodPatch,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/name", tenantID),
-			map[string]any{"name": "e2e-tenant-renamed"},
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/name", userID),
+			map[string]any{"name": "e2e-user-renamed"},
 			auth,
 		)
 		drain(resp)
@@ -63,7 +63,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("CreateProtectedResource", func(t *testing.T) {
 		resp := do(http.MethodPut,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s", tenantID, prID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s", userID, prID),
 			map[string]any{"name": "e2e-pr", "scopes": []any{}},
 			auth,
 		)
@@ -73,7 +73,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("GetProtectedResource", func(t *testing.T) {
 		resp := do(http.MethodGet,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s", tenantID, prID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s", userID, prID),
 			nil, auth,
 		)
 		var body map[string]any
@@ -84,7 +84,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("UpdateProtectedResourceName", func(t *testing.T) {
 		resp := do(http.MethodPatch,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/name", tenantID, prID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/name", userID, prID),
 			map[string]any{"name": "e2e-pr-renamed"},
 			auth,
 		)
@@ -94,7 +94,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("CreateScope", func(t *testing.T) {
 		resp := do(http.MethodPut,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/scopes/%s", tenantID, prID, scopeID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/scopes/%s", userID, prID, scopeID),
 			map[string]any{"name": "e2e:read"},
 			auth,
 		)
@@ -104,7 +104,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("GetScope", func(t *testing.T) {
 		resp := do(http.MethodGet,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/scopes/%s", tenantID, prID, scopeID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/scopes/%s", userID, prID, scopeID),
 			nil, auth,
 		)
 		var body map[string]any
@@ -115,7 +115,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("CreateClient", func(t *testing.T) {
 		resp := do(http.MethodPut,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/clients/%s", tenantID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/clients/%s", userID, clientID),
 			map[string]any{
 				"name":             "e2e-client",
 				"assertion_key_id": assertionKeyID,
@@ -132,7 +132,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("GetClient", func(t *testing.T) {
 		resp := do(http.MethodGet,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/clients/%s", tenantID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/clients/%s", userID, clientID),
 			nil, auth,
 		)
 		var body map[string]any
@@ -143,7 +143,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("AddClientAllowedFlow", func(t *testing.T) {
 		resp := do(http.MethodPost,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/clients/%s/flows", tenantID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/clients/%s/flows", userID, clientID),
 			map[string]any{"flow": "authorization_code"},
 			auth,
 		)
@@ -153,7 +153,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("AddRedirectUri", func(t *testing.T) {
 		resp := do(http.MethodPost,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/clients/%s/redirect-uris", tenantID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/clients/%s/redirect-uris", userID, clientID),
 			map[string]any{"redirect_uri": "https://example.com/callback"},
 			auth,
 		)
@@ -163,8 +163,8 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("AddScopeAllowedClient", func(t *testing.T) {
 		resp := do(http.MethodPost,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/scopes/%s/allowed-clients/%s",
-				tenantID, prID, scopeID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/scopes/%s/allowed-clients/%s",
+				userID, prID, scopeID, clientID),
 			map[string]any{"client_id": clientID},
 			auth,
 		)
@@ -174,8 +174,8 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("RemoveScopeAllowedClient", func(t *testing.T) {
 		resp := do(http.MethodDelete,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/scopes/%s/allowed-clients/%s",
-				tenantID, prID, scopeID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/scopes/%s/allowed-clients/%s",
+				userID, prID, scopeID, clientID),
 			nil, auth,
 		)
 		drain(resp)
@@ -184,7 +184,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("SoftDeleteScope", func(t *testing.T) {
 		resp := do(http.MethodDelete,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s/scopes/%s", tenantID, prID, scopeID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s/scopes/%s", userID, prID, scopeID),
 			nil, auth,
 		)
 		drain(resp)
@@ -193,7 +193,7 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("SoftDeleteClient", func(t *testing.T) {
 		resp := do(http.MethodDelete,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/clients/%s", tenantID, clientID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/clients/%s", userID, clientID),
 			nil, auth,
 		)
 		drain(resp)
@@ -202,16 +202,16 @@ func TestAdminEndpoints(t *testing.T) {
 
 	t.Run("SoftDeleteProtectedResource", func(t *testing.T) {
 		resp := do(http.MethodDelete,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s/protected-resources/%s", tenantID, prID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s/protected-resources/%s", userID, prID),
 			nil, auth,
 		)
 		drain(resp)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	})
 
-	t.Run("SoftDeleteTenant", func(t *testing.T) {
+	t.Run("SoftDeleteUser", func(t *testing.T) {
 		resp := do(http.MethodDelete,
-			fmt.Sprintf("/v1/backoffice/admins/tenants/%s", tenantID),
+			fmt.Sprintf("/v1/backoffice/admins/users/%s", userID),
 			nil, auth,
 		)
 		drain(resp)

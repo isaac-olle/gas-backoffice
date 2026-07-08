@@ -15,6 +15,7 @@ import (
 	queryInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
+	"os"
 	"strconv"
 	"time"
 
@@ -39,7 +40,15 @@ func Run() error {
 		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	m, err := migrate.New("file:///golang-migrate", "pgx5://"+cfg.Databases.Postgres[len("postgresql://"):])
+	migrationsPath := os.Getenv("MIGRATIONS_FOLDER_PATH")
+	if migrationsPath == "" {
+		migrationsPath = "/golang-migrate"
+	}
+	migrationsDSN := cfg.Databases.MigrationsDSN
+	if migrationsDSN == "" {
+		migrationsDSN = cfg.Databases.Postgres
+	}
+	m, err := migrate.New("file://"+migrationsPath, "pgx5://"+migrationsDSN[len("postgresql://"):])
 	if err != nil {
 		return fmt.Errorf("failed to init migrations: %w", err)
 	}

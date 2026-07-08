@@ -11,27 +11,27 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	prCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateProtectedResourceHandler struct {
-	commandBus      command.Bus
-	tenantOwnership func(context.Context) (tenants.Ownership, bool)
-	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
-	tenantId        func(context.Context) (ids2.TenantId, bool)
+	commandBus    command.Bus
+	userOwnership func(context.Context) (users.Ownership, bool)
+	prId          func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId        func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateProtectedResourceHandler(
 	commandBus command.Bus,
-	tenantOwnership func(context.Context) (tenants.Ownership, bool),
+	userOwnership func(context.Context) (users.Ownership, bool),
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
-	tenantId func(context.Context) (ids2.TenantId, bool),
+	userId func(context.Context) (ids2.UserId, bool),
 ) *CreateProtectedResourceHandler {
 	return &CreateProtectedResourceHandler{
-		commandBus:      commandBus,
-		tenantOwnership: tenantOwnership,
-		prId:            prId,
-		tenantId:        tenantId,
+		commandBus:    commandBus,
+		userOwnership: userOwnership,
+		prId:          prId,
+		userId:        userId,
 	}
 }
 
@@ -40,9 +40,9 @@ type createProtectedResourceRequest struct {
 }
 
 func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
-	tenantOwnership, ok := h.tenantOwnership(c.Request.Context())
+	userOwnership, ok := h.userOwnership(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_OWNERSHIP")
+		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
 	}
 
 	prId, ok := h.prId(c.Request.Context())
@@ -50,9 +50,9 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
 
-	tenantId, ok := h.tenantId(c.Request.Context())
+	userId, ok := h.userId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_ID")
+		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
 	var req createProtectedResourceRequest
@@ -60,7 +60,7 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	prOwnership := protected_resources.NewOwnership(tenantId, tenantOwnership.AdminId)
+	prOwnership := protected_resources.NewOwnership(userId, userOwnership.AdminId)
 	return nil, h.commandBus.Dispatch(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership))
 }
 

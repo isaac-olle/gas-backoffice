@@ -4,34 +4,34 @@ import (
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 )
 
-// ── Tenant ────────────────────────────────────────────────────────────────────
+// ── User ────────────────────────────────────────────────────────────────────
 
-type tenantCreatedBuilder struct{}
+type userCreatedBuilder struct{}
 
-func NewTenantCreatedBuilder() event2.PrimitiveEventBuilder { return &tenantCreatedBuilder{} }
-func (b *tenantCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return TenantCreated{
+func NewUserCreatedBuilder() event2.PrimitiveEventBuilder { return &userCreatedBuilder{} }
+func (b *userCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return UserCreated{
 		Name:      str(p.Data, "name"),
 		AdminId:   str(p.Data, "admin_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
 
-type tenantDeletedBuilder struct{}
+type userDeletedBuilder struct{}
 
-func NewTenantDeletedBuilder() event2.PrimitiveEventBuilder { return &tenantDeletedBuilder{} }
-func (b *tenantDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return TenantDeleted{
+func NewUserDeletedBuilder() event2.PrimitiveEventBuilder { return &userDeletedBuilder{} }
+func (b *userDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return UserDeleted{
 		AdminId:   str(p.Data, "admin_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
 
-type tenantNameChangedBuilder struct{}
+type userNameChangedBuilder struct{}
 
-func NewTenantNameChangedBuilder() event2.PrimitiveEventBuilder { return &tenantNameChangedBuilder{} }
-func (b *tenantNameChangedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return TenantNameChanged{
+func NewUserNameChangedBuilder() event2.PrimitiveEventBuilder { return &userNameChangedBuilder{} }
+func (b *userNameChangedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return UserNameChanged{
 		Name:      str(p.Data, "name"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
@@ -46,7 +46,7 @@ func (b *clientCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error)
 	return ClientCreated{
 		Name:      str(p.Data, "name"),
 		AdminId:   str(p.Data, "admin_id"),
-		TenantId:  str(p.Data, "tenant_id"),
+		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -56,7 +56,7 @@ type clientDeletedBuilder struct{}
 func NewClientDeletedBuilder() event2.PrimitiveEventBuilder { return &clientDeletedBuilder{} }
 func (b *clientDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ClientDeleted{
-		TenantId:  str(p.Data, "tenant_id"),
+		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -93,7 +93,7 @@ func NewProtectedResourceCreatedBuilder() event2.PrimitiveEventBuilder {
 func (b *protectedResourceCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ProtectedResourceCreated{
 		Name:      str(p.Data, "name"),
-		TenantId:  str(p.Data, "tenant_id"),
+		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -105,7 +105,7 @@ func NewProtectedResourceDeletedBuilder() event2.PrimitiveEventBuilder {
 }
 func (b *protectedResourceDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ProtectedResourceDeleted{
-		TenantId:  str(p.Data, "tenant_id"),
+		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }

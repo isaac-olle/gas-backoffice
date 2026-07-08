@@ -124,7 +124,7 @@ func TestIssueClientCredentials_NewSessionError(t *testing.T) {
 	clientID := uuid.New().String()
 	client := session.NewClient(
 		clientID, "TC",
-		"invalid-tenant-id", "invalid-admin-id",
+		"invalid-user-id", "invalid-admin-id",
 		[]string{"client_credentials"}, []string{},
 		[]*session.Scope{{ScopeName: "openid"}},
 	)

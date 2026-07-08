@@ -21,7 +21,7 @@ func aClient(t *testing.T) (*clients.Client, ids2.ClientId) {
 	c, err := clients.NewClient(
 		clientId,
 		"valid-client",
-		clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()),
+		clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()),
 		nil,
 		nil,
 	)
@@ -37,7 +37,7 @@ func aClientWithScope(t *testing.T, scopeId ids2.ScopeId) (*clients.Client, ids2
 		Id:            clientId.String(),
 		Name:          "valid-client",
 		AdminId:       ids2.NewAdminId().String(),
-		TenantId:      ids2.NewTenantId().String(),
+		UserId:        ids2.NewUserId().String(),
 		AllowedScopes: []string{scopeId.String()},
 	}
 	c, err := clients.FromPrimitives(prims)

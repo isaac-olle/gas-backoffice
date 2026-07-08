@@ -24,16 +24,16 @@ func withName(name string) primOpt {
 	return func(p *admins.AdminPrimitives) { p.Name = name }
 }
 
-func withTenantIds(ids ...string) primOpt {
-	return func(p *admins.AdminPrimitives) { p.TenantIds = ids }
+func withUserIds(ids ...string) primOpt {
+	return func(p *admins.AdminPrimitives) { p.UserIds = ids }
 }
 
 func aPrimitives(t *testing.T, opts ...primOpt) admins.AdminPrimitives {
 	t.Helper()
 	p := admins.AdminPrimitives{
-		Id:        ids2.NewAdminId().String(),
-		Name:      "Alice",
-		TenantIds: []string{},
+		Id:      ids2.NewAdminId().String(),
+		Name:    "Alice",
+		UserIds: []string{},
 	}
 	for _, o := range opts {
 		o(&p)
@@ -58,11 +58,11 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("reconstructs admin from valid primitives", func(t *testing.T) {
 		t.Parallel()
 		adminId := ids2.NewAdminId()
-		tenantId := ids2.NewTenantId()
+		userId := ids2.NewUserId()
 
 		prims := aPrimitives(t,
 			withId(adminId.String()),
-			withTenantIds(tenantId.String()),
+			withUserIds(userId.String()),
 		)
 
 		a, err := admins.FromPrimitives(prims)
@@ -71,8 +71,8 @@ func TestFromPrimitives(t *testing.T) {
 		got := a.ToPrimitives()
 		assert.Equal(t, adminId.String(), got.Id)
 		assert.Equal(t, "Alice", got.Name)
-		assert.Len(t, got.TenantIds, 1)
-		assert.Equal(t, tenantId.String(), got.TenantIds[0])
+		assert.Len(t, got.UserIds, 1)
+		assert.Equal(t, userId.String(), got.UserIds[0])
 	})
 
 	t.Run("does not record domain events on reconstruction", func(t *testing.T) {
@@ -81,11 +81,11 @@ func TestFromPrimitives(t *testing.T) {
 		assert.Empty(t, a.PullDomainEvents())
 	})
 
-	t.Run("accepts empty tenant ids", func(t *testing.T) {
+	t.Run("accepts empty user ids", func(t *testing.T) {
 		t.Parallel()
-		a, err := admins.FromPrimitives(aPrimitives(t, withTenantIds()))
+		a, err := admins.FromPrimitives(aPrimitives(t, withUserIds()))
 		require.NoError(t, err)
-		assert.Empty(t, a.ToPrimitives().TenantIds)
+		assert.Empty(t, a.ToPrimitives().UserIds)
 	})
 
 	errCases := []struct {
@@ -93,7 +93,7 @@ func TestFromPrimitives(t *testing.T) {
 		opts []primOpt
 	}{
 		{"invalid id returns error", []primOpt{withId("bad-id")}},
-		{"invalid tenant id returns error", []primOpt{withTenantIds("bad-tenant-id")}},
+		{"invalid user id returns error", []primOpt{withUserIds("bad-user-id")}},
 	}
 	for _, tc := range errCases {
 		tc := tc
@@ -106,49 +106,49 @@ func TestFromPrimitives(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// AddTenantId
+// AddUserId
 // ---------------------------------------------------------------------------
 
-func TestAddTenantId(t *testing.T) {
+func TestAddUserId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("adds a new tenant id", func(t *testing.T) {
+	t.Run("adds a new user id", func(t *testing.T) {
 		t.Parallel()
 		a := anAdmin(t)
-		tenantId := ids2.NewTenantId()
-		a.AddTenantId(tenantId)
-		assert.Contains(t, a.ToPrimitives().TenantIds, tenantId.String())
+		userId := ids2.NewUserId()
+		a.AddUserId(userId)
+		assert.Contains(t, a.ToPrimitives().UserIds, userId.String())
 	})
 
-	t.Run("is idempotent when adding same tenant twice", func(t *testing.T) {
+	t.Run("is idempotent when adding same user twice", func(t *testing.T) {
 		t.Parallel()
-		tenantId := ids2.NewTenantId()
-		a := anAdmin(t, withTenantIds(tenantId.String()))
-		a.AddTenantId(tenantId)
-		assert.Len(t, a.ToPrimitives().TenantIds, 1)
+		userId := ids2.NewUserId()
+		a := anAdmin(t, withUserIds(userId.String()))
+		a.AddUserId(userId)
+		assert.Len(t, a.ToPrimitives().UserIds, 1)
 	})
 }
 
 // ---------------------------------------------------------------------------
-// RemoveTenantId
+// RemoveUserId
 // ---------------------------------------------------------------------------
 
-func TestRemoveTenantId(t *testing.T) {
+func TestRemoveUserId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("removes an existing tenant id", func(t *testing.T) {
+	t.Run("removes an existing user id", func(t *testing.T) {
 		t.Parallel()
-		tenantId := ids2.NewTenantId()
-		a := anAdmin(t, withTenantIds(tenantId.String()))
-		a.RemoveTenantId(tenantId)
-		assert.Empty(t, a.ToPrimitives().TenantIds)
+		userId := ids2.NewUserId()
+		a := anAdmin(t, withUserIds(userId.String()))
+		a.RemoveUserId(userId)
+		assert.Empty(t, a.ToPrimitives().UserIds)
 	})
 
-	t.Run("is a no-op when tenant id does not exist", func(t *testing.T) {
+	t.Run("is a no-op when user id does not exist", func(t *testing.T) {
 		t.Parallel()
 		a := anAdmin(t)
-		a.RemoveTenantId(ids2.NewTenantId())
-		assert.Empty(t, a.ToPrimitives().TenantIds)
+		a.RemoveUserId(ids2.NewUserId())
+		assert.Empty(t, a.ToPrimitives().UserIds)
 	})
 }
 
@@ -162,12 +162,12 @@ func TestToPrimitivesRoundTrip(t *testing.T) {
 	t.Run("preserves all fields across serialisation round-trip", func(t *testing.T) {
 		t.Parallel()
 		adminId := ids2.NewAdminId()
-		tid1, tid2 := ids2.NewTenantId(), ids2.NewTenantId()
+		tid1, tid2 := ids2.NewUserId(), ids2.NewUserId()
 
 		prims := aPrimitives(t,
 			withId(adminId.String()),
 			withName("Charlie"),
-			withTenantIds(tid1.String(), tid2.String()),
+			withUserIds(tid1.String(), tid2.String()),
 		)
 		a, err := admins.FromPrimitives(prims)
 		require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestToPrimitivesRoundTrip(t *testing.T) {
 		got := a.ToPrimitives()
 		assert.Equal(t, adminId.String(), got.Id)
 		assert.Equal(t, "Charlie", got.Name)
-		assert.Len(t, got.TenantIds, 2)
+		assert.Len(t, got.UserIds, 2)
 	})
 }
 

@@ -19,7 +19,7 @@ func (s stubActorVo) ToPrimitives() *ActorPrimitives {
 
 func TestWithActorAndActorFromContext(t *testing.T) {
 	t.Parallel()
-	actor := stubActorVo{id: "user-42", role: TenantRole}
+	actor := stubActorVo{id: "user-42", role: UserRole}
 	ctx := context.Background()
 
 	ctxWithActor := WithActor(ctx, actor)
@@ -27,7 +27,7 @@ func TestWithActorAndActorFromContext(t *testing.T) {
 
 	assert.True(t, ok)
 	assert.Equal(t, "user-42", got.ToPrimitives().Id)
-	assert.Equal(t, TenantRole, got.role)
+	assert.Equal(t, UserRole, got.role)
 }
 
 func TestActorFromContext_NotSet(t *testing.T) {

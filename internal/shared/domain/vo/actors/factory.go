@@ -15,12 +15,12 @@ func NewActorForRole(role vo2.Role, sub string) (vo2.Actor, error) {
 		}
 		return &AdminActor{Id: adminId}, nil
 
-	case role.IsTenant():
-		tenantId, err := ids2.NewTenantIdFromString(sub)
+	case role.IsUser():
+		userId, err := ids2.NewUserIdFromString(sub)
 		if err != nil {
 			return nil, err
 		}
-		return &TenantActor{Id: tenantId}, nil
+		return &UserActor{Id: userId}, nil
 
 	case role.IsClient():
 		clientId, err := ids2.NewClientIdFromString(sub)

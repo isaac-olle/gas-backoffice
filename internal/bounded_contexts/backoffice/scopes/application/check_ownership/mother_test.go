@@ -15,7 +15,7 @@ type queryOpt func(*queryBuilder)
 type queryBuilder struct {
 	scopeId             string
 	protectedResourceId string
-	tenantId            string
+	userId              string
 	adminId             string
 }
 
@@ -27,8 +27,8 @@ func withProtectedResourceId(prId string) queryOpt {
 	return func(b *queryBuilder) { b.protectedResourceId = prId }
 }
 
-func withTenantId(tenantId string) queryOpt {
-	return func(b *queryBuilder) { b.tenantId = tenantId }
+func withUserId(userId string) queryOpt {
+	return func(b *queryBuilder) { b.userId = userId }
 }
 
 func withAdminId(adminId string) queryOpt {
@@ -41,19 +41,19 @@ func aQuery(t *testing.T, opts ...queryOpt) *check_ownership.Query {
 	b := &queryBuilder{
 		scopeId:             ids2.NewScopeId().String(),
 		protectedResourceId: ids2.NewProtectedResourceId().String(),
-		tenantId:            ids2.NewTenantId().String(),
+		userId:              ids2.NewUserId().String(),
 		adminId:             ids2.NewAdminId().String(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
-	return check_ownership.NewQuery(b.scopeId, b.protectedResourceId, b.tenantId, b.adminId)
+	return check_ownership.NewQuery(b.scopeId, b.protectedResourceId, b.userId, b.adminId)
 }
 
 // aScope builds a Scope aggregate owned by the given ids.
-func aScope(t *testing.T, scopeId ids2.ScopeId, prId ids2.ProtectedResourceId, tenantId ids2.TenantId, adminId ids2.AdminId) *scopes.Scope {
+func aScope(t *testing.T, scopeId ids2.ScopeId, prId ids2.ProtectedResourceId, userId ids2.UserId, adminId ids2.AdminId) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(prId, tenantId, adminId)
+	ownership := scopes.NewOwnershipFromVos(prId, userId, adminId)
 	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
 	require.NoError(t, err)
 	scope.PullDomainEvents()

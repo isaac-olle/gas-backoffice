@@ -41,7 +41,7 @@ func aClient(t *testing.T) (*clients.Client, ids2.ClientId) {
 	c, err := clients.NewClient(
 		clientId,
 		"valid-client",
-		clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()),
+		clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()),
 		nil,
 		nil,
 	)

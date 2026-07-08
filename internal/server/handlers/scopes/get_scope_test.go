@@ -21,7 +21,7 @@ func TestGetScopeHandler(t *testing.T) {
 		Id:                  handlerstest.ScopeID,
 		Name:                "read",
 		ProtectedResourceId: handlerstest.PrID,
-		TenantId:            handlerstest.TenantID,
+		UserId:              handlerstest.UserId,
 		AdminId:             handlerstest.AdminID,
 	})
 

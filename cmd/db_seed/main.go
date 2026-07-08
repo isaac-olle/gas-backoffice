@@ -25,8 +25,8 @@ import (
 //
 // Crea:
 //   - Un admin "Gas-Seed-Admin" amb la seva clau d'assertion RSA
-//   - Un tenant "Gas-Tenant" associat a l'admin
-//   - Un protected resource "Gas-Backoffice" amb 3 scopes (tenants:create, tenants:read, tenants:read_all)
+//   - Un user "Gas-User" associat a l'admin
+//   - Un protected resource "Gas-Backoffice" amb 3 scopes (users:create, users:read, users:read_all)
 //   - Un key pair RSA per signar tokens del backoffice
 //
 // Imprimeix els outputs per stdout com a KEY=VALUE.
@@ -60,7 +60,7 @@ func main() {
 
 	adminID := uuid.New().String()
 	adminAssertionKeyID := uuid.New().String()
-	tenantID := uuid.New().String()
+	userID := uuid.New().String()
 	prID := uuid.New().String()
 	keyPairID := uuid.New().String()
 	scopeCreateID := uuid.New().String()
@@ -110,30 +110,30 @@ func main() {
 		      VALUES ($1, $2, $3, $4)`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
-	exec_(`INSERT INTO tenants (id, name, admin_id, protected_resource_ids, is_system)
+	exec_(`INSERT INTO users (id, name, admin_id, protected_resource_ids, is_system)
 		      VALUES ($1, $2, $3, $4, TRUE)`,
-		tenantID, "Gas-Tenant", adminID, []string{prID})
+		userID, "Gas-User", adminID, []string{prID})
 
-	exec_(`INSERT INTO protected_resources (id, name, tenant_id, admin_id, scope_ids, is_system)
+	exec_(`INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system)
 		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
-		prID, "Gas-Backoffice", tenantID, adminID,
+		prID, "Gas-Backoffice", userID, adminID,
 		[]string{scopeCreateID, scopeReadID, scopeReadAllID})
 
 	exec_(`INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key)
 		      VALUES ($1, $2, $3, $4, $5)`,
 		keyPairID, prID, "RS256", backofficePubKeyPEM, backofficePrivKeyPEM)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, tenant_id, admin_id, is_system)
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
 		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
-		scopeCreateID, "tenants:create", prID, tenantID, adminID)
+		scopeCreateID, "users:create", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, tenant_id, admin_id, is_system)
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
 		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
-		scopeReadID, "tenants:read", prID, tenantID, adminID)
+		scopeReadID, "users:read", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, tenant_id, admin_id, is_system)
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
 		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
-		scopeReadAllID, "tenants:read_all", prID, tenantID, adminID)
+		scopeReadAllID, "users:read_all", prID, userID, adminID)
 
 	if err = tx.Commit(ctx); err != nil {
 		fatalf("commit transaction: %v", err)
@@ -144,7 +144,7 @@ func main() {
 	outputs := map[string]string{
 		"BACKOFFICE_PR_ID":            prID,
 		"SEED_ADMIN_ID":               adminID,
-		"SEED_TENANT_ID":              tenantID,
+		"SEED_USER_ID":                userID,
 		"ADMIN_ASSERTION_KEY_ID":      adminAssertionKeyID,
 		"ADMIN_ASSERTION_PRIVATE_KEY": adminPrivKeyB64,
 	}

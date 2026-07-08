@@ -15,19 +15,19 @@ import (
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func withTenantId(c *gin.Context) {
-	id, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-	c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), id))
+func withUserId(c *gin.Context) {
+	id, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+	c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), id))
 }
 
-func TestSystemResourceTenant_Success_CallsNext(t *testing.T) {
+func TestSystemResourceUser_Success_CallsNext(t *testing.T) {
 	t.Parallel()
 	bus := &querymocks.MockQueryBus{}
 	bus.On("Dispatch", mock.Anything, mock.Anything).Return(nil, nil)
 	nextCalled := false
 
 	r := gin.New()
-	r.GET("/test", func(c *gin.Context) { withTenantId(c); c.Next() }, system_resource.Tenant(bus), func(c *gin.Context) {
+	r.GET("/test", func(c *gin.Context) { withUserId(c); c.Next() }, system_resource.User(bus), func(c *gin.Context) {
 		nextCalled = true
 		c.Status(http.StatusOK)
 	})
@@ -39,13 +39,13 @@ func TestSystemResourceTenant_Success_CallsNext(t *testing.T) {
 	assert.True(t, nextCalled)
 }
 
-func TestSystemResourceTenant_MissingId_Aborts(t *testing.T) {
+func TestSystemResourceUser_MissingId_Aborts(t *testing.T) {
 	t.Parallel()
 	bus := &querymocks.MockQueryBus{}
 	nextCalled := false
 
 	r := gin.New()
-	r.GET("/test", system_resource.Tenant(bus), func(c *gin.Context) {
+	r.GET("/test", system_resource.User(bus), func(c *gin.Context) {
 		nextCalled = true
 		c.Status(http.StatusOK)
 	})
@@ -57,14 +57,14 @@ func TestSystemResourceTenant_MissingId_Aborts(t *testing.T) {
 	assert.False(t, nextCalled)
 }
 
-func TestSystemResourceTenant_BusError_Aborts(t *testing.T) {
+func TestSystemResourceUser_BusError_Aborts(t *testing.T) {
 	t.Parallel()
 	bus := &querymocks.MockQueryBus{}
 	bus.On("Dispatch", mock.Anything, mock.Anything).Return(nil, errors.New("not found"))
 	nextCalled := false
 
 	r := gin.New()
-	r.GET("/test", func(c *gin.Context) { withTenantId(c); c.Next() }, system_resource.Tenant(bus), func(c *gin.Context) {
+	r.GET("/test", func(c *gin.Context) { withUserId(c); c.Next() }, system_resource.User(bus), func(c *gin.Context) {
 		nextCalled = true
 		c.Status(http.StatusOK)
 	})

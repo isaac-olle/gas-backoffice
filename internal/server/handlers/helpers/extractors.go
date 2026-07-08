@@ -7,7 +7,7 @@ import (
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 func AdminIdFromActor(ctx context.Context) (ids2.AdminId, bool) {
@@ -18,10 +18,10 @@ func AdminIdFromActor(ctx context.Context) (ids2.AdminId, bool) {
 	return actor.Id, true
 }
 
-func TenantIdFromActor(ctx context.Context) (ids2.TenantId, bool) {
-	actor, ok := vo2.ActorFromContext[*actors2.TenantActor](ctx)
+func UserIdFromActor(ctx context.Context) (ids2.UserId, bool) {
+	actor, ok := vo2.ActorFromContext[*actors2.UserActor](ctx)
 	if !ok {
-		return ids2.TenantId{}, false
+		return ids2.UserId{}, false
 	}
 	return actor.Id, true
 }
@@ -34,14 +34,14 @@ func ClientIdFromActor(ctx context.Context) (ids2.ClientId, bool) {
 	return actor.Id, true
 }
 
-func TenantOwnershipFromContext(ctx context.Context) (tenants.Ownership, bool) {
-	return vo2.OwnershipFromContext[tenants.Ownership](ctx)
+func UserOwnershipFromContext(ctx context.Context) (users.Ownership, bool) {
+	return vo2.OwnershipFromContext[users.Ownership](ctx)
 }
 
-func TenantOwnershipFromActor(ctx context.Context) (tenants.Ownership, bool) {
-	actor, ok := vo2.ActorFromContext[*actors2.TenantActor](ctx)
+func UserOwnershipFromActor(ctx context.Context) (users.Ownership, bool) {
+	actor, ok := vo2.ActorFromContext[*actors2.UserActor](ctx)
 	if !ok {
-		return tenants.Ownership{}, false
+		return users.Ownership{}, false
 	}
 	return actor.Ownership(), true
 }

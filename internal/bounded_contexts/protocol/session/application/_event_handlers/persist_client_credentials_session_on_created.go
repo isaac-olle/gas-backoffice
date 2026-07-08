@@ -20,7 +20,7 @@ func (h *PersistClientCredentialsSessionOnCreatedEventHandler) Handle(ctx contex
 		&session.ClientCredentialsSessionPrimitives{
 			ID:       evt.AggregateID(),
 			ClientID: evt.ClientID,
-			TenantID: evt.TenantID,
+			UserId:   evt.UserId,
 			AdminID:  evt.AdminID,
 			Scope:    evt.Scope,
 			IssuedAt: evt.OccurredOn().Format("2006-01-02T15:04:05Z07:00"),

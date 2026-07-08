@@ -14,12 +14,12 @@ import (
 type ClientCredentialsSession struct {
 	BaseSession
 	id       ids2.ClientCredentialsSessionId
-	tenantID ids2.TenantId
+	userId   ids2.UserId
 	adminID  ids2.AdminId
 	issuedAt time.Time
 }
 
-func NewClientCredentialsSession(clientID, tenantID, adminID, scope string) (*ClientCredentialsSession, error) {
+func NewClientCredentialsSession(clientID, rawUserId, adminID, scope string) (*ClientCredentialsSession, error) {
 	errorArray := app_errors.NewEmptyErrorArray()
 
 	clientId, err := ids2.NewClientIdFromString(clientID)
@@ -27,7 +27,7 @@ func NewClientCredentialsSession(clientID, tenantID, adminID, scope string) (*Cl
 		errorArray.AddError(err)
 	}
 
-	tenantId, err := ids2.NewTenantIdFromString(tenantID)
+	userId, err := ids2.NewUserIdFromString(rawUserId)
 	if err != nil {
 		errorArray.AddError(err)
 	}
@@ -49,14 +49,14 @@ func NewClientCredentialsSession(clientID, tenantID, adminID, scope string) (*Cl
 	sess := &ClientCredentialsSession{
 		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
 		id:          ids2.NewClientCredentialsSessionId(),
-		tenantID:    tenantId,
+		userId:      userId,
 		adminID:     adminId,
 		issuedAt:    time.Now().UTC(),
 	}
 	sess.Record(protocoEvents.NewClientCredentialsSessionCreated(
 		sess.id.String(),
 		clientID,
-		tenantID,
+		rawUserId,
 		adminID,
 		scope,
 	))
@@ -74,7 +74,7 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 		return nil, err
 	}
 
-	tenantId, err := ids2.NewTenantIdFromString(p.TenantID)
+	userId, err := ids2.NewUserIdFromString(p.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 	return &ClientCredentialsSession{
 		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
 		id:          id,
-		tenantID:    tenantId,
+		userId:      userId,
 		adminID:     adminId,
 		issuedAt:    issuedAt,
 	}, nil
@@ -107,7 +107,7 @@ func (s *ClientCredentialsSession) ToPrimitives() *ClientCredentialsSessionPrimi
 	return &ClientCredentialsSessionPrimitives{
 		ID:       s.id.String(),
 		ClientID: s.clientID.String(),
-		TenantID: s.tenantID.String(),
+		UserId:   s.userId.String(),
 		AdminID:  s.adminID.String(),
 		Scope:    s.scope.String(),
 		IssuedAt: s.issuedAt.Format(time.RFC3339),

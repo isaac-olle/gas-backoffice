@@ -75,7 +75,7 @@ func TestRemoveScopeOnScopeClientRemoved(t *testing.T) {
 					Id:            ids2.NewClientId().String(),
 					Name:          "valid-client",
 					AdminId:       ids2.NewAdminId().String(),
-					TenantId:      ids2.NewTenantId().String(),
+					UserId:        ids2.NewUserId().String(),
 					AllowedScopes: []string{scopeId.String()},
 				}
 				c, _ := clients.FromPrimitives(prims)

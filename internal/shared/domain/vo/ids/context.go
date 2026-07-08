@@ -3,7 +3,7 @@ package ids
 import "context"
 
 type adminIdContextKey struct{}
-type tenantIdContextKey struct{}
+type userIdContextKey struct{}
 type clientIdContextKey struct{}
 type protectedResourceIdContextKey struct{}
 type scopeIdContextKey struct{}
@@ -17,12 +17,12 @@ func AdminIdFromContext(ctx context.Context) (AdminId, bool) {
 	return id, ok
 }
 
-func WithTenantId(ctx context.Context, id TenantId) context.Context {
-	return context.WithValue(ctx, tenantIdContextKey{}, id)
+func WithUserId(ctx context.Context, id UserId) context.Context {
+	return context.WithValue(ctx, userIdContextKey{}, id)
 }
 
-func TenantIdFromContext(ctx context.Context) (TenantId, bool) {
-	id, ok := ctx.Value(tenantIdContextKey{}).(TenantId)
+func UserIdFromContext(ctx context.Context) (UserId, bool) {
+	id, ok := ctx.Value(userIdContextKey{}).(UserId)
 	return id, ok
 }
 

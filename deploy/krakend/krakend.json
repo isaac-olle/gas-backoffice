@@ -6,7 +6,6 @@
   "cache_ttl": "0s",
   "endpoints": [
 
-    // ─── Protocol ────────────────────────────────────────────────────────────
     {
       "endpoint": "/v1/authorize",
       "method": "GET",
@@ -21,7 +20,6 @@
       "backend": [{ "url_pattern": "/v1/token", "host": ["http://gas:8080"], "method": "POST" }]
     },
 
-    // ─── Admins ──────────────────────────────────────────────────────────────
     {
       "endpoint": "/v1/backoffice/admins",
       "method": "GET",
@@ -35,227 +33,214 @@
       "backend": [{ "url_pattern": "/v1/backoffice/admins/token", "host": ["http://gas:8080"], "method": "POST" }]
     },
 
-    // ─── Tenants (via admin) ──────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/name",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/name",
       "method": "PATCH",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
     },
-
-    // ─── Protected Resources (via admin) ─────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/name",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/name",
       "method": "PATCH",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
 
-    // ─── Scopes (via admin) ───────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "POST" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
-
-    // ─── Clients (via admin) ──────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}/flows",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}/flows",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}/flows", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}/flows", "host": ["http://gas:8080"], "method": "POST" }]
     },
     {
-      "endpoint": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}/redirect-uris",
+      "endpoint": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}/redirect-uris",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/admins/tenants/{tenant_id}/clients/{client_id}/redirect-uris", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/admins/users/{user_id}/clients/{client_id}/redirect-uris", "host": ["http://gas:8080"], "method": "POST" }]
     },
 
-    // ─── Tenants self ─────────────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/name",
+      "endpoint": "/v1/backoffice/users/{user_id}/name",
       "method": "PATCH",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
     },
 
-    // ─── Protected Resources (via tenant) ────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/name",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/name",
       "method": "PATCH",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/name", "host": ["http://gas:8080"], "method": "PATCH" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
 
-    // ─── Scopes (via tenant) ──────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "POST" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/protected-resources/{protected_resource_id}/scopes/{scope_id}/allowed-clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
-
-    // ─── Clients (via tenant) ─────────────────────────────────────────────────
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/clients/{client_id}",
       "method": "PUT",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "PUT" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "PUT" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/clients/{client_id}",
       "method": "GET",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}",
+      "endpoint": "/v1/backoffice/users/{user_id}/clients/{client_id}",
       "method": "DELETE",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/clients/{client_id}", "host": ["http://gas:8080"], "method": "DELETE" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}/flows",
+      "endpoint": "/v1/backoffice/users/{user_id}/clients/{client_id}/flows",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}/flows", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/clients/{client_id}/flows", "host": ["http://gas:8080"], "method": "POST" }]
     },
     {
-      "endpoint": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}/redirect-uris",
+      "endpoint": "/v1/backoffice/users/{user_id}/clients/{client_id}/redirect-uris",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/backoffice/tenants/{tenant_id}/clients/{client_id}/redirect-uris", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/v1/backoffice/users/{user_id}/clients/{client_id}/redirect-uris", "host": ["http://gas:8080"], "method": "POST" }]
     },
-
-    // ─── Clients self ─────────────────────────────────────────────────────────
     {
       "endpoint": "/v1/backoffice/clients",
       "method": "GET",

@@ -32,23 +32,23 @@ func TestNewAdminIdFromString(t *testing.T) {
 	require.Error(t, err)
 }
 
-// TenantId
+// UserId
 
-func TestNewTenantId(t *testing.T) {
+func TestNewUserId(t *testing.T) {
 	t.Parallel()
-	id1 := NewTenantId()
-	id2 := NewTenantId()
+	id1 := NewUserId()
+	id2 := NewUserId()
 	assert.NotEmpty(t, id1.String())
 	assert.NotEqual(t, id1.String(), id2.String())
 }
 
-func TestNewTenantIdFromString(t *testing.T) {
+func TestNewUserIdFromString(t *testing.T) {
 	t.Parallel()
-	id, err := NewTenantIdFromString(validUUID)
+	id, err := NewUserIdFromString(validUUID)
 	require.NoError(t, err)
 	assert.Equal(t, validUUID, id.String())
 
-	_, err = NewTenantIdFromString(invalidUUID)
+	_, err = NewUserIdFromString(invalidUUID)
 	require.Error(t, err)
 }
 
@@ -240,7 +240,7 @@ func TestIdFromString_ErrorCodes(t *testing.T) {
 		fn   func(string) error
 	}{
 		{"admin", func(s string) error { _, err := NewAdminIdFromString(s); return err }},
-		{"tenant", func(s string) error { _, err := NewTenantIdFromString(s); return err }},
+		{"user", func(s string) error { _, err := NewUserIdFromString(s); return err }},
 		{"client", func(s string) error { _, err := NewClientIdFromString(s); return err }},
 		{"scope", func(s string) error { _, err := NewScopeIdFromString(s); return err }},
 		{"protected_resource", func(s string) error { _, err := NewProtectedResourceIdFromString(s); return err }},

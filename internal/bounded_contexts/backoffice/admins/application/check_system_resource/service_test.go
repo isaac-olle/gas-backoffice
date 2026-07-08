@@ -18,10 +18,10 @@ import (
 func anAdmin(t *testing.T, isSystem bool) *admins.Admin {
 	t.Helper()
 	a, err := admins.FromPrimitives(admins.AdminPrimitives{
-		Id:        ids.NewAdminId().String(),
-		Name:      "Test",
-		TenantIds: []string{},
-		IsSystem:  isSystem,
+		Id:       ids.NewAdminId().String(),
+		Name:     "Test",
+		UserIds:  []string{},
+		IsSystem: isSystem,
 	})
 	require.NoError(t, err)
 	return a

@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const (
 	AdminID  = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
-	TenantID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	UserId   = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 	ClientID = "c1b2c3d4-e5f6-7890-abcd-ef1234567890"
 	PrID     = "d1b2c3d4-e5f6-7890-abcd-ef1234567890"
 	ScopeID  = "e1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -29,16 +29,16 @@ func MissingAdminIdExtractor() func(context.Context) (ids.AdminId, bool) {
 	}
 }
 
-func ValidTenantIdExtractor() func(context.Context) (ids.TenantId, bool) {
-	return func(_ context.Context) (ids.TenantId, bool) {
-		id, _ := ids.NewTenantIdFromString(TenantID)
+func ValidUserIdExtractor() func(context.Context) (ids.UserId, bool) {
+	return func(_ context.Context) (ids.UserId, bool) {
+		id, _ := ids.NewUserIdFromString(UserId)
 		return id, true
 	}
 }
 
-func MissingTenantIdExtractor() func(context.Context) (ids.TenantId, bool) {
-	return func(_ context.Context) (ids.TenantId, bool) {
-		return ids.TenantId{}, false
+func MissingUserIdExtractor() func(context.Context) (ids.UserId, bool) {
+	return func(_ context.Context) (ids.UserId, bool) {
+		return ids.UserId{}, false
 	}
 }
 
@@ -87,24 +87,24 @@ func NewScopeIdExtractor() func(context.Context) (ids.ScopeId, bool) {
 	}
 }
 
-func ValidTenantOwnershipExtractor() func(context.Context) (tenants.Ownership, bool) {
-	return func(_ context.Context) (tenants.Ownership, bool) {
+func ValidUserOwnershipExtractor() func(context.Context) (users.Ownership, bool) {
+	return func(_ context.Context) (users.Ownership, bool) {
 		adminId, _ := ids.NewAdminIdFromString(AdminID)
-		return tenants.NewOwnership(adminId), true
+		return users.NewOwnership(adminId), true
 	}
 }
 
-func MissingTenantOwnershipExtractor() func(context.Context) (tenants.Ownership, bool) {
-	return func(_ context.Context) (tenants.Ownership, bool) {
-		return tenants.Ownership{}, false
+func MissingUserOwnershipExtractor() func(context.Context) (users.Ownership, bool) {
+	return func(_ context.Context) (users.Ownership, bool) {
+		return users.Ownership{}, false
 	}
 }
 
 func ValidPrOwnershipExtractor() func(context.Context) (protected_resources.Ownership, bool) {
 	return func(_ context.Context) (protected_resources.Ownership, bool) {
 		adminId, _ := ids.NewAdminIdFromString(AdminID)
-		tenantId, _ := ids.NewTenantIdFromString(TenantID)
-		return protected_resources.NewOwnership(tenantId, adminId), true
+		userId, _ := ids.NewUserIdFromString(UserId)
+		return protected_resources.NewOwnership(userId, adminId), true
 	}
 }
 

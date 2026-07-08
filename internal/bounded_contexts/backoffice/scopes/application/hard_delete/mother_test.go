@@ -36,7 +36,7 @@ func aScope(t *testing.T) (*scopes.Scope, ids2.ScopeId) {
 	scopeId := ids2.NewScopeId()
 	ownership := scopes.NewOwnershipFromVos(
 		ids2.NewProtectedResourceId(),
-		ids2.NewTenantId(),
+		ids2.NewUserId(),
 		ids2.NewAdminId(),
 	)
 	scope, err := scopes.NewScope(scopeId, "read:users", ownership)

@@ -24,7 +24,7 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	ownership := clients.NewOwnership(qry.adminId, qry.tenantId)
+	ownership := clients.NewOwnership(qry.adminId, qry.userId)
 
 	client, err := s.repository.SearchById(ctx, clientId)
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 
 	if !client.CheckOwnership(ownership) {
 		return nil, app_errors.ForbiddenError(clients.ErrInvalidOwnership).
-			WithDescription("client does not belong to the provided admin and tenant")
+			WithDescription("client does not belong to the provided admin and user")
 	}
 
 	return ownership.ToPrimitives(), nil

@@ -1,10 +1,10 @@
 package admins
 
 type AdminPrimitives struct {
-	Id        string
-	Name      string
-	TenantIds []string
-	IsSystem  bool
+	Id       string
+	Name     string
+	UserIds  []string
+	IsSystem bool
 }
 
 type OwnershipPrimitives struct {
@@ -16,14 +16,14 @@ func (o Ownership) ToPrimitives() OwnershipPrimitives {
 }
 
 func (a *Admin) ToPrimitives() AdminPrimitives {
-	tenantIds := make([]string, 0, a.tenantIds.Size())
-	for _, id := range a.tenantIds.Values() {
-		tenantIds = append(tenantIds, id.String())
+	userIds := make([]string, 0, a.userIds.Size())
+	for _, id := range a.userIds.Values() {
+		userIds = append(userIds, id.String())
 	}
 	return AdminPrimitives{
-		Id:        a.id.String(),
-		Name:      a.name.String(),
-		TenantIds: tenantIds,
-		IsSystem:  a.isSystem,
+		Id:       a.id.String(),
+		Name:     a.name.String(),
+		UserIds:  userIds,
+		IsSystem: a.isSystem,
 	}
 }

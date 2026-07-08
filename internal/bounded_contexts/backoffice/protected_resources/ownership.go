@@ -6,19 +6,19 @@ import (
 )
 
 type Ownership struct {
-	TenantId ids2.TenantId
-	AdminId  ids2.AdminId
+	UserId  ids2.UserId
+	AdminId ids2.AdminId
 }
 
-func NewOwnership(tenantId ids2.TenantId, adminId ids2.AdminId) Ownership {
-	return Ownership{TenantId: tenantId, AdminId: adminId}
+func NewOwnership(userId ids2.UserId, adminId ids2.AdminId) Ownership {
+	return Ownership{UserId: userId, AdminId: adminId}
 }
 
-func NewOwnershipFromStrings(tenantId string, adminId string) (Ownership, error) {
-	tId, err := ids2.NewTenantIdFromString(tenantId)
+func NewOwnershipFromStrings(userId string, adminId string) (Ownership, error) {
+	tId, err := ids2.NewUserIdFromString(userId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid tenant id").
+			WithDescription("invalid user id").
 			WithCause(err)
 	}
 	aId, err := ids2.NewAdminIdFromString(adminId)

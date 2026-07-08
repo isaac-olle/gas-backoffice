@@ -22,7 +22,7 @@ type PkcePrimitives struct {
 type ClientCredentialsSessionPrimitives struct {
 	ID       string
 	ClientID string
-	TenantID string
+	UserId   string
 	AdminID  string
 	Scope    string
 	IssuedAt string

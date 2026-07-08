@@ -21,7 +21,7 @@ func aScope(t *testing.T, isSystem bool) *scopes.Scope {
 		Id:                  ids.NewScopeId().String(),
 		Name:                "read:users",
 		ProtectedResourceId: ids.NewProtectedResourceId().String(),
-		TenantId:            ids.NewTenantId().String(),
+		UserId:              ids.NewUserId().String(),
 		AdminId:             ids.NewAdminId().String(),
 		IsSystem:            isSystem,
 	})

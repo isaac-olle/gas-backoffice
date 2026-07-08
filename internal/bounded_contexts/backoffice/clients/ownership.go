@@ -5,14 +5,14 @@ import (
 )
 
 type Ownership struct {
-	AdminId  ids2.AdminId
-	TenantId ids2.TenantId
+	AdminId ids2.AdminId
+	UserId  ids2.UserId
 }
 
 func (o Ownership) Equals(other Ownership) bool {
 	return o == other
 }
 
-func NewOwnership(adminId ids2.AdminId, tenantId ids2.TenantId) Ownership {
-	return Ownership{AdminId: adminId, TenantId: tenantId}
+func NewOwnership(adminId ids2.AdminId, userId ids2.UserId) Ownership {
+	return Ownership{AdminId: adminId, UserId: userId}
 }

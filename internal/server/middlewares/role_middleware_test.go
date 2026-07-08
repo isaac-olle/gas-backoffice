@@ -14,15 +14,15 @@ import (
 )
 
 const testAdminID = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
-const testTenantID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+const testUserId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 func withAdminActor(c *gin.Context) {
 	actor, _ := actors2.NewAdminActorFromString(testAdminID)
 	c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
 }
 
-func withTenantActor(c *gin.Context) {
-	actor, _ := actors2.NewTenantActorFromString(testTenantID)
+func withUserActor(c *gin.Context) {
+	actor, _ := actors2.NewUserActorFromString(testUserId)
 	c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
 }
 
@@ -49,13 +49,13 @@ func TestRoleMiddleware(t *testing.T) {
 		{
 			name:         "wrong_role_aborts",
 			setupActor:   withAdminActor,
-			allowedRoles: []vo2.Role{vo2.TenantRole},
+			allowedRoles: []vo2.Role{vo2.UserRole},
 			wantNext:     false,
 		},
 		{
-			name:         "multiple_allowed_tenant_in_list_passes",
-			setupActor:   withTenantActor,
-			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.TenantRole},
+			name:         "multiple_allowed_user_in_list_passes",
+			setupActor:   withUserActor,
+			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.UserRole},
 			wantNext:     true,
 		},
 	}

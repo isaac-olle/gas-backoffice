@@ -21,8 +21,8 @@ import (
 func fullScopeSetup(c *gin.Context) {
 	actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 	c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-	tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-	c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+	userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+	c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 	prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
 	c.Request = c.Request.WithContext(ids2.WithProtectedResourceId(c.Request.Context(), prId))
 	scopeId, _ := ids2.NewScopeIdFromString("e1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -78,8 +78,8 @@ func TestOwnershipScope_MissingActor_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithProtectedResourceId(c.Request.Context(), prId))
 		scopeId, _ := ids2.NewScopeIdFromString("e1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -105,8 +105,8 @@ func TestOwnershipScope_MissingScopeId_Aborts(t *testing.T) {
 	r.Use(func(c *gin.Context) {
 		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithProtectedResourceId(c.Request.Context(), prId))
 		c.Next()
@@ -130,8 +130,8 @@ func TestOwnershipScope_MissingProtectedResourceId_Aborts(t *testing.T) {
 	r.Use(func(c *gin.Context) {
 		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		scopeId, _ := ids2.NewScopeIdFromString("e1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithScopeId(c.Request.Context(), scopeId))
 		c.Next()
@@ -146,7 +146,7 @@ func TestOwnershipScope_MissingProtectedResourceId_Aborts(t *testing.T) {
 	assert.False(t, nextCalled)
 }
 
-func TestOwnershipScope_MissingTenantId_Aborts(t *testing.T) {
+func TestOwnershipScope_MissingUserId_Aborts(t *testing.T) {
 	t.Parallel()
 	bus := &querymocks.MockQueryBus{}
 	nextCalled := false

@@ -18,9 +18,9 @@ import (
 func anAdmin(t *testing.T) *admins.Admin {
 	t.Helper()
 	a, err := admins.FromPrimitives(admins.AdminPrimitives{
-		Id:        ids.NewAdminId().String(),
-		Name:      "Test",
-		TenantIds: []string{},
+		Id:      ids.NewAdminId().String(),
+		Name:    "Test",
+		UserIds: []string{},
 	})
 	require.NoError(t, err)
 	return a

@@ -51,7 +51,7 @@ func TestRecord_AddsEvent(t *testing.T) {
 
 func TestRecord_MultipleEvents(t *testing.T) {
 	t.Parallel()
-	root := NewRoot(Tenant)
+	root := NewRoot(User)
 	for i := 0; i < 3; i++ {
 		root.Record(newStubEvent("agg-multi"))
 	}

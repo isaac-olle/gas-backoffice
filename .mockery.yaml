@@ -67,13 +67,13 @@ packages:
           pkgname: scopemocks
           structname: MockRepository
 
-  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/tenants:
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/users:
     interfaces:
       Repository:
         config:
-          dir: internal/bounded_contexts/backoffice/tenants/mocks
+          dir: internal/bounded_contexts/backoffice/users/mocks
           filename: repository.go
-          pkgname: tenantmocks
+          pkgname: usermocks
           structname: MockRepository
 
   github.com/isaac-olle/gas/internal/bounded_contexts/security/admin_assertion_keys:

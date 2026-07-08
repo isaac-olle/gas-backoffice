@@ -7,9 +7,9 @@ import (
 )
 
 func RegisterEventBuilders(registry *event.BuilderRegistry) {
-	registry.Register(backoffice.TenantCreatedType, backoffice.NewTenantCreatedBuilder())
-	registry.Register(backoffice.TenantDeletedType, backoffice.NewTenantDeletedBuilder())
-	registry.Register(backoffice.TenantNameChangedType, backoffice.NewTenantNameChangedBuilder())
+	registry.Register(backoffice.UserCreatedType, backoffice.NewUserCreatedBuilder())
+	registry.Register(backoffice.UserDeletedType, backoffice.NewUserDeletedBuilder())
+	registry.Register(backoffice.UserNameChangedType, backoffice.NewUserNameChangedBuilder())
 	registry.Register(backoffice.ClientCreatedType, backoffice.NewClientCreatedBuilder())
 	registry.Register(backoffice.ClientDeletedType, backoffice.NewClientDeletedBuilder())
 	registry.Register(backoffice.ClientFlowAddedType, backoffice.NewClientFlowAddedBuilder())

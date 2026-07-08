@@ -45,7 +45,13 @@ resource "digitalocean_app" "backoffice" {
 
       env {
         key   = "POSTGRES_DSN"
-        value = "postgresql://${data.digitalocean_database_cluster.postgres.user}:${data.digitalocean_database_cluster.postgres.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+        value = "postgresql://${digitalocean_database_user.gas_backoffice_service.name}:${digitalocean_database_user.gas_backoffice_service.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+        type  = "SECRET"
+      }
+
+      env {
+        key   = "MIGRATIONS_DSN"
+        value = "postgresql://${digitalocean_database_user.gas_backoffice_admin.name}:${digitalocean_database_user.gas_backoffice_admin.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
         type  = "SECRET"
       }
 

@@ -11,27 +11,27 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateClientHandler struct {
-	commandBus      command.Bus
-	clientId        func(context.Context) (ids2.ClientId, bool)
-	tenantId        func(context.Context) (ids2.TenantId, bool)
-	tenantOwnership func(context.Context) (tenants.Ownership, bool)
+	commandBus    command.Bus
+	clientId      func(context.Context) (ids2.ClientId, bool)
+	userId        func(context.Context) (ids2.UserId, bool)
+	userOwnership func(context.Context) (users.Ownership, bool)
 }
 
 func NewCreateClientHandler(
 	commandBus command.Bus,
 	clientId func(context.Context) (ids2.ClientId, bool),
-	tenantId func(context.Context) (ids2.TenantId, bool),
-	tenantOwnership func(context.Context) (tenants.Ownership, bool),
+	userId func(context.Context) (ids2.UserId, bool),
+	userOwnership func(context.Context) (users.Ownership, bool),
 ) *CreateClientHandler {
 	return &CreateClientHandler{
-		commandBus:      commandBus,
-		clientId:        clientId,
-		tenantId:        tenantId,
-		tenantOwnership: tenantOwnership,
+		commandBus:    commandBus,
+		clientId:      clientId,
+		userId:        userId,
+		userOwnership: userOwnership,
 	}
 }
 
@@ -50,18 +50,18 @@ func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	tenantId, ok := h.tenantId(c.Request.Context())
+	userId, ok := h.userId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_ID")
+		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
-	ownership, ok := h.tenantOwnership(c.Request.Context())
+	ownership, ok := h.userOwnership(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_OWNERSHIP")
+		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
 	}
 
 	return nil, h.commandBus.Dispatch(c.Request.Context(), clientCreate.NewCommand(
-		clientId, req.Name, clients.NewOwnership(ownership.AdminId, tenantId), nil, nil,
+		clientId, req.Name, clients.NewOwnership(ownership.AdminId, userId), nil, nil,
 	))
 }
 

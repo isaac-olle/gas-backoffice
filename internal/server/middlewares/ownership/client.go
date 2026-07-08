@@ -26,9 +26,9 @@ func Client(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		tenantId, ok := ids.TenantIdFromContext(c.Request.Context())
+		userId, ok := ids.UserIdFromContext(c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.BadRequestError("MISSING_TENANT_ID"))
+			_ = c.Error(app_errors.BadRequestError("MISSING_USER_ID"))
 			c.Abort()
 			return
 		}
@@ -37,7 +37,7 @@ func Client(queryBus query.Bus) gin.HandlerFunc {
 			clientCheckOwnership.NewQuery(
 				clientId.String(),
 				actor.Id,
-				tenantId,
+				userId,
 			))
 		if err != nil {
 			_ = c.Error(err)

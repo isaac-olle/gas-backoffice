@@ -73,7 +73,7 @@ func TestAddSecretOnClientSecretCreated(t *testing.T) {
 			desc: "wraps repository save failure",
 			evt:  securityevents.NewClientSecretCreated(ids2.NewClientSecretId().String(), ids2.NewClientId().String()),
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewTenantId()), nil, nil)
+				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()), nil, nil)
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))

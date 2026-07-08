@@ -7,7 +7,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
 	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
-	tenantHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/tenants"
+	userHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/path_params"
@@ -31,48 +31,48 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 		p.executor.Run(admins.NewGetAdminHandler(p.queryBus, helpers.AdminIdFromActor)),
 	)
 
-	tenant := authenticated.Group("/tenants/:tenant_id")
-	tenant.Use(
-		path_params.TenantIdParam(),
+	user := authenticated.Group("/users/:user_id")
+	user.Use(
+		path_params.UserIdParam(),
 	)
-	tenant.PUT("",
-		p.executor.Run(tenantHandlers.NewCreateTenantHandler(
-			p.commandBus, helpers.AdminIdFromActor, ids.TenantIdFromContext,
+	user.PUT("",
+		p.executor.Run(userHandlers.NewCreateUserHandler(
+			p.commandBus, helpers.AdminIdFromActor, ids.UserIdFromContext,
 		)),
 	)
-	tenant.DELETE("",
-		ownership.Tenant(p.queryBus),
-		system_resource.Tenant(p.queryBus),
-		p.executor.Run(tenantHandlers.NewSoftDeleteTenantHandler(p.commandBus, ids.TenantIdFromContext)),
+	user.DELETE("",
+		ownership.User(p.queryBus),
+		system_resource.User(p.queryBus),
+		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandBus, ids.UserIdFromContext)),
 	)
-	tenant.GET("",
-		ownership.Tenant(p.queryBus),
-		p.executor.Run(tenantHandlers.NewGetTenantHandler(p.queryBus, ids.TenantIdFromContext)),
+	user.GET("",
+		ownership.User(p.queryBus),
+		p.executor.Run(userHandlers.NewGetUserHandler(p.queryBus, ids.UserIdFromContext)),
 	)
-	tenant.PATCH("/name",
-		ownership.Tenant(p.queryBus),
-		system_resource.Tenant(p.queryBus),
-		p.executor.Run(tenantHandlers.NewChangeTenantNameHandler(p.commandBus, ids.TenantIdFromContext)),
+	user.PATCH("/name",
+		ownership.User(p.queryBus),
+		system_resource.User(p.queryBus),
+		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandBus, ids.UserIdFromContext)),
 	)
 
-	pr := tenant.Group("/protected-resources/:protected_resource_id")
+	pr := user.Group("/protected-resources/:protected_resource_id")
 	pr.Use(
 		path_params.ProtectedResourceIdParam(),
 	)
 	pr.PUT("",
-		ownership.Tenant(p.queryBus),
+		ownership.User(p.queryBus),
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(prHandlers.NewCreateProtectedResourceHandler(
 			p.commandBus,
-			helpers.TenantOwnershipFromContext,
+			helpers.UserOwnershipFromContext,
 			ids.ProtectedResourceIdFromContext,
-			ids.TenantIdFromContext,
+			ids.UserIdFromContext,
 		)),
 		p.executor.Run(scopeHandlers.NewCreateScopesFromBodyHandler(
 			p.commandBus,
-			helpers.TenantOwnershipFromContext,
+			helpers.UserOwnershipFromContext,
 			ids.ProtectedResourceIdFromContext,
-			ids.TenantIdFromContext,
+			ids.UserIdFromContext,
 			helpers.GenerateScopeId,
 		)),
 	)
@@ -127,15 +127,15 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 		)),
 	)
 
-	client := tenant.Group("/clients/:client_id")
+	client := user.Group("/clients/:client_id")
 	client.Use(
 		path_params.ClientIdParam(),
 	)
 	client.PUT("",
-		ownership.Tenant(p.queryBus),
+		ownership.User(p.queryBus),
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(clientHandlers.NewCreateClientHandler(
-			p.commandBus, ids.ClientIdFromContext, ids.TenantIdFromContext, helpers.TenantOwnershipFromContext,
+			p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
 		)),
 		p.executor.Run(clientHandlers.NewCreateClientAssertionKeyHandler(
 			p.commandBus, ids.ClientIdFromContext,

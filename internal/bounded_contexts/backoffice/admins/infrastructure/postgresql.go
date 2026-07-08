@@ -27,17 +27,17 @@ func NewPostgresAdminRepository(db *pgxpool.Pool) *PostgresAdminRepository {
 func (r *PostgresAdminRepository) Save(ctx context.Context, admin *admins.Admin) error {
 	p := admin.ToPrimitives()
 	query := `
-		INSERT INTO admins (id, name, tenant_ids, is_system)
+		INSERT INTO admins (id, name, user_ids, is_system)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
-			tenant_ids = EXCLUDED.tenant_ids
+			user_ids = EXCLUDED.user_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.TenantIds, p.IsSystem)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserIds, p.IsSystem)
 }
 
 func (r *PostgresAdminRepository) SearchById(ctx context.Context, id ids.AdminId) (*admins.Admin, error) {
-	query := `SELECT id, name, tenant_ids, is_system FROM admins WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, user_ids, is_system FROM admins WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -57,7 +57,7 @@ func (r *PostgresAdminRepository) HardDelete(ctx context.Context, id ids.AdminId
 
 func (r *PostgresAdminRepository) fromRow(row pgx.Row) (*admins.Admin, error) {
 	var p admins.AdminPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.TenantIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.UserIds, &p.IsSystem)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, app_errors.NotFoundError(admins.ErrAdminNotFound).WithDescription("admin not found")
 	}

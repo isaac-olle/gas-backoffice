@@ -27,20 +27,20 @@ func NewPostgresScopeRepository(db *pgxpool.Pool) *PostgresScopeRepository {
 func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope) error {
 	p := scope.ToPrimitives()
 	query := `
-		INSERT INTO scopes (id, name, protected_resource_id, tenant_id, admin_id, allowed_client_ids, is_system)
+		INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			protected_resource_id = EXCLUDED.protected_resource_id,
-			tenant_id = EXCLUDED.tenant_id,
+			user_id = EXCLUDED.user_id,
 			admin_id = EXCLUDED.admin_id,
 			allowed_client_ids = EXCLUDED.allowed_client_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.TenantId, p.AdminId, p.AllowedClientIds, p.IsSystem)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.UserId, p.AdminId, p.AllowedClientIds, p.IsSystem)
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, tenant_id, admin_id, allowed_client_ids, is_system FROM scopes WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system FROM scopes WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -60,7 +60,7 @@ func (r *PostgresScopeRepository) HardDelete(ctx context.Context, id ids.ScopeId
 
 func (r *PostgresScopeRepository) fromRow(row pgx.Row) (*scopes.Scope, error) {
 	var p scopes.ScopePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.TenantId, &p.AdminId, &p.AllowedClientIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.UserId, &p.AdminId, &p.AllowedClientIds, &p.IsSystem)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, app_errors.NotFoundError(scopes.ErrScopeNotFound).WithDescription("scope not found")
 	}

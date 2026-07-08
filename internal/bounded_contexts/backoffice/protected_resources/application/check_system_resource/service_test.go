@@ -20,7 +20,7 @@ func aPR(t *testing.T, isSystem bool) *protected_resources.ProtectedResource {
 	pr, err := protected_resources.FromPrimitives(protected_resources.ProtectedResourcePrimitives{
 		Id:       ids.NewProtectedResourceId().String(),
 		Name:     "Test Resource",
-		TenantId: ids.NewTenantId().String(),
+		UserId:   ids.NewUserId().String(),
 		AdminId:  ids.NewAdminId().String(),
 		IsSystem: isSystem,
 	})

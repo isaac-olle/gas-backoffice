@@ -10,12 +10,12 @@ const QueryType query.Type = "query.backoffice.protected_resource.check_ownershi
 
 type Query struct {
 	protectedResourceId string
-	tenantId            string
+	userId              string
 	adminId             ids.AdminId
 }
 
-func NewQuery(protectedResourceId, tenantId string, adminId ids.AdminId) *Query {
-	return &Query{protectedResourceId: protectedResourceId, tenantId: tenantId, adminId: adminId}
+func NewQuery(protectedResourceId, userId string, adminId ids.AdminId) *Query {
+	return &Query{protectedResourceId: protectedResourceId, userId: userId, adminId: adminId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

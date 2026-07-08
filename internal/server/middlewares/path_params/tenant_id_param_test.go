@@ -12,7 +12,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func TestTenantIdParam(t *testing.T) {
+func TestUserIdParam(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name      string
@@ -25,19 +25,19 @@ func TestTenantIdParam(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var gotId ids.TenantId
+			var gotId ids.UserId
 			var gotInCtx bool
 			nextCalled := false
 
 			r := gin.New()
-			r.GET("/tenants/:tenant_id", path_params.TenantIdParam(), func(c *gin.Context) {
+			r.GET("/users/:user_id", path_params.UserIdParam(), func(c *gin.Context) {
 				nextCalled = true
-				gotId, gotInCtx = ids.TenantIdFromContext(c.Request.Context())
+				gotId, gotInCtx = ids.UserIdFromContext(c.Request.Context())
 				c.Status(http.StatusOK)
 			})
 
 			w := httptest.NewRecorder()
-			req, _ := http.NewRequest(http.MethodGet, "/tenants/"+tt.param, nil)
+			req, _ := http.NewRequest(http.MethodGet, "/users/"+tt.param, nil)
 			r.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.wantNext, nextCalled)

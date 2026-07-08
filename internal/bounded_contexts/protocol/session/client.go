@@ -26,18 +26,18 @@ func NewScope(scopeID, scopeName, protectedResourceID, protectedResourceName str
 type Client struct {
 	ClientID     string   `bson:"client_id"`
 	Name         string   `bson:"name"`
-	TenantID     string   `bson:"tenant_id"`
+	UserId       string   `bson:"user_id"`
 	AdminID      string   `bson:"admin_id"`
 	AllowedFlows []string `bson:"allowed_flows"`
 	RedirectURIs []string `bson:"redirect_uris"`
 	Scopes       []*Scope `bson:"scopes"`
 }
 
-func NewClient(clientID, name, tenantID, adminID string, allowedFlows, redirectURIs []string, scopes []*Scope) *Client {
+func NewClient(clientID, name, userId, adminID string, allowedFlows, redirectURIs []string, scopes []*Scope) *Client {
 	return &Client{
 		ClientID:     clientID,
 		Name:         name,
-		TenantID:     tenantID,
+		UserId:       userId,
 		AdminID:      adminID,
 		AllowedFlows: allowedFlows,
 		RedirectURIs: redirectURIs,

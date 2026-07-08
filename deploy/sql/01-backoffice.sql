@@ -11,7 +11,7 @@ CREATE TABLE admins (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
     is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
-    tenant_ids TEXT[]      NOT NULL DEFAULT '{}',
+    user_ids TEXT[]      NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
@@ -19,7 +19,7 @@ CREATE TABLE admins (
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON admins
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE TABLE tenants (
+CREATE TABLE users (
     id                     TEXT        NOT NULL PRIMARY KEY,
     name                   TEXT        NOT NULL,
     is_system              BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -30,14 +30,14 @@ CREATE TABLE tenants (
     updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at             TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON tenants
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 CREATE TABLE protected_resources (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
     is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
-    tenant_id  TEXT        NOT NULL,
+    user_id  TEXT        NOT NULL,
     admin_id   TEXT        NOT NULL,
     scope_ids  TEXT[]      NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -52,7 +52,7 @@ CREATE TABLE scopes (
     name                  TEXT        NOT NULL,
     is_system             BOOLEAN     NOT NULL DEFAULT FALSE,
     protected_resource_id TEXT        NOT NULL,
-    tenant_id             TEXT        NOT NULL,
+    user_id             TEXT        NOT NULL,
     admin_id              TEXT        NOT NULL,
     allowed_client_ids    TEXT[]      NOT NULL DEFAULT '{}',
     created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -66,7 +66,7 @@ CREATE TABLE clients (
     id             TEXT        NOT NULL PRIMARY KEY,
     name           TEXT        NOT NULL,
     admin_id       TEXT        NOT NULL,
-    tenant_id      TEXT        NOT NULL,
+    user_id      TEXT        NOT NULL,
     allowed_flows  TEXT[]      NOT NULL DEFAULT '{}',
     allowed_scopes TEXT[]      NOT NULL DEFAULT '{}',
     redirect_uris  TEXT[]      NOT NULL DEFAULT '{}',
@@ -80,7 +80,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON clients
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE admins             TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tenants            TO gas_backoffice;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users            TO gas_backoffice;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protected_resources TO gas_backoffice;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE scopes             TO gas_backoffice;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE clients            TO gas_backoffice;

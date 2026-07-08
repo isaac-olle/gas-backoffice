@@ -25,7 +25,7 @@ func (g *BusSessionTokenGenerator) GenerateFromSession(ctx context.Context, sess
 		"sub":       client.ClientID,
 		"scope":     sess.ToPrimitives().Scope,
 		"client_id": client.ClientID,
-		"tenant_id": client.TenantID,
+		"user_id":   client.UserId,
 		"admin_id":  client.AdminID,
 	}, protectedResourceId)
 }
@@ -37,7 +37,7 @@ func (g *BusSessionTokenGenerator) GenerateFromClientCredentials(ctx context.Con
 		"sub":       p.ClientID,
 		"scope":     p.Scope,
 		"client_id": p.ClientID,
-		"tenant_id": p.TenantID,
+		"user_id":   p.UserId,
 		"admin_id":  p.AdminID,
 	}, protectedResourceId)
 }

@@ -36,16 +36,16 @@ import (
 	scopeSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/soft_delete"
 	scopeDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
 	scopeInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/infrastructure"
-	tenantEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/_event_handlers"
-	tenantChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/change_name"
-	tenantCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/check_ownership"
-	tenantCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/check_system_resource"
-	tenantCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/create"
-	tenantGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/get"
-	tenantHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/hard_delete"
-	tenantSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/soft_delete"
-	tenantDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/domain_services"
-	tenantInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/infrastructure"
+	userEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/_event_handlers"
+	userChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/change_name"
+	userCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_ownership"
+	userCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_system_resource"
+	userCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create"
+	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
+	userHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/hard_delete"
+	userSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/soft_delete"
+	userDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/domain_services"
+	userInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
@@ -57,14 +57,14 @@ import (
 
 func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager) {
 	adminRepo := persistanceInfra.NewInMemoryContextDecorator(adminInfra.NewPostgresAdminRepository(pool))
-	tenantRepo := persistanceInfra.NewInMemoryContextDecorator(tenantInfra.NewPostgresTenantRepository(pool))
+	userRepo := persistanceInfra.NewInMemoryContextDecorator(userInfra.NewPostgresUserRepository(pool))
 	prRepo := persistanceInfra.NewInMemoryContextDecorator(prInfra.NewPostgresProtectedResourceRepository(pool))
 	clientRepo := persistanceInfra.NewInMemoryContextDecorator(clientInfra.NewPostgresClientRepository(pool))
 	scopeRepo := persistanceInfra.NewInMemoryContextDecorator(scopeInfra.NewPostgresScopeRepository(pool))
 
 	// finders
 	adminFinder := adminDomainServices.NewAdminFinder(adminRepo)
-	tenantFinder := tenantDomainServices.NewTenantFinder(tenantRepo)
+	userFinder := userDomainServices.NewUserFinder(userRepo)
 	prFinder := prDomainServices.NewProtectedResourceFinder(prRepo)
 	scopeFinder := scopeDomainServices.NewScopeFinder(scopeRepo)
 	clientFinder := clientDomainServices.NewClientFinder(clientRepo)
@@ -89,37 +89,37 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	cmdBus.Register(scopeSoftDelete.CommandType, scopeSoftDelete.NewCommandHandler(scopeSoftDelete.NewService(scopeRepo)))
 	cmdBus.Register(scopeHardDelete.CommandType, scopeHardDelete.NewCommandHandler(scopeHardDelete.NewService(scopeFinder, scopeRepo, evtBus)))
 
-	// tenants
-	cmdBus.Register(tenantCreate.CommandType, tenantCreate.NewCommandHandler(tenantCreate.NewService(tenantRepo, evtBus)))
-	cmdBus.Register(tenantChangeName.CommandType, tenantChangeName.NewCommandHandler(tenantChangeName.NewService(tenantFinder, tenantRepo, evtBus)))
-	cmdBus.Register(tenantSoftDelete.CommandType, tenantSoftDelete.NewCommandHandler(tenantSoftDelete.NewService(tenantFinder, tenantRepo, evtBus)))
-	cmdBus.Register(tenantHardDelete.CommandType, tenantHardDelete.NewCommandHandler(tenantHardDelete.NewService(tenantFinder, tenantRepo, evtBus)))
+	// users
+	cmdBus.Register(userCreate.CommandType, userCreate.NewCommandHandler(userCreate.NewService(userRepo, evtBus)))
+	cmdBus.Register(userChangeName.CommandType, userChangeName.NewCommandHandler(userChangeName.NewService(userFinder, userRepo, evtBus)))
+	cmdBus.Register(userSoftDelete.CommandType, userSoftDelete.NewCommandHandler(userSoftDelete.NewService(userFinder, userRepo, evtBus)))
+	cmdBus.Register(userHardDelete.CommandType, userHardDelete.NewCommandHandler(userHardDelete.NewService(userFinder, userRepo, evtBus)))
 
 	// check_ownership queries
-	qryBus.Register(tenantCheckOwnership.QueryType, tenantCheckOwnership.NewQueryHandler(tenantCheckOwnership.NewService(tenantFinder)))
+	qryBus.Register(userCheckOwnership.QueryType, userCheckOwnership.NewQueryHandler(userCheckOwnership.NewService(userFinder)))
 	qryBus.Register(prCheckOwnership.QueryType, prCheckOwnership.NewQueryHandler(prCheckOwnership.NewService(prRepo)))
 	qryBus.Register(scopeCheckOwnership.QueryType, scopeCheckOwnership.NewQueryHandler(scopeCheckOwnership.NewService(scopeRepo)))
 	qryBus.Register(clientCheckOwnership.QueryType, clientCheckOwnership.NewQueryHandler(clientCheckOwnership.NewService(clientRepo)))
 
 	// check_system_resource queries
 	qryBus.Register(adminCheckSystem.QueryType, adminCheckSystem.NewQueryHandler(adminCheckSystem.NewService(adminFinder)))
-	qryBus.Register(tenantCheckSystem.QueryType, tenantCheckSystem.NewQueryHandler(tenantCheckSystem.NewService(tenantFinder)))
+	qryBus.Register(userCheckSystem.QueryType, userCheckSystem.NewQueryHandler(userCheckSystem.NewService(userFinder)))
 	qryBus.Register(prCheckSystem.QueryType, prCheckSystem.NewQueryHandler(prCheckSystem.NewService(prFinder)))
 	qryBus.Register(scopeCheckSystem.QueryType, scopeCheckSystem.NewQueryHandler(scopeCheckSystem.NewService(scopeFinder)))
 
 	// get queries
 	qryBus.Register(adminGet.QueryType, adminGet.NewQueryHandler(adminGet.NewService(adminFinder)))
-	qryBus.Register(tenantGet.QueryType, tenantGet.NewQueryHandler(tenantGet.NewService(tenantFinder)))
+	qryBus.Register(userGet.QueryType, userGet.NewQueryHandler(userGet.NewService(userFinder)))
 	qryBus.Register(prGet.QueryType, prGet.NewQueryHandler(prGet.NewService(prFinder)))
 	qryBus.Register(scopeGet.QueryType, scopeGet.NewQueryHandler(scopeGet.NewService(scopeFinder)))
 	qryBus.Register(clientGet.QueryType, clientGet.NewQueryHandler(clientGet.NewService(clientFinder)))
 
-	addTenantHandler := adminEventHandlers.NewAddTenantOnTenantCreatedEventHandler(adminRepo, adminFinder, evtBus)
-	removeTenantHandler := adminEventHandlers.NewRemoveTenantOnTenantDeletedEventHandler(adminRepo, adminFinder, evtBus)
-	addClientHandler := tenantEventHandlers.NewAddClientOnClientCreatedEventHandler(tenantRepo, evtBus)
-	removeClientHandler := tenantEventHandlers.NewRemoveClientOnClientDeletedEventHandler(tenantRepo, evtBus)
-	addPRHandler := tenantEventHandlers.NewAddProtectedResourceOnProtectedResourceCreatedEventHandler(tenantRepo, evtBus)
-	removePRHandler := tenantEventHandlers.NewRemoveProtectedResourceOnProtectedResourceDeletedEventHandler(tenantRepo, evtBus)
+	addUserHandler := adminEventHandlers.NewAddUserOnUserCreatedEventHandler(adminRepo, adminFinder, evtBus)
+	removeUserHandler := adminEventHandlers.NewRemoveUserOnUserDeletedEventHandler(adminRepo, adminFinder, evtBus)
+	addClientHandler := userEventHandlers.NewAddClientOnClientCreatedEventHandler(userRepo, evtBus)
+	removeClientHandler := userEventHandlers.NewRemoveClientOnClientDeletedEventHandler(userRepo, evtBus)
+	addPRHandler := userEventHandlers.NewAddProtectedResourceOnProtectedResourceCreatedEventHandler(userRepo, evtBus)
+	removePRHandler := userEventHandlers.NewRemoveProtectedResourceOnProtectedResourceDeletedEventHandler(userRepo, evtBus)
 	addScopeHandler := prEventHandlers.NewAddScopeOnScopeCreatedEventHandler(prRepo, evtBus)
 	removeScopeHandler := prEventHandlers.NewRemoveScopeOnScopeDeletedEventHandler(prRepo, evtBus)
 	addScopeToClientHandler := clientEventHandlers.NewAddScopeOnScopeClientAddedEventHandler(clientRepo, evtBus)
@@ -127,8 +127,8 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	addKeyHandler := clientEventHandlers.NewAddKeyOnClientAssertionKeyCreatedEventHandler(clientFinder, clientRepo, evtBus)
 	addSecretHandler := clientEventHandlers.NewAddSecretOnClientSecretCreatedEventHandler(clientFinder, clientRepo, evtBus)
 
-	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.TenantCreated](addTenantHandler.Handle))
-	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.TenantDeleted](removeTenantHandler.Handle))
+	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserCreated](addUserHandler.Handle))
+	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserDeleted](removeUserHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientCreated](addClientHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientDeleted](removeClientHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ProtectedResourceCreated](addPRHandler.Handle))

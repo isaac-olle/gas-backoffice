@@ -18,10 +18,10 @@ import (
 func TestGetProtectedResourceHandler(t *testing.T) {
 	t.Parallel()
 	validPR, _ := protectedResourcesAggregate.FromPrimitives(protectedResourcesAggregate.ProtectedResourcePrimitives{
-		Id:       handlerstest.PrID,
-		Name:     "My Resource",
-		TenantId: handlerstest.TenantID,
-		AdminId:  handlerstest.AdminID,
+		Id:      handlerstest.PrID,
+		Name:    "My Resource",
+		UserId:  handlerstest.UserId,
+		AdminId: handlerstest.AdminID,
 	})
 
 	tests := []struct {

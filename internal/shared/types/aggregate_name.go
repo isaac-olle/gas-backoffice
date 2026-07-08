@@ -4,7 +4,7 @@ type AggregateName string
 
 const (
 	AggregateAdmin             AggregateName = "admin"
-	AggregateTenant            AggregateName = "tenant"
+	AggregateUser              AggregateName = "user"
 	AggregateProtectedResource AggregateName = "protected-resource"
 	AggregateScope             AggregateName = "scope"
 	AggregateClient            AggregateName = "client"

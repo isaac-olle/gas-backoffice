@@ -40,15 +40,15 @@ func TestGet(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, adminId.String(), prims.Id)
 		assert.Equal(t, "Test", prims.Name)
-		assert.Empty(t, prims.TenantIds)
+		assert.Empty(t, prims.UserIds)
 	})
 
-	t.Run("includes tenant ids in the returned primitives", func(t *testing.T) {
+	t.Run("includes user ids in the returned primitives", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		adminId := ids2.NewAdminId()
-		tenantId := ids2.NewTenantId()
-		admin := anAdminWithTenant(t, adminId, tenantId)
+		userId := ids2.NewUserId()
+		admin := anAdminWithUser(t, adminId, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, adminId).Return(admin, nil)
 
@@ -58,7 +58,7 @@ func TestGet(t *testing.T) {
 		prims, ok := result.(admins.AdminPrimitives)
 		require.True(t, ok)
 		assert.Equal(t, adminId.String(), prims.Id)
-		assert.Contains(t, prims.TenantIds, tenantId.String())
+		assert.Contains(t, prims.UserIds, userId.String())
 	})
 
 	errCases := []struct {

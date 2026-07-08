@@ -33,9 +33,9 @@ func Scope(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		tenantId, ok := ids.TenantIdFromContext(c.Request.Context())
+		userId, ok := ids.UserIdFromContext(c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.BadRequestError("MISSING_TENANT_ID"))
+			_ = c.Error(app_errors.BadRequestError("MISSING_USER_ID"))
 			c.Abort()
 			return
 		}
@@ -43,7 +43,7 @@ func Scope(queryBus query.Bus) gin.HandlerFunc {
 		result, err := queryBus.Dispatch(c.Request.Context(), scopeCheckOwnership.NewQuery(
 			scopeId.String(),
 			protectedResourceId.String(),
-			tenantId.String(),
+			userId.String(),
 			actor.Id.String(),
 		))
 		if err != nil {

@@ -46,7 +46,7 @@ func aScopeWithClient(t *testing.T, clientId ids2.ClientId) (*scopes.Scope, ids2
 		Id:                  scopeId.String(),
 		Name:                "read:users",
 		ProtectedResourceId: ids2.NewProtectedResourceId().String(),
-		TenantId:            ids2.NewTenantId().String(),
+		UserId:              ids2.NewUserId().String(),
 		AdminId:             ids2.NewAdminId().String(),
 		AllowedClientIds:    []string{clientId.String()},
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 )
@@ -22,60 +22,60 @@ func TestCreateProtectedResourceHandler(t *testing.T) {
 	tests := []struct {
 		name        string
 		body        io.Reader
-		ownershipFn func(context.Context) (tenants.Ownership, bool)
+		ownershipFn func(context.Context) (users.Ownership, bool)
 		prIdFn      func(context.Context) (ids2.ProtectedResourceId, bool)
-		tenantIdFn  func(context.Context) (ids2.TenantId, bool)
+		userIdFn    func(context.Context) (ids2.UserId, bool)
 		busErr      error
 		wantErr     bool
 		wantStatus  int
 	}{
 		{
-			name:        "missing_tenant_ownership_returns_error",
+			name:        "missing_user_ownership_returns_error",
 			body:        handlerstest.JsonBody(map[string]string{"name": "My PR"}),
-			ownershipFn: handlerstest.MissingTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.MissingUserOwnershipExtractor(),
 			prIdFn:      handlerstest.ValidPrIdExtractor(),
-			tenantIdFn:  handlerstest.ValidTenantIdExtractor(),
+			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			wantErr:     true,
 		},
 		{
 			name:        "missing_pr_id_returns_error",
 			body:        handlerstest.JsonBody(map[string]string{"name": "My PR"}),
-			ownershipFn: handlerstest.ValidTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
 			prIdFn:      handlerstest.MissingPrIdExtractor(),
-			tenantIdFn:  handlerstest.ValidTenantIdExtractor(),
+			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			wantErr:     true,
 		},
 		{
-			name:        "missing_tenant_id_returns_error",
+			name:        "missing_user_id_returns_error",
 			body:        handlerstest.JsonBody(map[string]string{"name": "My PR"}),
-			ownershipFn: handlerstest.ValidTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
 			prIdFn:      handlerstest.ValidPrIdExtractor(),
-			tenantIdFn:  handlerstest.MissingTenantIdExtractor(),
+			userIdFn:    handlerstest.MissingUserIdExtractor(),
 			wantErr:     true,
 		},
 		{
 			name:        "invalid_body_returns_error",
 			body:        bytes.NewBufferString(`{}`),
-			ownershipFn: handlerstest.ValidTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
 			prIdFn:      handlerstest.ValidPrIdExtractor(),
-			tenantIdFn:  handlerstest.ValidTenantIdExtractor(),
+			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			wantErr:     true,
 		},
 		{
 			name:        "bus_error_returns_error",
 			body:        handlerstest.JsonBody(map[string]string{"name": "My PR"}),
-			ownershipFn: handlerstest.ValidTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
 			prIdFn:      handlerstest.ValidPrIdExtractor(),
-			tenantIdFn:  handlerstest.ValidTenantIdExtractor(),
+			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			busErr:      errors.New("bus error"),
 			wantErr:     true,
 		},
 		{
 			name:        "success_returns_201",
 			body:        handlerstest.JsonBody(map[string]string{"name": "My PR"}),
-			ownershipFn: handlerstest.ValidTenantOwnershipExtractor(),
+			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
 			prIdFn:      handlerstest.ValidPrIdExtractor(),
-			tenantIdFn:  handlerstest.ValidTenantIdExtractor(),
+			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			wantErr:     false,
 			wantStatus:  http.StatusCreated,
 		},
@@ -84,7 +84,7 @@ func TestCreateProtectedResourceHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandBus(tt.busErr)
-			h := prHandlers.NewCreateProtectedResourceHandler(bus, tt.ownershipFn, tt.prIdFn, tt.tenantIdFn)
+			h := prHandlers.NewCreateProtectedResourceHandler(bus, tt.ownershipFn, tt.prIdFn, tt.userIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -103,7 +103,7 @@ func TestCreateProtectedResourceHandler(t *testing.T) {
 func TestCreateProtectedResourceHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandBus(nil)
-	h := prHandlers.NewCreateProtectedResourceHandler(bus, handlerstest.ValidTenantOwnershipExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidTenantIdExtractor())
+	h := prHandlers.NewCreateProtectedResourceHandler(bus, handlerstest.ValidUserOwnershipExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

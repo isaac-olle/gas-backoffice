@@ -29,8 +29,8 @@ func TestOwnershipClient_QuerySucceeds_SetsOwnershipAndCallsNext(t *testing.T) {
 	r.Use(func(c *gin.Context) {
 		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithClientId(c.Request.Context(), clientId))
 		c.Next()
@@ -60,8 +60,8 @@ func TestOwnershipClient_QueryFails_Aborts(t *testing.T) {
 	r.Use(func(c *gin.Context) {
 		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithClientId(c.Request.Context(), clientId))
 		c.Next()
@@ -83,8 +83,8 @@ func TestOwnershipClient_MissingActor_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithClientId(c.Request.Context(), clientId))
 		c.Next()
@@ -108,8 +108,8 @@ func TestOwnershipClient_MissingClientId_Aborts(t *testing.T) {
 	r.Use(func(c *gin.Context) {
 		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
-		tenantId, _ := ids2.NewTenantIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithTenantId(c.Request.Context(), tenantId))
+		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		c.Next()
 	})
 	r.Use(ownership.Client(bus))
@@ -122,7 +122,7 @@ func TestOwnershipClient_MissingClientId_Aborts(t *testing.T) {
 	assert.False(t, nextCalled)
 }
 
-func TestOwnershipClient_MissingTenantId_Aborts(t *testing.T) {
+func TestOwnershipClient_MissingUserId_Aborts(t *testing.T) {
 	t.Parallel()
 	bus := &querymocks.MockQueryBus{}
 	nextCalled := false

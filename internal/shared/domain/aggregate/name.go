@@ -8,7 +8,7 @@ type Name = sharedtypes.AggregateName
 
 const (
 	Admin             = sharedtypes.AggregateAdmin
-	Tenant            = sharedtypes.AggregateTenant
+	User              = sharedtypes.AggregateUser
 	ProtectedResource = sharedtypes.AggregateProtectedResource
 	Scope             = sharedtypes.AggregateScope
 	Client            = sharedtypes.AggregateClient

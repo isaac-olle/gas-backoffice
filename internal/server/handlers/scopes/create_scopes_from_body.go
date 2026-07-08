@@ -10,30 +10,30 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	scopeCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateScopesFromBodyHandler struct {
-	commandBus      command.Bus
-	tenantOwnership func(context.Context) (tenants.Ownership, bool)
-	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
-	tenantId        func(context.Context) (ids2.TenantId, bool)
-	scopeId         func(context.Context) (ids2.ScopeId, bool)
+	commandBus    command.Bus
+	userOwnership func(context.Context) (users.Ownership, bool)
+	prId          func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId        func(context.Context) (ids2.UserId, bool)
+	scopeId       func(context.Context) (ids2.ScopeId, bool)
 }
 
 func NewCreateScopesFromBodyHandler(
 	commandBus command.Bus,
-	tenantOwnership func(context.Context) (tenants.Ownership, bool),
+	userOwnership func(context.Context) (users.Ownership, bool),
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
-	tenantId func(context.Context) (ids2.TenantId, bool),
+	userId func(context.Context) (ids2.UserId, bool),
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 ) *CreateScopesFromBodyHandler {
 	return &CreateScopesFromBodyHandler{
-		commandBus:      commandBus,
-		tenantOwnership: tenantOwnership,
-		prId:            prId,
-		tenantId:        tenantId,
-		scopeId:         scopeId,
+		commandBus:    commandBus,
+		userOwnership: userOwnership,
+		prId:          prId,
+		userId:        userId,
+		scopeId:       scopeId,
 	}
 }
 
@@ -51,9 +51,9 @@ func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, nil
 	}
 
-	tenantOwnership, ok := h.tenantOwnership(c.Request.Context())
+	userOwnership, ok := h.userOwnership(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_OWNERSHIP")
+		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
 	}
 
 	prId, ok := h.prId(c.Request.Context())
@@ -61,14 +61,14 @@ func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
 
-	tenantId, ok := h.tenantId(c.Request.Context())
+	userId, ok := h.userId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_ID")
+		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
 	for _, scopeName := range req.Scopes {
 		scopeId, _ := h.scopeId(c.Request.Context())
-		ownership := scopes.NewOwnershipFromVos(prId, tenantId, tenantOwnership.AdminId)
+		ownership := scopes.NewOwnershipFromVos(prId, userId, userOwnership.AdminId)
 		if err := h.commandBus.Dispatch(
 			c.Request.Context(), scopeCreate.NewCommand(scopeId, scopeName, ownership),
 		); err != nil {
