@@ -70,13 +70,18 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check terraform changes
-        id: tf_changes
+      - name: Check changes
+        id: changes
         run: |
           if git diff --name-only HEAD~1 HEAD | grep -q '^deploy/terraform/'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "terraform_changed=true" >> $GITHUB_OUTPUT
           else
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "terraform_changed=false" >> $GITHUB_OUTPUT
+          fi
+          if git diff --name-only HEAD~1 HEAD | grep -q '^deploy/golang-migrate/'; then
+            echo "migrations_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "migrations_changed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: tfsec
@@ -87,7 +92,6 @@ jobs:
 
       - name: Trigger infrastructure deploy
         id: trigger
-        if: steps.tf_changes.outputs.changed == 'true'
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GAS_REPO_TOKEN }}" \
@@ -99,7 +103,9 @@ jobs:
                 "environment": "${{ inputs.environment }}",
                 "sha": "${{ github.sha }}",
                 "callback_repo": "${{ github.repository }}",
-                "migrations_path": "./deploy/golang-migrate"
+                "terraform_changed": ${{ steps.changes.outputs.terraform_changed }},
+                "migrations_path": "./deploy/golang-migrate",
+                "run_migrations": ${{ steps.changes.outputs.migrations_changed }}
               }
             }'
           echo "triggered=true" >> $GITHUB_OUTPUT
