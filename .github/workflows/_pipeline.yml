@@ -99,7 +99,7 @@ jobs:
                 "environment": "${{ inputs.environment }}",
                 "sha": "${{ github.sha }}",
                 "callback_repo": "${{ github.repository }}",
-                "db_cluster_id": "${{ env.DO_DB_CLUSTER_ID }}"
+                "migrations_path": "./deploy/golang-migrate"
               }
             }'
           echo "triggered=true" >> $GITHUB_OUTPUT
