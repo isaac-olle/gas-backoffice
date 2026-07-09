@@ -3,9 +3,6 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_managers"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_presenters"
@@ -15,7 +12,6 @@ import (
 	queryInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
-	"os"
 	"strconv"
 	"time"
 
@@ -38,22 +34,6 @@ func Run() error {
 	log, err := logger.NewZapLogger(cfg.Environment)
 	if err != nil {
 		return fmt.Errorf("failed to create logger: %w", err)
-	}
-
-	migrationsPath := os.Getenv("MIGRATIONS_FOLDER_PATH")
-	if migrationsPath == "" {
-		migrationsPath = "/golang-migrate"
-	}
-	migrationsDSN := cfg.Databases.MigrationsDSN
-	if migrationsDSN == "" {
-		migrationsDSN = cfg.Databases.Postgres
-	}
-	m, err := migrate.New("file://"+migrationsPath, "pgx5://"+migrationsDSN[len("postgresql://"):])
-	if err != nil {
-		return fmt.Errorf("failed to init migrations: %w", err)
-	}
-	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	postgresPool, err := pgxpool.New(context.Background(), cfg.Databases.Postgres)
