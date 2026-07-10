@@ -3,6 +3,9 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_managers"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_presenters"
@@ -34,6 +37,14 @@ func Run() error {
 	log, err := logger.NewZapLogger(cfg.Environment)
 	if err != nil {
 		return fmt.Errorf("failed to create logger: %w", err)
+	}
+
+	m, err := migrate.New("file:///golang-migrate", "pgx5://"+cfg.Databases.MigrationsDSN[len("postgresql://"):])
+	if err != nil {
+		return fmt.Errorf("failed to init migrations: %w", err)
+	}
+	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	postgresPool, err := pgxpool.New(context.Background(), cfg.Databases.Postgres)
