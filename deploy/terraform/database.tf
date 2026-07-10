@@ -28,6 +28,22 @@ resource "postgresql_grant" "gas_backoffice_admin_schema_privileges" {
   privileges  = ["ALL"]
 }
 
+resource "postgresql_grant" "gas_backoffice_admin_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_admin.name
+  schema      = "public"
+  object_type = "table"
+  privileges  = ["ALL"]
+}
+
+resource "postgresql_grant" "gas_backoffice_admin_sequences_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_admin.name
+  schema      = "public"
+  object_type = "sequence"
+  privileges  = ["ALL"]
+}
+
 resource "postgresql_grant" "gas_backoffice_service_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
   role        = digitalocean_database_user.gas_backoffice_service.name
