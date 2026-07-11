@@ -86,6 +86,15 @@ resource "postgresql_grant" "gas_backoffice_service_sequences_privileges" {
   privileges  = ["USAGE", "SELECT"]
 }
 
+resource "postgresql_default_privileges" "gas_backoffice_admin_future_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_admin.name
+  schema      = "public"
+  object_type = "table"
+  owner       = "doadmin"
+  privileges  = ["ALL"]
+}
+
 resource "postgresql_default_privileges" "gas_backoffice_service_future_tables_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
   role        = digitalocean_database_user.gas_backoffice_service.name

@@ -67,6 +67,10 @@ resource "digitalocean_app" "backoffice" {
       }
     }
   }
+
+  lifecycle {
+    ignore_changes = [spec[0].service[0].image[0].tag]
+  }
 }
 
 resource "digitalocean_database_firewall" "gas_postgres" {
