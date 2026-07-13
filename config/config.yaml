@@ -12,3 +12,4 @@ application:
 databases:
   postgres: ${POSTGRES_DSN}
   migrations_dsn: ${MIGRATIONS_DSN}
+  migrations_path: ${MIGRATIONS_PATH}

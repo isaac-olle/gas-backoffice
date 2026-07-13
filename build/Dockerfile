@@ -18,5 +18,6 @@ COPY --from=builder /app/config/config.yaml /config/config.yaml
 COPY --from=builder /app/deploy/golang-migrate /golang-migrate
 
 ENV CONFIG_FILE_PATH=/config/config.yaml
+ENV MIGRATIONS_PATH=/golang-migrate
 
 ENTRYPOINT ["/gas"]

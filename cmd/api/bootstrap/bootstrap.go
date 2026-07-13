@@ -40,7 +40,7 @@ func Run() error {
 	}
 
 	log.Info("running migrations")
-	m, err := migrate.New("file:///golang-migrate", "pgx5://"+cfg.Databases.MigrationsDSN[len("postgresql://"):])
+	m, err := migrate.New("file://"+cfg.Databases.MigrationsPath, "pgx5://"+cfg.Databases.MigrationsDSN[len("postgresql://"):])
 	if err != nil {
 		return fmt.Errorf("failed to init migrations: %w", err)
 	}
