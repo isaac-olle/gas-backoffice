@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
@@ -26,9 +27,10 @@ func NewPostgresScopeRepository(db *pgxpool.Pool) *PostgresScopeRepository {
 
 func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope) error {
 	p := scope.ToPrimitives()
+	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			protected_resource_id = EXCLUDED.protected_resource_id,
@@ -36,7 +38,16 @@ func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope)
 			admin_id = EXCLUDED.admin_id,
 			allowed_client_ids = EXCLUDED.allowed_client_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.UserId, p.AdminId, p.AllowedClientIds, p.IsSystem)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.UserId, p.AdminId, p.AllowedClientIds, p.IsSystem, authorId, authorRole)
+}
+
+func actorPrimitives(ctx context.Context) (string, string) {
+	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+	if !ok {
+		return "", ""
+	}
+	p := actor.ToPrimitives()
+	return p.Id, p.Role
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {

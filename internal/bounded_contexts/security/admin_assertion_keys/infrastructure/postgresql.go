@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
@@ -27,15 +28,16 @@ func NewPostgresAdminAssertionKeyRepository(db *pgxpool.Pool) *PostgresAdminAsse
 
 func (r *PostgresAdminAssertionKeyRepository) Save(ctx context.Context, aak *admin_assertion_keys.AdminAssertionKey) error {
 	p := aak.ToPrimitives()
+	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			admin_id = EXCLUDED.admin_id,
 			algorithm = EXCLUDED.algorithm,
 			public_key = EXCLUDED.public_key
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.AdminId, p.Algorithm, p.PublicKey)
+	return r.postgres.Save(ctx, query, p.Id, p.AdminId, p.Algorithm, p.PublicKey, authorId, authorRole)
 }
 
 func (r *PostgresAdminAssertionKeyRepository) SearchById(ctx context.Context, id ids2.AdminAssertionKeyId) (*admin_assertion_keys.AdminAssertionKey, error) {
@@ -60,6 +62,15 @@ func (r *PostgresAdminAssertionKeyRepository) SoftDelete(ctx context.Context, id
 func (r *PostgresAdminAssertionKeyRepository) HardDelete(ctx context.Context, id ids2.AdminAssertionKeyId) error {
 	query := `DELETE FROM admin_assertion_keys WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
+}
+
+func actorPrimitives(ctx context.Context) (string, string) {
+	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+	if !ok {
+		return "", ""
+	}
+	p := actor.ToPrimitives()
+	return p.Id, p.Role
 }
 
 func (r *PostgresAdminAssertionKeyRepository) fromRow(row pgx.Row) (*admin_assertion_keys.AdminAssertionKey, error) {

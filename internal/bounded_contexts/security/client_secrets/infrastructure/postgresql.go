@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
@@ -26,14 +27,15 @@ func NewPostgresClientSecretRepository(db *pgxpool.Pool) *PostgresClientSecretRe
 
 func (r *PostgresClientSecretRepository) Save(ctx context.Context, cs *client_secrets.ClientSecret) error {
 	p := cs.ToPrimitives()
+	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO client_secrets (id, client_id, secret_hash)
-		VALUES ($1, $2, $3)
+		INSERT INTO client_secrets (id, client_id, secret_hash, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (id) DO UPDATE SET
 			client_id = EXCLUDED.client_id,
 			secret_hash = EXCLUDED.secret_hash
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.SecretHash)
+	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.SecretHash, authorId, authorRole)
 }
 
 func (r *PostgresClientSecretRepository) SearchById(ctx context.Context, id ids2.ClientSecretId) (*client_secrets.ClientSecret, error) {
@@ -58,6 +60,15 @@ func (r *PostgresClientSecretRepository) HardDelete(ctx context.Context, id ids2
 func (r *PostgresClientSecretRepository) FindByClientId(ctx context.Context, clientID ids2.ClientId) (*client_secrets.ClientSecret, error) {
 	query := `SELECT id, client_id, secret_hash FROM client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
+}
+
+func actorPrimitives(ctx context.Context) (string, string) {
+	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+	if !ok {
+		return "", ""
+	}
+	p := actor.ToPrimitives()
+	return p.Id, p.Role
 }
 
 func (r *PostgresClientSecretRepository) fromRow(row pgx.Row) (*client_secrets.ClientSecret, error) {

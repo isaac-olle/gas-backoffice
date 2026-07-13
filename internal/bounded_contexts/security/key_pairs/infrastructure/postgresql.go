@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
@@ -25,16 +26,17 @@ func NewPostgresKeyPairRepository(db *pgxpool.Pool) *PostgresKeyPairRepository {
 
 func (r *PostgresKeyPairRepository) Save(ctx context.Context, keyPair *key_pairs.KeyPair) error {
 	p := keyPair.ToPrimitives()
+	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO UPDATE SET
 			protected_resource_id = EXCLUDED.protected_resource_id,
 			algorithm = EXCLUDED.algorithm,
 			public_key = EXCLUDED.public_key,
 			private_key = EXCLUDED.private_key
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.ProtectedResourceId, p.Algorithm, p.PublicKey, p.PrivateKey)
+	return r.postgres.Save(ctx, query, p.Id, p.ProtectedResourceId, p.Algorithm, p.PublicKey, p.PrivateKey, authorId, authorRole)
 }
 
 func (r *PostgresKeyPairRepository) SearchById(ctx context.Context, id ids.KeyPairId) (*key_pairs.KeyPair, error) {
@@ -59,6 +61,15 @@ func (r *PostgresKeyPairRepository) SoftDelete(ctx context.Context, id ids.KeyPa
 func (r *PostgresKeyPairRepository) HardDelete(ctx context.Context, id ids.KeyPairId) error {
 	query := `DELETE FROM key_pairs WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
+}
+
+func actorPrimitives(ctx context.Context) (string, string) {
+	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+	if !ok {
+		return "", ""
+	}
+	p := actor.ToPrimitives()
+	return p.Id, p.Role
 }
 
 func (r *PostgresKeyPairRepository) fromRow(row pgx.Row) (*key_pairs.KeyPair, error) {
