@@ -39,12 +39,18 @@ func Run() error {
 		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
+	log.Info("running migrations")
 	m, err := migrate.New("file:///golang-migrate", "pgx5://"+cfg.Databases.MigrationsDSN[len("postgresql://"):])
 	if err != nil {
 		return fmt.Errorf("failed to init migrations: %w", err)
 	}
 	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	if err == migrate.ErrNoChange {
+		log.Info("migrations: no changes")
+	} else {
+		log.Info("migrations: applied successfully")
 	}
 
 	postgresPool, err := pgxpool.New(context.Background(), cfg.Databases.Postgres)
