@@ -54,7 +54,7 @@ CREATE TABLE client_secrets (
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON client_secrets
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE key_pairs             TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE admin_assertion_keys  TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE client_assertion_keys TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE client_secrets        TO gas_backoffice;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE key_pairs             TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE admin_assertion_keys  TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE client_assertion_keys TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE client_secrets        TO gas_backoffice_service;

@@ -30,5 +30,5 @@ CREATE TABLE protocol_client_credentials_sessions (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_sessions                    TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_client_credentials_sessions TO gas_backoffice;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_sessions                    TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_client_credentials_sessions TO gas_backoffice_service;

@@ -78,8 +78,8 @@ CREATE TABLE clients (
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON clients
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE admins              TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users             TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protected_resources TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE scopes              TO gas_backoffice;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE clients             TO gas_backoffice;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE admins              TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users             TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protected_resources TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE scopes              TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE clients             TO gas_backoffice_service;
