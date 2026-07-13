@@ -30,7 +30,7 @@ import (
 
 func main() {
 	envFile := flag.String("env", "scripts/generate_admin_token/.env", "path to the admin token .env file")
-	ttl := flag.Duration("ttl", 99999*time.Hour, "token TTL (e.g. 5m, 1h)")
+	ttl := flag.Duration("ttl", 15*time.Minute, "token TTL (e.g. 5m, 1h)")
 	flag.Parse()
 
 	if err := godotenv.Load(*envFile); err != nil {

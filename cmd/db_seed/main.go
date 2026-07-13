@@ -106,33 +106,33 @@ func main() {
 	exec_(`INSERT INTO admins (id, name, is_system) VALUES ($1, $2, TRUE)`,
 		adminID, "Gas-Seed-Admin")
 
-	exec_(`INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key)
-		      VALUES ($1, $2, $3, $4)`,
+	exec_(`INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, '', '')`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
-	exec_(`INSERT INTO users (id, name, admin_id, protected_resource_ids, is_system)
-		      VALUES ($1, $2, $3, $4, TRUE)`,
+	exec_(`INSERT INTO users (id, name, admin_id, protected_resource_ids, is_system, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, TRUE, '', '')`,
 		userID, "Gas-User", adminID, []string{prID})
 
-	exec_(`INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system)
-		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
+	exec_(`INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		prID, "Gas-Backoffice", userID, adminID,
 		[]string{scopeCreateID, scopeReadID, scopeReadAllID})
 
-	exec_(`INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key)
-		      VALUES ($1, $2, $3, $4, $5)`,
+	exec_(`INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, $5, '', '')`,
 		keyPairID, prID, "RS256", backofficePubKeyPEM, backofficePrivKeyPEM)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
-		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeCreateID, "users:create", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
-		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeReadID, "users:read", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system)
-		      VALUES ($1, $2, $3, $4, $5, TRUE)`,
+	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeReadAllID, "users:read_all", prID, userID, adminID)
 
 	if err = tx.Commit(ctx); err != nil {
@@ -165,7 +165,7 @@ func main() {
 		"sub":  adminID,
 		"aud":  "gas",
 		"iat":  now.Unix(),
-		"exp":  now.Add(99999 * time.Hour).Unix(),
+		"exp":  now.Add(15 * time.Minute).Unix(),
 		"jti":  uuid.New().String(),
 		"role": "admin",
 	})

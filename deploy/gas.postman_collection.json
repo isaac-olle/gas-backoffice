@@ -9,6 +9,692 @@
   },
   "item": [
     {
+      "name": "E2E Flow",
+      "item": [
+        {
+          "name": "01 - Admin Token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [""]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test(\"Response has access_token\", function() {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('access_token');",
+                  "    pm.environment.set('admin_token', body.access_token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "urn:ietf:params:oauth:grant-type:jwt-bearer" },
+                { "key": "assertion", "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNhYzI2NjE0LWM2MzMtNDhiZS1hYTkzLWQ3MDJmNWRkNWEwNSIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnYXMiLCJleHAiOjIxMzk5NjA1OTEsImlhdCI6MTc3OTk2NDE5MSwiaXNzIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1IiwianRpIjoiOGU1M2M2YTgtM2U0Zi00MTBmLWIwNTUtNDRlOWU0OTQ3YWMzIiwicm9sZSI6ImFkbWluIiwic3ViIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1In0.WKfPLezmtwQDGb_2IbrBdkqzuP31jaWTiY4GyftWf9BGXB97LA0QEy3c5eUy_kNTlyewoTwJh8t_JOEahtzzvsGAu_84zPqqCT0rE15o8AyEAZTzOKK7tBs-Om_Dz0o_RBfxiQIeP5RczZoIU6mpQFMr7hw-BRlaouPGYLPYO_QvtqQWHQMbbtcXGCuLuXXBQ67z4XpMtvWIm5cmRjXWpIuF5Bedn4GWUtGgwsbq7m2n-uvuFE0PajEtYkCTvc62MadtkkxBV4gzsJU6udyQq2o1a8eAafpl6TLhKrFK7eB_wCnYrg8qWVfChpXK844y_-IEF2lI0BPvcvVnL4tRCQ" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/token",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Create User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('e2e_user_id', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E Test User\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Get User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test(\"Response has id and name\", function() {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Rename User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E Renamed User\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/name",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - Create Protected Resource",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('e2e_protected_resource_id', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E API\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Get Protected Resource",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test(\"Response has id and name\", function() {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Rename Protected Resource",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E API Renamed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/name",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - Create Scope",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('e2e_scope_id', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"read:e2e\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 - Get Scope",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test(\"Response has id and name\", function() {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Create Client",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('e2e_client_id', pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('e2e_assertion_key_id', pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('e2e_secret_id', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E Client\",\n  \"assertion_key_id\": \"{{e2e_assertion_key_id}}\",\n  \"public_key\": \"30820122300d06092a864886f70d01010105000382010f003082010a02820101008fa18e300e1c4869cc2493dd422cb7900e7f04a0f9997655194f3c1d055c940a207d2248ca1eafe05c5af8780422614e42a6cfa49f5f895116d4d55534ce0f3982eefcb63e699b786a63263f89a2c3c6d77c237684d2737515d8331968d8a8a1c5f790335e5d440b99220c3cda4cdeeb763ac73a6eac7e5cf82b7a90324c4ce678781449a7fe28efb928060e8d8e31f6c2abaab4af203ecbeed0de901316294822155ef0f328ef815a1a67969f19c3e06c09730c1c1586b87be49567c94e36ce11b8b2295004e396830aeac4d7c79510c971e7d9e307cb8216068881ce1541421ea02961360c7e46319a94b32fbc3ac37c82de5cca8de7fc08921d5f872e587b0203010001\",\n  \"secret_id\": \"{{e2e_secret_id}}\",\n  \"plaintext_secret\": \"e2e-plain-secret\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 - Get Client",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test(\"Response has id and name\", function() {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 - Add Allowed Flow to Client",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flow\": \"authorization_code\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}/flows",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}", "flows"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13 - Add Redirect URI to Client",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"redirect_uri\": \"https://e2e.example.com/callback\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}/redirect-uris",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}", "redirect-uris"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14 - Add Allowed Client to Scope",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/201/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}/allowed-clients/{{e2e_client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}", "allowed-clients", "{{e2e_client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15 - Remove Allowed Client from Scope",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}/allowed-clients/{{e2e_client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}", "allowed-clients", "{{e2e_client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16 - Delete Scope",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "17 - Delete Protected Resource",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "18 - Delete User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "type": "text/javascript", "exec": [""] }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200/204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Protocol",
       "item": [
         {
@@ -139,7 +825,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -148,13 +834,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "{{$guid}}"
-                    }
+                    "{{user_id}}"
                   ]
                 }
               },
@@ -171,7 +851,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -180,13 +860,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": ""
-                    }
+                    "{{user_id}}"
                   ]
                 }
               },
@@ -216,7 +890,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/name",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/name",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -225,14 +899,8 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "name"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "4dfe9b0b-efd4-4d8c-b573-0129777aa2de"
-                    }
                   ]
                 }
               },
@@ -249,7 +917,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -258,13 +926,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "4dfe9b0b-efd4-4d8c-b573-0129777aa2de"
-                    }
+                    "{{user_id}}"
                   ]
                 }
               },
@@ -333,7 +995,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -342,19 +1004,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "protected-resources",
-                    ":protected_resource_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "1de73ec0-6b42-4372-a6f5-28ac32eb84d7"
-                    },
-                    {
-                      "key": "protected_resource_id",
-                      "value": "{{$guid}}"
-                    }
+                    "{{protected_resource_id}}"
                   ]
                 }
               },
@@ -371,7 +1023,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -380,19 +1032,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "protected-resources",
-                    ":protected_resource_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "1de73ec0-6b42-4372-a6f5-28ac32eb84d7"
-                    },
-                    {
-                      "key": "protected_resource_id",
-                      "value": "c859e8e1-aba9-4ea3-865a-713b0caed4ad"
-                    }
+                    "{{protected_resource_id}}"
                   ]
                 }
               },
@@ -422,7 +1064,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/name",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/name",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -431,20 +1073,10 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "protected-resources",
-                    ":protected_resource_id",
+                    "{{protected_resource_id}}",
                     "name"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "1de73ec0-6b42-4372-a6f5-28ac32eb84d7"
-                    },
-                    {
-                      "key": "protected_resource_id",
-                      "value": "c859e8e1-aba9-4ea3-865a-713b0caed4ad"
-                    }
                   ]
                 }
               },
@@ -461,7 +1093,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -470,19 +1102,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "protected-resources",
-                    ":protected_resource_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "1de73ec0-6b42-4372-a6f5-28ac32eb84d7"
-                    },
-                    {
-                      "key": "protected_resource_id",
-                      "value": "1de73ec0-6b42-4372-a6f5-28ac32eb84d7"
-                    }
+                    "{{protected_resource_id}}"
                   ]
                 }
               },
@@ -551,7 +1173,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -560,19 +1182,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "clients",
-                    ":client_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "341685a8-1059-40c0-9dab-b0d9341b89b5"
-                    },
-                    {
-                      "key": "client_id",
-                      "value": "{{$guid}}"
-                    }
+                    "{{client_id}}"
                   ]
                 }
               },
@@ -589,7 +1201,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -598,19 +1210,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    ":user_id",
+                    "{{user_id}}",
                     "clients",
-                    ":client_id"
-                  ],
-                  "variable": [
-                    {
-                      "key": "user_id",
-                      "value": "341685a8-1059-40c0-9dab-b0d9341b89b5"
-                    },
-                    {
-                      "key": "client_id",
-                      "value": "47069e79-b893-4cc9-beef-2fa1f4782b3f"
-                    }
+                    "{{client_id}}"
                   ]
                 }
               },
@@ -1084,15 +1686,14 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "v1",
                 "backoffice",
-                "users",
-                "{{user_id}}"
+                "users"
               ]
             }
           },
@@ -1122,7 +1723,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/name",
+              "raw": "{{base_url}}/v1/backoffice/users/name",
               "host": [
                 "{{base_url}}"
               ],
@@ -1130,8 +1731,31 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "name"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Soft Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "users"
               ]
             }
           },
@@ -1166,7 +1790,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1174,7 +1798,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}"
               ]
@@ -1193,7 +1816,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1201,7 +1824,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}"
               ]
@@ -1233,7 +1855,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/name",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/name",
               "host": [
                 "{{base_url}}"
               ],
@@ -1241,7 +1863,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "name"
@@ -1261,7 +1882,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1269,7 +1890,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}"
               ]
@@ -1306,7 +1926,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1314,7 +1934,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "scopes",
@@ -1335,7 +1954,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1343,7 +1962,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "scopes",
@@ -1364,7 +1982,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1372,7 +1990,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "scopes",
@@ -1393,7 +2010,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1401,7 +2018,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "scopes",
@@ -1424,7 +2040,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1432,7 +2048,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "protected-resources",
                 "{{protected_resource_id}}",
                 "scopes",
@@ -1473,7 +2088,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/clients/{{client_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1481,7 +2096,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "clients",
                 "{{client_id}}"
               ]
@@ -1500,7 +2114,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/clients/{{client_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1508,7 +2122,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "clients",
                 "{{client_id}}"
               ]
@@ -1540,7 +2153,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/clients/{{client_id}}/flows",
+              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/flows",
               "host": [
                 "{{base_url}}"
               ],
@@ -1548,7 +2161,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "clients",
                 "{{client_id}}",
                 "flows"
@@ -1581,7 +2193,7 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/clients/{{client_id}}/redirect-uris",
+              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/redirect-uris",
               "host": [
                 "{{base_url}}"
               ],
@@ -1589,7 +2201,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "clients",
                 "{{client_id}}",
                 "redirect-uris"
@@ -1609,7 +2220,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/{{user_id}}/clients/{{client_id}}",
+              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1617,7 +2228,6 @@
                 "v1",
                 "backoffice",
                 "users",
-                "{{user_id}}",
                 "clients",
                 "{{client_id}}"
               ]
@@ -1687,6 +2297,44 @@
                 "backoffice",
                 "clients",
                 "redirect-uris"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Allowed Flow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{client_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flow\": \"authorization_code\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/clients/flows",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "clients",
+                "flows"
               ]
             }
           },
