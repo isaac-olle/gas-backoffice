@@ -81,7 +81,9 @@ jobs:
           context: .
           file: build/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/backoffice:sha-${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/backoffice:sha-${{ github.sha }}
+            ${{ env.REGISTRY }}/backoffice:${{ inputs.environment }}
 
   deploy:
     name: Deploy
@@ -98,10 +100,7 @@ jobs:
         run: |
           doctl apps spec get ${{ secrets.DO_APP_ID }} | \
             sed "s/tag:.*/tag: sha-${{ github.sha }}/" | \
-            doctl apps update ${{ secrets.DO_APP_ID }} --spec -
-
-      - name: Create deployment
-        run: doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait
+            doctl apps update ${{ secrets.DO_APP_ID }} --spec - --wait
 
       - name: Garbage collect registry
         run: doctl registry garbage-collection start --include-untagged-manifests --force
