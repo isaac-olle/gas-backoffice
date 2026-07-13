@@ -27,7 +27,7 @@ func NewPostgresClientSecretRepository(db *pgxpool.Pool) *PostgresClientSecretRe
 
 func (r *PostgresClientSecretRepository) Save(ctx context.Context, cs *client_secrets.ClientSecret) error {
 	p := cs.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO security.client_secrets (id, client_id, secret_hash, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5)
@@ -62,12 +62,12 @@ func (r *PostgresClientSecretRepository) FindByClientId(ctx context.Context, cli
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 

@@ -18,11 +18,11 @@ func NewPostgresAuditRepository(pool *pgxpool.Pool) *PostgresAuditRepository {
 
 func (r *PostgresAuditRepository) Save(ctx context.Context, rec event.AuditRecord) error {
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO audit_events (event_id, event_type, aggregate_id, aggregate_type, actor_id, actor_role, payload, occurred_at)
+		`INSERT INTO audit_events (event_id, event_type, aggregate_id, aggregate_type, author_id, author_role, payload, occurred_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 ON CONFLICT (event_id) DO NOTHING`,
 		rec.EventID, rec.EventType, rec.AggregateID, rec.AggregateType,
-		rec.ActorID, rec.ActorRole, rec.Payload, rec.OccurredAt,
+		rec.AuthorID, rec.AuthorRole, rec.Payload, rec.OccurredAt,
 	)
 	if err != nil {
 		return fmt.Errorf("audit: insert event %s: %w", rec.EventID, err)

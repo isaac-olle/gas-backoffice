@@ -2,7 +2,7 @@ package middlewares_test
 
 import (
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	actors2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	authors2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,45 +16,45 @@ import (
 const testAdminID = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
 const testUserId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
-func withAdminActor(c *gin.Context) {
-	actor, _ := actors2.NewAdminActorFromString(testAdminID)
-	c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+func withAdminAuthor(c *gin.Context) {
+	author, _ := authors2.NewAdminAuthorFromString(testAdminID)
+	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
-func withUserActor(c *gin.Context) {
-	actor, _ := actors2.NewUserActorFromString(testUserId)
-	c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+func withUserAuthor(c *gin.Context) {
+	author, _ := authors2.NewUserAuthorFromString(testUserId)
+	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
 func TestRoleMiddleware(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name         string
-		setupActor   func(c *gin.Context)
+		setupAuthor  func(c *gin.Context)
 		allowedRoles []vo2.Role
 		wantNext     bool
 	}{
 		{
 			name:         "no_actor_aborts",
-			setupActor:   nil,
+			setupAuthor:  nil,
 			allowedRoles: []vo2.Role{vo2.AdminRole},
 			wantNext:     false,
 		},
 		{
 			name:         "correct_role_admin_passes",
-			setupActor:   withAdminActor,
+			setupAuthor:  withAdminAuthor,
 			allowedRoles: []vo2.Role{vo2.AdminRole},
 			wantNext:     true,
 		},
 		{
 			name:         "wrong_role_aborts",
-			setupActor:   withAdminActor,
+			setupAuthor:  withAdminAuthor,
 			allowedRoles: []vo2.Role{vo2.UserRole},
 			wantNext:     false,
 		},
 		{
 			name:         "multiple_allowed_user_in_list_passes",
-			setupActor:   withUserActor,
+			setupAuthor:  withUserAuthor,
 			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.UserRole},
 			wantNext:     true,
 		},
@@ -67,8 +67,8 @@ func TestRoleMiddleware(t *testing.T) {
 			r := gin.New()
 			r.GET("/test",
 				func(c *gin.Context) {
-					if tt.setupActor != nil {
-						tt.setupActor(c)
+					if tt.setupAuthor != nil {
+						tt.setupAuthor(c)
 					}
 					c.Next()
 				},

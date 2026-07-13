@@ -3,7 +3,7 @@ package admin_assertion_keys
 import (
 	"fmt"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type TokenClaims struct {
@@ -61,6 +61,6 @@ func (t *TokenClaims) CheckAudience(expectedValue string) error {
 	return nil
 }
 
-func (t *TokenClaims) ToActor() (vo2.Actor, error) {
-	return actors.NewActorForRole(vo2.AdminRole, t.sub)
+func (t *TokenClaims) ToAuthor() (vo2.Author, error) {
+	return authors.NewAuthorForRole(vo2.AdminRole, t.sub)
 }

@@ -26,7 +26,7 @@ func NewPostgresClientRepository(db *pgxpool.Pool) *PostgresClientRepository {
 
 func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Client) error {
 	p := client.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO backoffice.clients (id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -41,12 +41,12 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 	return r.postgres.Save(ctx, query, p.Id, p.Name, p.AdminId, p.UserId, p.AllowedFlows, p.AllowedScopes, p.RedirectUris, p.KeyIds, p.SecretIds, authorId, authorRole)
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 

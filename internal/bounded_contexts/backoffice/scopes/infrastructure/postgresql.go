@@ -27,7 +27,7 @@ func NewPostgresScopeRepository(db *pgxpool.Pool) *PostgresScopeRepository {
 
 func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope) error {
 	p := scope.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -41,12 +41,12 @@ func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope)
 	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.UserId, p.AdminId, p.AllowedClientIds, p.IsSystem, authorId, authorRole)
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 

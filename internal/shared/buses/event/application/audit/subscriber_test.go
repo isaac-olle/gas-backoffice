@@ -11,7 +11,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/application/audit"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 )
 
@@ -49,25 +49,25 @@ func TestSubscriber_On_SavesRecord(t *testing.T) {
 	assert.Equal(t, "agg-1", repo.saved.AggregateID)
 	assert.Equal(t, "test", repo.saved.AggregateType)
 	assert.NotEmpty(t, repo.saved.Payload)
-	assert.Nil(t, repo.saved.ActorID)
-	assert.Nil(t, repo.saved.ActorRole)
+	assert.Nil(t, repo.saved.AuthorID)
+	assert.Nil(t, repo.saved.AuthorRole)
 }
 
-func TestSubscriber_On_ExtractsActorFromContext(t *testing.T) {
+func TestSubscriber_On_ExtractsAuthorFromContext(t *testing.T) {
 	t.Parallel()
 	repo := &stubRepo{}
 	sub := audit.NewSubscriber(repo)
 
-	actor, err := actors.NewAdminActorFromString("00000000-0000-0000-0000-000000000001")
+	author, err := authors.NewAdminAuthorFromString("00000000-0000-0000-0000-000000000001")
 	require.NoError(t, err)
-	ctx := vo.WithActor(context.Background(), actor)
+	ctx := vo.WithAuthor(context.Background(), author)
 
 	require.NoError(t, sub.On(ctx, newTestEvent()))
 
-	require.NotNil(t, repo.saved.ActorID)
-	require.NotNil(t, repo.saved.ActorRole)
-	assert.Equal(t, "00000000-0000-0000-0000-000000000001", *repo.saved.ActorID)
-	assert.Equal(t, "admin", *repo.saved.ActorRole)
+	require.NotNil(t, repo.saved.AuthorID)
+	require.NotNil(t, repo.saved.AuthorRole)
+	assert.Equal(t, "00000000-0000-0000-0000-000000000001", *repo.saved.AuthorID)
+	assert.Equal(t, "admin", *repo.saved.AuthorRole)
 }
 
 func TestSubscriber_On_PropagatesRepoError(t *testing.T) {

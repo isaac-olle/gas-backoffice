@@ -8,15 +8,15 @@ import (
 
 func RoleMiddleware(allowed ...vo2.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		actor, ok := vo2.ActorFromContext[vo2.Actor](c.Request.Context())
+		author, ok := vo2.AuthorFromContext[vo2.Author](c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.UnauthorizedError("MISSING_ACTOR"))
+			_ = c.Error(app_errors.UnauthorizedError("MISSING_AUTHOR"))
 			c.Abort()
 			return
 		}
 
 		for _, role := range allowed {
-			if actor.EqualsRole(role) {
+			if author.EqualsRole(role) {
 				c.Next()
 				return
 			}

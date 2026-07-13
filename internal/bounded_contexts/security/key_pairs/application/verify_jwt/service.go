@@ -59,11 +59,11 @@ func (s *Service) VerifyJWT(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	actor, err := claims.ToActor()
+	author, err := claims.ToAuthor()
 	if err != nil {
 		return nil, app_errors.UnauthorizedError(key_pairs.ErrInvalidToken).
-			WithDescription("invalid actor").
+			WithDescription("invalid author").
 			WithCause(err)
 	}
-	return actor, nil
+	return author, nil
 }

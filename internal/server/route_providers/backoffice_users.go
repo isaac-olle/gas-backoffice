@@ -24,17 +24,17 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 
 	t.GET("",
 		ownership.User(p.queryBus),
-		p.executor.Run(userHandlers.NewGetUserHandler(p.queryBus, helpers.UserIdFromActor)),
+		p.executor.Run(userHandlers.NewGetUserHandler(p.queryBus, helpers.UserIdFromAuthor)),
 	)
 	t.PATCH("/name",
 		ownership.User(p.queryBus),
 		system_resource.User(p.queryBus),
-		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandBus, helpers.UserIdFromActor)),
+		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandBus, helpers.UserIdFromAuthor)),
 	)
 	t.DELETE("",
 		ownership.User(p.queryBus),
 		system_resource.User(p.queryBus),
-		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandBus, helpers.UserIdFromActor)),
+		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandBus, helpers.UserIdFromAuthor)),
 	)
 
 	pr := t.Group("/protected-resources/:protected_resource_id")
@@ -46,15 +46,15 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(prHandlers.NewCreateProtectedResourceHandler(
 			p.commandBus,
-			helpers.UserOwnershipFromActor,
+			helpers.UserOwnershipFromAuthor,
 			ids.ProtectedResourceIdFromContext,
-			helpers.UserIdFromActor,
+			helpers.UserIdFromAuthor,
 		)),
 		p.executor.Run(scopeHandlers.NewCreateScopesFromBodyHandler(
 			p.commandBus,
-			helpers.UserOwnershipFromActor,
+			helpers.UserOwnershipFromAuthor,
 			ids.ProtectedResourceIdFromContext,
-			helpers.UserIdFromActor,
+			helpers.UserIdFromAuthor,
 			helpers.GenerateScopeId,
 		)),
 	)
@@ -120,7 +120,7 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		ownership.User(p.queryBus),
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(clientHandlers.NewCreateClientHandler(
-			p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromActor, helpers.UserOwnershipFromActor,
+			p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromAuthor, helpers.UserOwnershipFromAuthor,
 		)),
 		p.executor.Run(clientHandlers.NewCreateClientAssertionKeyHandler(
 			p.commandBus, ids.ClientIdFromContext,

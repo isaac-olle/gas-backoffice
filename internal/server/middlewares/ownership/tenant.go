@@ -7,15 +7,15 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func User(queryBus query.Bus) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		actor, ok := vo2.ActorFromContext[*actors.AdminActor](c.Request.Context())
+		author, ok := vo2.AuthorFromContext[*authors.AdminAuthor](c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.UnauthorizedError("MISSING_ACTOR"))
+			_ = c.Error(app_errors.UnauthorizedError("MISSING_AUTHOR"))
 			c.Abort()
 			return
 		}
@@ -28,7 +28,7 @@ func User(queryBus query.Bus) gin.HandlerFunc {
 		}
 
 		result, err := query.DispatchTyped[users.Ownership](c.Request.Context(), queryBus,
-			userCheckOwnership.NewQuery(userId.String(), actor.Id),
+			userCheckOwnership.NewQuery(userId.String(), author.Id),
 		)
 		if err != nil {
 			_ = c.Error(err)

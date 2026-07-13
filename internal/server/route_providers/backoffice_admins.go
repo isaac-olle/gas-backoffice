@@ -28,7 +28,7 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 		middlewares.RoleMiddleware(vo.AdminRole),
 	)
 	authenticated.GET("",
-		p.executor.Run(admins.NewGetAdminHandler(p.queryBus, helpers.AdminIdFromActor)),
+		p.executor.Run(admins.NewGetAdminHandler(p.queryBus, helpers.AdminIdFromAuthor)),
 	)
 
 	user := authenticated.Group("/users/:user_id")
@@ -37,7 +37,7 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	user.PUT("",
 		p.executor.Run(userHandlers.NewCreateUserHandler(
-			p.commandBus, helpers.AdminIdFromActor, ids.UserIdFromContext,
+			p.commandBus, helpers.AdminIdFromAuthor, ids.UserIdFromContext,
 		)),
 	)
 	user.DELETE("",

@@ -7,8 +7,8 @@ type AuditRecord struct {
 	EventType     string
 	AggregateID   string
 	AggregateType string
-	ActorID       *string
-	ActorRole     *string
+	AuthorID      *string
+	AuthorRole    *string
 	Payload       []byte
 	OccurredAt    time.Time
 }

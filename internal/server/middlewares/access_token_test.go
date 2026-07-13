@@ -13,12 +13,12 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 func TestAccessToken(t *testing.T) {
 	t.Parallel()
-	validActor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-000000000001")
+	validAuthor, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-000000000001")
 
 	tests := []struct {
 		name       string
@@ -50,7 +50,7 @@ func TestAccessToken(t *testing.T) {
 		{
 			name:       "valid_token_sets_actor_and_continues",
 			authHeader: "Bearer validtoken",
-			busResult:  vo.Actor(validActor),
+			busResult:  vo.Author(validAuthor),
 			busCalled:  true,
 			wantNext:   true,
 		},

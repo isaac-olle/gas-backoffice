@@ -38,10 +38,10 @@ func (s *Subscriber) On(ctx context.Context, evt event.Event) error {
 		OccurredAt:    p.OccurredOn,
 	}
 
-	if actor, ok := vo.ActorFromContext[vo.Actor](ctx); ok {
-		prims := actor.ToPrimitives()
-		rec.ActorID = &prims.Id
-		rec.ActorRole = &prims.Role
+	if author, ok := vo.AuthorFromContext[vo.Author](ctx); ok {
+		prims := author.ToPrimitives()
+		rec.AuthorID = &prims.Id
+		rec.AuthorRole = &prims.Role
 	}
 
 	return s.repo.Save(ctx, rec)

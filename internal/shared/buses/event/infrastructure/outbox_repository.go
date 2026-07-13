@@ -26,13 +26,13 @@ func NewOutboxRepository(pool *pgxpool.Pool) *Repository {
 
 // Save inserts domain events into the outbox.
 // Participates in the ambient transaction from ctx if present.
-// The actor is extracted from ctx if available.
+// The author is extracted from ctx if available.
 func (r *Repository) Save(ctx context.Context, events []event2.Event) error {
-	var actorId, actorRole *string
-	if actor, ok := vo.ActorFromContext[vo.Actor](ctx); ok {
-		p := actor.ToPrimitives()
-		actorId = &p.Id
-		actorRole = &p.Role
+	var authorId, authorRole *string
+	if author, ok := vo.AuthorFromContext[vo.Author](ctx); ok {
+		p := author.ToPrimitives()
+		authorId = &p.Id
+		authorRole = &p.Role
 	}
 
 	for _, evt := range events {
@@ -42,9 +42,9 @@ func (r *Repository) Save(ctx context.Context, events []event2.Event) error {
 			return fmt.Errorf("marshal event payload: %w", err)
 		}
 		if err = r.postgres.Save(ctx,
-			`INSERT INTO outbox_event_bus (event_id, event_name, aggregate_id, payload, occurred_at, actor_id, actor_role)
+			`INSERT INTO outbox_event_bus (event_id, event_name, aggregate_id, payload, occurred_at, author_id, author_role)
 			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			p.ID, p.Type, p.AggregateID, payload, p.OccurredOn, actorId, actorRole,
+			p.ID, p.Type, p.AggregateID, payload, p.OccurredOn, authorId, authorRole,
 		); err != nil {
 			return fmt.Errorf("insert outbox event %s: %w", p.ID, err)
 		}

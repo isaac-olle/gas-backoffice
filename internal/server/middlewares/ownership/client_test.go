@@ -14,7 +14,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
 	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -27,8 +27,8 @@ func TestOwnershipClient_QuerySucceeds_SetsOwnershipAndCallsNext(t *testing.T) {
 	var capturedCtx context.Context
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -58,8 +58,8 @@ func TestOwnershipClient_QueryFails_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -106,8 +106,8 @@ func TestOwnershipClient_MissingClientId_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		c.Next()
@@ -129,8 +129,8 @@ func TestOwnershipClient_MissingUserId_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		actor, _ := actors.NewAdminActorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithActor(c.Request.Context(), actor))
+		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
+		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		clientId, _ := ids2.NewClientIdFromString("c1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithClientId(c.Request.Context(), clientId))
 		c.Next()

@@ -16,12 +16,12 @@ func registerClients(g *gin.RouterGroup, p *Backoffice) {
 	)
 
 	c.GET("",
-		p.executor.Run(clientHandlers.NewGetClientHandler(p.queryBus, helpers.ClientIdFromActor)),
+		p.executor.Run(clientHandlers.NewGetClientHandler(p.queryBus, helpers.ClientIdFromAuthor)),
 	)
 	c.POST("/redirect-uris",
-		p.executor.Run(clientHandlers.NewAddRedirectUriHandler(p.commandBus, helpers.ClientIdFromActor)),
+		p.executor.Run(clientHandlers.NewAddRedirectUriHandler(p.commandBus, helpers.ClientIdFromAuthor)),
 	)
 	c.POST("/flows",
-		p.executor.Run(clientHandlers.NewAddAllowedFlowHandler(p.commandBus, helpers.ClientIdFromActor)),
+		p.executor.Run(clientHandlers.NewAddAllowedFlowHandler(p.commandBus, helpers.ClientIdFromAuthor)),
 	)
 }

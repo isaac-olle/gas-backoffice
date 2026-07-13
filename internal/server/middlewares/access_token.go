@@ -19,7 +19,7 @@ func AccessToken(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		actor, err := query.DispatchTyped[vo.Actor](
+		author, err := query.DispatchTyped[vo.Author](
 			c.Request.Context(),
 			queryBus,
 			verifyJwt.NewQuery(token),
@@ -31,9 +31,9 @@ func AccessToken(queryBus query.Bus) gin.HandlerFunc {
 		}
 
 		c.Request = c.Request.WithContext(
-			vo.WithActor(
+			vo.WithAuthor(
 				c.Request.Context(),
-				actor,
+				author,
 			),
 		)
 		c.Next()

@@ -26,7 +26,7 @@ func NewPostgresProtectedResourceRepository(db *pgxpool.Pool) *PostgresProtected
 
 func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *protected_resources.ProtectedResource) error {
 	p := pr.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO backoffice.protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -37,12 +37,12 @@ func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *prot
 	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserId, p.AdminId, p.ScopeIds, p.IsSystem, authorId, authorRole)
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 

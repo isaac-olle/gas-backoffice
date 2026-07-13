@@ -72,11 +72,11 @@ func (s *Service) VerifyAssertion(ctx context.Context, qry *Query) (any, error) 
 			WithCause(err)
 	}
 
-	actor, err := tokenClaims.ToActor()
+	author, err := tokenClaims.ToAuthor()
 	if err != nil {
 		return nil, app_errors.UnauthorizedError(admin_assertion_keys.ErrInvalidAdminAssertion).
-			WithDescription("failed to convert assertion claims to actor").
+			WithDescription("failed to convert assertion claims to author").
 			WithCause(err)
 	}
-	return actor, nil
+	return author, nil
 }

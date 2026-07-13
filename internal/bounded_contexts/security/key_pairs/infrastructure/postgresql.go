@@ -26,7 +26,7 @@ func NewPostgresKeyPairRepository(db *pgxpool.Pool) *PostgresKeyPairRepository {
 
 func (r *PostgresKeyPairRepository) Save(ctx context.Context, keyPair *key_pairs.KeyPair) error {
 	p := keyPair.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO security.key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -63,12 +63,12 @@ func (r *PostgresKeyPairRepository) HardDelete(ctx context.Context, id ids.KeyPa
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 

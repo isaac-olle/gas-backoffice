@@ -1,28 +1,28 @@
-package actors
+package authors
 
 import (
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-type ClientActor struct {
+type ClientAuthor struct {
 	Id ids.ClientId
 }
 
-func NewClientActorFromString(id string) (*ClientActor, error) {
+func NewClientAuthorFromString(id string) (*ClientAuthor, error) {
 	clientId, err := ids.NewClientIdFromString(id)
 	if err != nil {
 		return nil, err
 	}
-	return &ClientActor{Id: clientId}, nil
+	return &ClientAuthor{Id: clientId}, nil
 }
 
-func (a *ClientActor) EqualsRole(other vo2.Role) bool {
+func (a *ClientAuthor) EqualsRole(other vo2.Role) bool {
 	return other.Equals(vo2.ClientRole)
 }
 
-func (a *ClientActor) ToPrimitives() *vo2.ActorPrimitives {
-	return &vo2.ActorPrimitives{
+func (a *ClientAuthor) ToPrimitives() *vo2.AuthorPrimitives {
+	return &vo2.AuthorPrimitives{
 		Id:   a.Id.String(),
 		Role: vo2.ClientRole.String(),
 	}

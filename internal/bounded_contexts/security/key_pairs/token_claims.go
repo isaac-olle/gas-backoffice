@@ -3,7 +3,7 @@ package key_pairs
 import (
 	"fmt"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/actors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type TokenClaims struct {
@@ -53,6 +53,6 @@ func (t *TokenClaims) CheckAudience(expectedAud string) error {
 	return nil
 }
 
-func (t *TokenClaims) ToActor() (vo2.Actor, error) {
-	return actors.NewActorForRole(t.role, t.sub)
+func (t *TokenClaims) ToAuthor() (vo2.Author, error) {
+	return authors.NewAuthorForRole(t.role, t.sub)
 }

@@ -28,7 +28,7 @@ func NewPostgresAdminAssertionKeyRepository(db *pgxpool.Pool) *PostgresAdminAsse
 
 func (r *PostgresAdminAssertionKeyRepository) Save(ctx context.Context, aak *admin_assertion_keys.AdminAssertionKey) error {
 	p := aak.ToPrimitives()
-	authorId, authorRole := actorPrimitives(ctx)
+	authorId, authorRole := authorPrimitives(ctx)
 	query := `
 		INSERT INTO security.admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -64,12 +64,12 @@ func (r *PostgresAdminAssertionKeyRepository) HardDelete(ctx context.Context, id
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
-func actorPrimitives(ctx context.Context) (string, string) {
-	actor, ok := vo.ActorFromContext[vo.Actor](ctx)
+func authorPrimitives(ctx context.Context) (string, string) {
+	author, ok := vo.AuthorFromContext[vo.Author](ctx)
 	if !ok {
 		return "", ""
 	}
-	p := actor.ToPrimitives()
+	p := author.ToPrimitives()
 	return p.Id, p.Role
 }
 
