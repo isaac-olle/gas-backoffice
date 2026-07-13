@@ -27,7 +27,7 @@ func NewPostgresAdminRepository(db *pgxpool.Pool) *PostgresAdminRepository {
 func (r *PostgresAdminRepository) Save(ctx context.Context, admin *admins.Admin) error {
 	p := admin.ToPrimitives()
 	query := `
-		INSERT INTO admins (id, name, user_ids, is_system)
+		INSERT INTO backoffice.admins (id, name, user_ids, is_system)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
@@ -37,7 +37,7 @@ func (r *PostgresAdminRepository) Save(ctx context.Context, admin *admins.Admin)
 }
 
 func (r *PostgresAdminRepository) SearchById(ctx context.Context, id ids.AdminId) (*admins.Admin, error) {
-	query := `SELECT id, name, user_ids, is_system FROM admins WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, user_ids, is_system FROM backoffice.admins WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -46,12 +46,12 @@ func (r *PostgresAdminRepository) Matching(ctx context.Context, _ criteria.Crite
 }
 
 func (r *PostgresAdminRepository) SoftDelete(ctx context.Context, id ids.AdminId) error {
-	query := `UPDATE admins SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE backoffice.admins SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresAdminRepository) HardDelete(ctx context.Context, id ids.AdminId) error {
-	query := `DELETE FROM admins WHERE id = $1`
+	query := `DELETE FROM backoffice.admins WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

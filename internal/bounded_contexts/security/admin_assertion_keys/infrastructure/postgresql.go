@@ -30,7 +30,7 @@ func (r *PostgresAdminAssertionKeyRepository) Save(ctx context.Context, aak *adm
 	p := aak.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
+		INSERT INTO security.admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			admin_id = EXCLUDED.admin_id,
@@ -41,12 +41,12 @@ func (r *PostgresAdminAssertionKeyRepository) Save(ctx context.Context, aak *adm
 }
 
 func (r *PostgresAdminAssertionKeyRepository) SearchById(ctx context.Context, id ids2.AdminAssertionKeyId) (*admin_assertion_keys.AdminAssertionKey, error) {
-	query := `SELECT id, admin_id, algorithm, public_key FROM admin_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, admin_id, algorithm, public_key FROM security.admin_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
 func (r *PostgresAdminAssertionKeyRepository) FindByAdminId(ctx context.Context, adminID ids2.AdminId) (*admin_assertion_keys.AdminAssertionKey, error) {
-	query := `SELECT id, admin_id, algorithm, public_key FROM admin_assertion_keys WHERE admin_id = $1 AND deleted_at IS NULL LIMIT 1`
+	query := `SELECT id, admin_id, algorithm, public_key FROM security.admin_assertion_keys WHERE admin_id = $1 AND deleted_at IS NULL LIMIT 1`
 	return r.postgres.Find(ctx, query, r.fromRow, adminID.String())
 }
 
@@ -55,12 +55,12 @@ func (r *PostgresAdminAssertionKeyRepository) Matching(ctx context.Context, _ cr
 }
 
 func (r *PostgresAdminAssertionKeyRepository) SoftDelete(ctx context.Context, id ids2.AdminAssertionKeyId) error {
-	query := `UPDATE admin_assertion_keys SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE security.admin_assertion_keys SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresAdminAssertionKeyRepository) HardDelete(ctx context.Context, id ids2.AdminAssertionKeyId) error {
-	query := `DELETE FROM admin_assertion_keys WHERE id = $1`
+	query := `DELETE FROM security.admin_assertion_keys WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

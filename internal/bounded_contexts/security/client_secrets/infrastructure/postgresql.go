@@ -29,7 +29,7 @@ func (r *PostgresClientSecretRepository) Save(ctx context.Context, cs *client_se
 	p := cs.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO client_secrets (id, client_id, secret_hash, author_id, author_role)
+		INSERT INTO security.client_secrets (id, client_id, secret_hash, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (id) DO UPDATE SET
 			client_id = EXCLUDED.client_id,
@@ -39,7 +39,7 @@ func (r *PostgresClientSecretRepository) Save(ctx context.Context, cs *client_se
 }
 
 func (r *PostgresClientSecretRepository) SearchById(ctx context.Context, id ids2.ClientSecretId) (*client_secrets.ClientSecret, error) {
-	query := `SELECT id, client_id, secret_hash FROM client_secrets WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, secret_hash FROM security.client_secrets WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -48,17 +48,17 @@ func (r *PostgresClientSecretRepository) Matching(ctx context.Context, _ criteri
 }
 
 func (r *PostgresClientSecretRepository) SoftDelete(ctx context.Context, id ids2.ClientSecretId) error {
-	query := `UPDATE client_secrets SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE security.client_secrets SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresClientSecretRepository) HardDelete(ctx context.Context, id ids2.ClientSecretId) error {
-	query := `DELETE FROM client_secrets WHERE id = $1`
+	query := `DELETE FROM security.client_secrets WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresClientSecretRepository) FindByClientId(ctx context.Context, clientID ids2.ClientId) (*client_secrets.ClientSecret, error) {
-	query := `SELECT id, client_id, secret_hash FROM client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`
+	query := `SELECT id, client_id, secret_hash FROM security.client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
 }
 

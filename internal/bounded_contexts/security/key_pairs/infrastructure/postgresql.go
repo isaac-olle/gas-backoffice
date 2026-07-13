@@ -28,7 +28,7 @@ func (r *PostgresKeyPairRepository) Save(ctx context.Context, keyPair *key_pairs
 	p := keyPair.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
+		INSERT INTO security.key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO UPDATE SET
 			protected_resource_id = EXCLUDED.protected_resource_id,
@@ -40,12 +40,12 @@ func (r *PostgresKeyPairRepository) Save(ctx context.Context, keyPair *key_pairs
 }
 
 func (r *PostgresKeyPairRepository) SearchById(ctx context.Context, id ids.KeyPairId) (*key_pairs.KeyPair, error) {
-	query := `SELECT id, protected_resource_id, algorithm, public_key, private_key FROM key_pairs WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, protected_resource_id, algorithm, public_key, private_key FROM security.key_pairs WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
 func (r *PostgresKeyPairRepository) SearchByProtectedResourceId(ctx context.Context, id ids.ProtectedResourceId) (*key_pairs.KeyPair, error) {
-	query := `SELECT id, protected_resource_id, algorithm, public_key, private_key FROM key_pairs WHERE protected_resource_id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, protected_resource_id, algorithm, public_key, private_key FROM security.key_pairs WHERE protected_resource_id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -54,12 +54,12 @@ func (r *PostgresKeyPairRepository) Matching(ctx context.Context, _ criteria.Cri
 }
 
 func (r *PostgresKeyPairRepository) SoftDelete(ctx context.Context, id ids.KeyPairId) error {
-	query := `UPDATE key_pairs SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE security.key_pairs SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresKeyPairRepository) HardDelete(ctx context.Context, id ids.KeyPairId) error {
-	query := `DELETE FROM key_pairs WHERE id = $1`
+	query := `DELETE FROM security.key_pairs WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

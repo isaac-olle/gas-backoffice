@@ -29,7 +29,7 @@ func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope)
 	p := scope.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system, author_id, author_role)
+		INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
@@ -51,7 +51,7 @@ func actorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system FROM scopes WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, user_id, admin_id, allowed_client_ids, is_system FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -60,12 +60,12 @@ func (r *PostgresScopeRepository) Matching(ctx context.Context, _ criteria.Crite
 }
 
 func (r *PostgresScopeRepository) SoftDelete(ctx context.Context, id ids.ScopeId) error {
-	query := `UPDATE scopes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE backoffice.scopes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresScopeRepository) HardDelete(ctx context.Context, id ids.ScopeId) error {
-	query := `DELETE FROM scopes WHERE id = $1`
+	query := `DELETE FROM backoffice.scopes WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

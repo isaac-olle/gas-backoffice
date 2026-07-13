@@ -86,7 +86,7 @@ func main() {
 	}
 
 	var existing string
-	err = pool.QueryRow(ctx, `SELECT id FROM admins WHERE name = $1 LIMIT 1`, "Gas-Seed-Admin").Scan(&existing)
+	err = pool.QueryRow(ctx, `SELECT id FROM backoffice.admins WHERE name = $1 LIMIT 1`, "Gas-Seed-Admin").Scan(&existing)
 	if err == nil {
 		fatalf("seed already applied (admin %s exists)", existing)
 	}
@@ -103,35 +103,35 @@ func main() {
 		}
 	}
 
-	exec_(`INSERT INTO admins (id, name, is_system) VALUES ($1, $2, TRUE)`,
+	exec_(`INSERT INTO backoffice.admins (id, name, is_system) VALUES ($1, $2, TRUE)`,
 		adminID, "Gas-Seed-Admin")
 
-	exec_(`INSERT INTO admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
+	exec_(`INSERT INTO security.admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, '', '')`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
-	exec_(`INSERT INTO users (id, name, admin_id, protected_resource_ids, is_system, author_id, author_role)
+	exec_(`INSERT INTO backoffice.users (id, name, admin_id, protected_resource_ids, is_system, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, TRUE, '', '')`,
 		userID, "Gas-User", adminID, []string{prID})
 
-	exec_(`INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
+	exec_(`INSERT INTO backoffice.protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		prID, "Gas-Backoffice", userID, adminID,
 		[]string{scopeCreateID, scopeReadID, scopeReadAllID})
 
-	exec_(`INSERT INTO key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
+	exec_(`INSERT INTO security.key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, $5, '', '')`,
 		keyPairID, prID, "RS256", backofficePubKeyPEM, backofficePrivKeyPEM)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+	exec_(`INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeCreateID, "users:create", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+	exec_(`INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeReadID, "users:read", prID, userID, adminID)
 
-	exec_(`INSERT INTO scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
+	exec_(`INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
 		      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')`,
 		scopeReadAllID, "users:read_all", prID, userID, adminID)
 

@@ -28,7 +28,7 @@ func (r *PostgresClientAssertionKeyRepository) Save(ctx context.Context, cak *cl
 	p := cak.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO client_assertion_keys (id, client_id, algorithm, public_key, author_id, author_role)
+		INSERT INTO security.client_assertion_keys (id, client_id, algorithm, public_key, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			client_id = EXCLUDED.client_id,
@@ -39,7 +39,7 @@ func (r *PostgresClientAssertionKeyRepository) Save(ctx context.Context, cak *cl
 }
 
 func (r *PostgresClientAssertionKeyRepository) SearchById(ctx context.Context, id ids2.ClientAssertionKeyId) (*client_assertion_keys.ClientAssertionKey, error) {
-	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM client_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM security.client_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -48,17 +48,17 @@ func (r *PostgresClientAssertionKeyRepository) Matching(ctx context.Context, _ c
 }
 
 func (r *PostgresClientAssertionKeyRepository) SoftDelete(ctx context.Context, id ids2.ClientAssertionKeyId) error {
-	query := `UPDATE client_assertion_keys SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE security.client_assertion_keys SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresClientAssertionKeyRepository) HardDelete(ctx context.Context, id ids2.ClientAssertionKeyId) error {
-	query := `DELETE FROM client_assertion_keys WHERE id = $1`
+	query := `DELETE FROM security.client_assertion_keys WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresClientAssertionKeyRepository) FindByClientId(ctx context.Context, clientID ids2.ClientId) (*client_assertion_keys.ClientAssertionKey, error) {
-	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM client_assertion_keys WHERE client_id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM security.client_assertion_keys WHERE client_id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
 }
 

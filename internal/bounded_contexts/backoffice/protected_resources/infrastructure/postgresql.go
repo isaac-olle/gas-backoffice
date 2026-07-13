@@ -28,7 +28,7 @@ func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *prot
 	p := pr.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
+		INSERT INTO backoffice.protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
@@ -47,7 +47,7 @@ func actorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresProtectedResourceRepository) SearchById(ctx context.Context, id ids.ProtectedResourceId) (*protected_resources.ProtectedResource, error) {
-	query := `SELECT id, name, user_id, admin_id, scope_ids, is_system FROM protected_resources WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, user_id, admin_id, scope_ids, is_system FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -56,12 +56,12 @@ func (r *PostgresProtectedResourceRepository) Matching(ctx context.Context, _ cr
 }
 
 func (r *PostgresProtectedResourceRepository) SoftDelete(ctx context.Context, id ids.ProtectedResourceId) error {
-	query := `UPDATE protected_resources SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE backoffice.protected_resources SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresProtectedResourceRepository) HardDelete(ctx context.Context, id ids.ProtectedResourceId) error {
-	query := `DELETE FROM protected_resources WHERE id = $1`
+	query := `DELETE FROM backoffice.protected_resources WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

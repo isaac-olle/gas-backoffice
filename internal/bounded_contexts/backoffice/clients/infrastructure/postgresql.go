@@ -28,7 +28,7 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 	p := client.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO clients (id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
+		INSERT INTO backoffice.clients (id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
@@ -51,7 +51,7 @@ func actorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresClientRepository) SearchById(ctx context.Context, id ids.ClientId) (*clients.Client, error) {
-	query := `SELECT id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids FROM clients WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -60,12 +60,12 @@ func (r *PostgresClientRepository) Matching(ctx context.Context, _ criteria.Crit
 }
 
 func (r *PostgresClientRepository) SoftDelete(ctx context.Context, id ids.ClientId) error {
-	query := `UPDATE clients SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE backoffice.clients SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresClientRepository) HardDelete(ctx context.Context, id ids.ClientId) error {
-	query := `DELETE FROM clients WHERE id = $1`
+	query := `DELETE FROM backoffice.clients WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

@@ -37,7 +37,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) Save(ctx context.Context, s
 	}
 
 	query := `
-		INSERT INTO protocol_authorization_code_sessions (
+		INSERT INTO protocol.protocol_authorization_code_sessions (
 			session_id, client_id, redirect_uri, scope, state,
 			response_types, code, pkce, session_state, flow, consumed,
 			expires_at
@@ -60,7 +60,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) FindById(ctx context.Contex
 	query := `
 		SELECT session_id, client_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, flow, consumed
-		FROM protocol_authorization_code_sessions WHERE session_id = $1 AND deleted_at IS NULL
+		FROM protocol.protocol_authorization_code_sessions WHERE session_id = $1 AND deleted_at IS NULL
 	`
 	return r.postgres.Find(ctx, query, scanAuthorizationCodeSession, id.String())
 }
@@ -69,13 +69,13 @@ func (r *PostgresAuthorizationCodeSessionRepository) FindByCode(ctx context.Cont
 	query := `
 		SELECT session_id, client_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, flow, consumed
-		FROM protocol_authorization_code_sessions WHERE code = $1 AND deleted_at IS NULL
+		FROM protocol.protocol_authorization_code_sessions WHERE code = $1 AND deleted_at IS NULL
 	`
 	return r.postgres.Find(ctx, query, scanAuthorizationCodeSession, code)
 }
 
 func (r *PostgresAuthorizationCodeSessionRepository) SoftDelete(ctx context.Context, id ids.SessionId) error {
-	query := `UPDATE protocol_authorization_code_sessions SET deleted_at = NOW() WHERE session_id = $1`
+	query := `UPDATE protocol.protocol_authorization_code_sessions SET deleted_at = NOW() WHERE session_id = $1`
 	if err := r.postgres.Delete(ctx, query, id.String()); err != nil {
 		return fmt.Errorf("soft delete session: %w", err)
 	}
@@ -83,7 +83,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) SoftDelete(ctx context.Cont
 }
 
 func (r *PostgresAuthorizationCodeSessionRepository) HardDelete(ctx context.Context, id ids.SessionId) error {
-	query := `DELETE FROM protocol_authorization_code_sessions WHERE session_id = $1`
+	query := `DELETE FROM protocol.protocol_authorization_code_sessions WHERE session_id = $1`
 	if err := r.postgres.Delete(ctx, query, id.String()); err != nil {
 		return fmt.Errorf("hard delete session: %w", err)
 	}

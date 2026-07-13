@@ -28,7 +28,7 @@ func (r *PostgresUserRepository) Save(ctx context.Context, user *users.User) err
 	p := user.ToPrimitives()
 	authorId, authorRole := actorPrimitives(ctx)
 	query := `
-		INSERT INTO users (id, name, admin_id, client_ids, protected_resource_ids, is_system, author_id, author_role)
+		INSERT INTO backoffice.users (id, name, admin_id, client_ids, protected_resource_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
@@ -48,7 +48,7 @@ func actorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresUserRepository) SearchById(ctx context.Context, id ids.UserId) (*users.User, error) {
-	query := `SELECT id, name, admin_id, client_ids, protected_resource_ids, is_system FROM users WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, admin_id, client_ids, protected_resource_ids, is_system FROM backoffice.users WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -57,12 +57,12 @@ func (r *PostgresUserRepository) Matching(ctx context.Context, _ criteria.Criter
 }
 
 func (r *PostgresUserRepository) SoftDelete(ctx context.Context, id ids.UserId) error {
-	query := `UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE backoffice.users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 
 func (r *PostgresUserRepository) HardDelete(ctx context.Context, id ids.UserId) error {
-	query := `DELETE FROM users WHERE id = $1`
+	query := `DELETE FROM backoffice.users WHERE id = $1`
 	return r.postgres.Delete(ctx, query, id.String())
 }
 

@@ -13,6 +13,7 @@ resource "postgresql_schema" "public" {
   }
 }
 
+
 resource "digitalocean_database_user" "gas_backoffice_admin" {
   cluster_id = data.digitalocean_database_cluster.postgres.id
   name       = "gas_backoffice_admin"
@@ -112,3 +113,4 @@ resource "postgresql_default_privileges" "gas_backoffice_service_future_sequence
   owner       = digitalocean_database_user.gas_backoffice_admin.name
   privileges  = ["USAGE", "SELECT"]
 }
+

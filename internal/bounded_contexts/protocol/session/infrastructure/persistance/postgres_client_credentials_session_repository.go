@@ -20,7 +20,7 @@ func (r *PostgresClientCredentialsSessionRepository) Save(ctx context.Context, s
 	p := sess.ToPrimitives()
 
 	_, err := r.pool.Exec(ctx, `
-		INSERT INTO protocol_client_credentials_sessions (
+		INSERT INTO protocol.protocol_client_credentials_sessions (
 			id, client_id, user_id, admin_id, scope, issued_at
 		) VALUES ($1,$2,$3,$4,$5,$6)
 	`, p.ID, p.ClientID, p.UserId, p.AdminID, p.Scope, p.IssuedAt)
