@@ -17,7 +17,7 @@ func applyMigrations(log *logger.ZapLoggerAdapter, migrationsPath, migrationsDSN
 	if err != nil {
 		return fmt.Errorf("failed to init migrations: %w", err)
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	version, dirty, _ := m.Version()
 	if dirty {
