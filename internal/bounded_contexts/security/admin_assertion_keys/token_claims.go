@@ -2,8 +2,8 @@ package admin_assertion_keys
 
 import (
 	"fmt"
-	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type TokenClaims struct {
@@ -61,6 +61,10 @@ func (t *TokenClaims) CheckAudience(expectedValue string) error {
 	return nil
 }
 
-func (t *TokenClaims) ToAuthor() (vo2.Author, error) {
-	return authors.NewAuthorForRole(vo2.AdminRole, t.sub)
+func (t *TokenClaims) ToAuthor() (*authors.AdminAuthor, error) {
+	adminId, err := ids.NewAdminIdFromString(t.sub)
+	if err != nil {
+		return nil, err
+	}
+	return &authors.AdminAuthor{Id: adminId}, nil
 }
