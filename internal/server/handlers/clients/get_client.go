@@ -2,13 +2,14 @@ package clients
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	clientGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetClientHandler struct {
@@ -25,7 +26,11 @@ func (h *GetClientHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
-	return h.queryBus.Dispatch(c.Request.Context(), clientGet.NewQuery(clientId.String()))
+	client, err := query.DispatchTyped[*clients.Client](c.Request.Context(), h.queryBus, clientGet.NewQuery(clientId.String()))
+	if err != nil {
+		return nil, err
+	}
+	return client.ToPrimitives(), nil
 }
 
 func (h *GetClientHandler) Success(c *gin.Context, result any) error {

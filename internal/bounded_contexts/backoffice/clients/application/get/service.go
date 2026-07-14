@@ -30,5 +30,5 @@ func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
 		return nil, app_errors.AddTrace(err)
 	}
 
-	return client.ToPrimitives(), nil
+	return client, nil
 }

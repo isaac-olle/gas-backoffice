@@ -19,5 +19,5 @@ func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return admin.ToPrimitives(), nil
+	return admin, nil
 }
