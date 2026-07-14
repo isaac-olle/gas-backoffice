@@ -43,9 +43,6 @@ func New(
 	router.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 		SkipPaths: []string{"/health"},
 		Formatter: func(p gin.LogFormatterParams) string {
-			if p.StatusCode >= 400 {
-				return ""
-			}
 			return fmt.Sprintf("[GIN] %s %s %d %s\n", p.Method, p.Path, p.StatusCode, p.Latency)
 		},
 	}))
