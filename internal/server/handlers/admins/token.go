@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/admin_assertion_keys/application/verify_assertion"
 	generateJwtByPrId "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt_by_pr_id"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
@@ -21,6 +22,8 @@ func NewTokenHandler(queryBus query.Bus, backofficePrId, jwtIssuer string) *Toke
 	return &TokenHandler{queryBus: queryBus, backofficePrId: backofficePrId, jwtIssuer: jwtIssuer}
 }
 
+const ErrInvalidTokenRequest app_errors.ErrorCode = "INVALID_TOKEN_REQUEST"
+
 type adminTokenRequest struct {
 	GrantType string `form:"grant_type" binding:"required"`
 	Assertion string `form:"assertion" binding:"required"`
@@ -29,7 +32,7 @@ type adminTokenRequest struct {
 func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 	var req adminTokenRequest
 	if err := c.ShouldBind(&req); err != nil {
-		return nil, err
+		return nil, app_errors.BadRequestError(ErrInvalidTokenRequest).WithCause(err)
 	}
 
 	adminAuthor, err := query.DispatchTyped[*authors.AdminAuthor](
