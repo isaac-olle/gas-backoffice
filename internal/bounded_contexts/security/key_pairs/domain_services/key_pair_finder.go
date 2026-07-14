@@ -25,7 +25,8 @@ func (f *KeyPairFinder) Find(ctx context.Context, id ids.KeyPairId) (*key_pairs.
 	}
 	if kp == nil {
 		return nil, app_errors.NotFoundError(key_pairs.ErrKeyPairNotFound).
-			WithDescription("key pair not found")
+			WithDescription("key pair not found").
+			WithDetails(map[string]any{"key_pair_id": id.String()})
 	}
 	return kp, nil
 }

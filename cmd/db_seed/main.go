@@ -33,9 +33,10 @@ import (
 // Amb --env-file escriu també els outputs al fitxer .env indicat (ús local).
 //
 // go run ./cmd/seed
-// go run ./cmd/db_seed --env-file config/.env
+// go run ./cmd/db_seed --env-file .env.local
 func main() {
 	envFile := flag.String("env-file", "", "path to a .env file to load and update (optional, local use)")
+	adminTokenEnvFile := flag.String("admin-token-env-file", "", "path to the .env file to write admin token vars (defaults to --env-file if set)")
 	flag.Parse()
 
 	if *envFile != "" {
@@ -154,8 +155,22 @@ func main() {
 	}
 
 	if *envFile != "" {
-		if err = writeEnvFile(*envFile, outputs); err != nil {
+		if err = writeEnvFile(*envFile, map[string]string{"BACKOFFICE_PR_ID": prID}); err != nil {
 			fatalf("write env file: %v", err)
+		}
+	}
+
+	targetEnv := *adminTokenEnvFile
+	if targetEnv == "" {
+		targetEnv = *envFile
+	}
+	if targetEnv != "" {
+		if err = writeEnvFile(targetEnv, map[string]string{
+			"SEED_ADMIN_ID":               adminID,
+			"ADMIN_ASSERTION_KEY_ID":      adminAssertionKeyID,
+			"ADMIN_ASSERTION_PRIVATE_KEY": adminPrivKeyB64,
+		}); err != nil {
+			fatalf("write admin token vars: %v", err)
 		}
 	}
 

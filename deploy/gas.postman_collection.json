@@ -3,32 +3,56 @@
     "_postman_id": "aebbf21e-c1ae-496b-b32d-98d72c507e14",
     "name": "gas",
     "description": "GAS Authorization Server API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "40075699",
-    "_collection_link": "https://go.postman.co/collection/40075699-aebbf21e-c1ae-496b-b32d-98d72c507e14?source=collection_link"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "E2E Flow",
+      "name": "Admin",
       "item": [
         {
-          "name": "01 - Admin Token",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [""]
+          "name": "Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
               }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins/token",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "admins",
+                "token"
+              ]
             },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:jwt-bearer"
+                },
+                {
+                  "key": "assertion",
+                  "value": "{{admin_assertion}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status 200\", function() {",
-                  "    pm.expect(pm.response.code).to.equal(200);",
-                  "});",
+                  "pm.test(\"Status 200\", function() { pm.expect(pm.response.code).to.equal(200); });",
                   "pm.test(\"Response has access_token\", function() {",
                   "    const body = pm.response.json();",
                   "    pm.expect(body).to.have.property('access_token');",
@@ -37,660 +61,2215 @@
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Get Admin",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
-              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                { "key": "grant_type", "value": "urn:ietf:params:oauth:grant-type:jwt-bearer" },
-                { "key": "assertion", "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNhYzI2NjE0LWM2MzMtNDhiZS1hYTkzLWQ3MDJmNWRkNWEwNSIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnYXMiLCJleHAiOjIxMzk5NjA1OTEsImlhdCI6MTc3OTk2NDE5MSwiaXNzIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1IiwianRpIjoiOGU1M2M2YTgtM2U0Zi00MTBmLWIwNTUtNDRlOWU0OTQ3YWMzIiwicm9sZSI6ImFkbWluIiwic3ViIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1In0.WKfPLezmtwQDGb_2IbrBdkqzuP31jaWTiY4GyftWf9BGXB97LA0QEy3c5eUy_kNTlyewoTwJh8t_JOEahtzzvsGAu_84zPqqCT0rE15o8AyEAZTzOKK7tBs-Om_Dz0o_RBfxiQIeP5RczZoIU6mpQFMr7hw-BRlaouPGYLPYO_QvtqQWHQMbbtcXGCuLuXXBQ67z4XpMtvWIm5cmRjXWpIuF5Bedn4GWUtGgwsbq7m2n-uvuFE0PajEtYkCTvc62MadtkkxBV4gzsJU6udyQq2o1a8eAafpl6TLhKrFK7eB_wCnYrg8qWVfChpXK844y_-IEF2lI0BPvcvVnL4tRCQ" }
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/admins",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "admins"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "Create User",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test User\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
               ]
             },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/token",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "token"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "02 - Create User",
-          "event": [
             {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('e2e_user_id', pm.variables.replaceIn('{{$guid}}'));"
-                ]
-              }
+              "name": "Get User",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             },
             {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 201\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "});"
-                ]
-              }
+              "name": "Change User Name",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/name",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "name"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Renamed User\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             }
-          ],
+          ]
+        },
+        {
+          "name": "Protected Resources",
+          "item": [
+            {
+              "name": "Create Protected Resource",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My API\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Protected Resource",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Rename Protected Resource",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/name",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "name"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Renamed API\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Protected Resource",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Scopes",
+          "item": [
+            {
+              "name": "Create Scope",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"read\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Scope",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Scope",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Allowed Client",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}",
+                    "allowed-clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Remove Allowed Client",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}",
+                    "allowed-clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Clients",
+          "item": [
+            {
+              "name": "Create Client",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My Client\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Client",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Allowed Flow",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/flows",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "clients",
+                    "{{client_id}}",
+                    "flows"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flow\": \"client_credentials\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Redirect URI",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/redirect-uris",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "clients",
+                    "{{client_id}}",
+                    "redirect-uris"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"uri\": \"https://example.com/callback\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Client",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    "{{user_id}}",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tenant",
+      "item": [
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "Get Self",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Change Name",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/name",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "name"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Name\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Self",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Protected Resources",
+          "item": [
+            {
+              "name": "Create Protected Resource",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My API\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Protected Resource",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Rename Protected Resource",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/name",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "name"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Renamed API\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Protected Resource",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Scopes",
+          "item": [
+            {
+              "name": "Create Scope",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"read\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Scope",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Scope",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Allowed Client",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}",
+                    "allowed-clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Remove Allowed Client",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources",
+                    "{{protected_resource_id}}",
+                    "scopes",
+                    "{{scope_id}}",
+                    "allowed-clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "protected_resource_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "scope_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Clients",
+          "item": [
+            {
+              "name": "Create Client",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My Client\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Client",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Allowed Flow",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/flows",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    "{{client_id}}",
+                    "flows"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flow\": \"client_credentials\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Redirect URI",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/redirect-uris",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    "{{client_id}}",
+                    "redirect-uris"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"uri\": \"https://example.com/callback\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Delete Client",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    "{{client_id}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200, 204\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Client",
+      "item": [
+        {
+          "name": "Get Self",
           "request": {
-            "method": "PUT",
+            "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{client_token}}"
+              }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"E2E Test User\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
+              "raw": "{{base_url}}/v1/backoffice/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "clients"
+              ]
             }
           },
-          "response": []
-        },
-        {
-          "name": "03 - Get User",
+          "response": [],
           "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", function() {",
-                  "    pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test(\"Response has id and name\", function() {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('id');",
-                  "    pm.expect(body).to.have.property('name');",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
                   "});"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
-            }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "04 - Rename User",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"E2E Renamed User\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/name",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "name"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "05 - Create Protected Resource",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('e2e_protected_resource_id', pm.variables.replaceIn('{{$guid}}'));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/201\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"E2E API\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "06 - Get Protected Resource",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200\", function() {",
-                  "    pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test(\"Response has id and name\", function() {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('id');",
-                  "    pm.expect(body).to.have.property('name');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "07 - Rename Protected Resource",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"E2E API Renamed\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/name",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "name"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "08 - Create Scope",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('e2e_scope_id', pm.variables.replaceIn('{{$guid}}'));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/201\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"read:e2e\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "09 - Get Scope",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200\", function() {",
-                  "    pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test(\"Response has id and name\", function() {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('id');",
-                  "    pm.expect(body).to.have.property('name');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "10 - Create Client",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('e2e_client_id', pm.variables.replaceIn('{{$guid}}'));",
-                  "pm.environment.set('e2e_assertion_key_id', pm.variables.replaceIn('{{$guid}}'));",
-                  "pm.environment.set('e2e_secret_id', pm.variables.replaceIn('{{$guid}}'));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/201\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"E2E Client\",\n  \"assertion_key_id\": \"{{e2e_assertion_key_id}}\",\n  \"public_key\": \"30820122300d06092a864886f70d01010105000382010f003082010a02820101008fa18e300e1c4869cc2493dd422cb7900e7f04a0f9997655194f3c1d055c940a207d2248ca1eafe05c5af8780422614e42a6cfa49f5f895116d4d55534ce0f3982eefcb63e699b786a63263f89a2c3c6d77c237684d2737515d8331968d8a8a1c5f790335e5d440b99220c3cda4cdeeb763ac73a6eac7e5cf82b7a90324c4ce678781449a7fe28efb928060e8d8e31f6c2abaab4af203ecbeed0de901316294822155ef0f328ef815a1a67969f19c3e06c09730c1c1586b87be49567c94e36ce11b8b2295004e396830aeac4d7c79510c971e7d9e307cb8216068881ce1541421ea02961360c7e46319a94b32fbc3ac37c82de5cca8de7fc08921d5f872e587b0203010001\",\n  \"secret_id\": \"{{e2e_secret_id}}\",\n  \"plaintext_secret\": \"e2e-plain-secret\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11 - Get Client",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200\", function() {",
-                  "    pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test(\"Response has id and name\", function() {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('id');",
-                  "    pm.expect(body).to.have.property('name');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "12 - Add Allowed Flow to Client",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/201/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
+          "name": "Add Redirect URI",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{client_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/clients/redirect-uris",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "clients",
+                "redirect-uris"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"flow\": \"authorization_code\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}/flows",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}", "flows"]
+              "raw": "{\n  \"uri\": \"https://example.com/callback\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           },
-          "response": []
-        },
-        {
-          "name": "13 - Add Redirect URI to Client",
+          "response": [],
           "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status 200/201/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "pm.test(\"Status 200, 204\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
                   "});"
                 ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Add Allowed Flow",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{client_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/clients/flows",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "clients",
+                "flows"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"redirect_uri\": \"https://e2e.example.com/callback\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/clients/{{e2e_client_id}}/redirect-uris",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "clients", "{{e2e_client_id}}", "redirect-uris"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "14 - Add Allowed Client to Scope",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/201/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
-                  "});"
-                ]
+              "raw": "{\n  \"flow\": \"client_credentials\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}/allowed-clients/{{e2e_client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}", "allowed-clients", "{{e2e_client_id}}"]
-            }
           },
-          "response": []
-        },
-        {
-          "name": "15 - Remove Allowed Client from Scope",
+          "response": [],
           "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
+                  "pm.test(\"Status 200, 204\", function() {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
                   "});"
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}/allowed-clients/{{e2e_client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}", "allowed-clients", "{{e2e_client_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "16 - Delete Scope",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}/scopes/{{e2e_scope_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}", "scopes", "{{e2e_scope_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "17 - Delete Protected Resource",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}/protected-resources/{{e2e_protected_resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}", "protected-resources", "{{e2e_protected_resource_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "18 - Delete User",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": { "type": "text/javascript", "exec": [""] }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status 200/204\", function() {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{e2e_user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["v1", "backoffice", "admins", "users", "{{e2e_user_id}}"]
-            }
-          },
-          "response": []
+          ]
         }
       ]
     },
@@ -703,7 +2282,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v1/authorize?response_type=code&client_id={{client_id}}&redirect_uri=https://example.com/callback&scope=openid&code_challenge=CHALLENGE&code_challenge_method=S256&state=STATE",
+              "raw": "{{base_url}}/v1/authorize",
               "host": [
                 "{{base_url}}"
               ],
@@ -730,7 +2309,7 @@
                 },
                 {
                   "key": "code_challenge",
-                  "value": "CHALLENGE"
+                  "value": "{{code_challenge}}"
                 },
                 {
                   "key": "code_challenge_method",
@@ -738,15 +2317,28 @@
                 },
                 {
                   "key": "state",
-                  "value": "STATE"
+                  "value": "{{state}}"
                 }
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200, 302\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Token (authorization_code)",
+          "name": "Token",
           "request": {
             "method": "POST",
             "header": [
@@ -755,31 +2347,6 @@
                 "value": "application/x-www-form-urlencoded"
               }
             ],
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "grant_type",
-                  "value": "authorization_code"
-                },
-                {
-                  "key": "code",
-                  "value": "AUTH_CODE"
-                },
-                {
-                  "key": "redirect_uri",
-                  "value": "https://example.com/callback"
-                },
-                {
-                  "key": "client_id",
-                  "value": "{{client_id}}"
-                },
-                {
-                  "key": "code_verifier",
-                  "value": "VERIFIER"
-                }
-              ]
-            },
             "url": {
               "raw": "{{base_url}}/v1/token",
               "host": [
@@ -789,1620 +2356,55 @@
                 "v1",
                 "token"
               ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admins",
-      "item": [
-        {
-          "name": "Users",
-          "item": [
-            {
-              "name": "Create User",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"My User\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}"
-                  ]
-                }
-              },
-              "response": []
             },
-            {
-              "name": "Get User",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Change User Name",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"New Name\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/name",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "name"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Soft Delete User",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ],
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{access_token}}",
-                "type": "string"
-              }
-            ]
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Protected Resources",
-          "item": [
-            {
-              "name": "Create Protected Resource",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"My API\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "protected-resources",
-                    "{{protected_resource_id}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Get Protected Resource",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "protected-resources",
-                    "{{protected_resource_id}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Update Protected Resource Name",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"New API Name\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/name",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "protected-resources",
-                    "{{protected_resource_id}}",
-                    "name"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Soft Delete Protected Resource",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "protected-resources",
-                    "{{protected_resource_id}}"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ],
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{access_token}}",
-                "type": "string"
-              }
-            ]
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Clients (via Admin)",
-          "item": [
-            {
-              "name": "Create Client",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"My App\",\n  \"assertion_key_id\": \"{{$guid}}\",\n  \"public_key\": \"30820122300d06092a864886f70d01010105000382010f003082010a02820101008fa18e300e1c4869cc2493dd422cb7900e7f04a0f9997655194f3c1d055c940a207d2248ca1eafe05c5af8780422614e42a6cfa49f5f895116d4d55534ce0f3982eefcb63e699b786a63263f89a2c3c6d77c237684d2737515d8331968d8a8a1c5f790335e5d440b99220c3cda4cdeeb763ac73a6eac7e5cf82b7a90324c4ce678781449a7fe28efb928060e8d8e31f6c2abaab4af203ecbeed0de901316294822155ef0f328ef815a1a67969f19c3e06c09730c1c1586b87be49567c94e36ce11b8b2295004e396830aeac4d7c79510c971e7d9e307cb8216068881ce1541421ea02961360c7e46319a94b32fbc3ac37c82de5cca8de7fc08921d5f872e587b0203010001\",\n  \"secret_id\": \"{{$guid}}\",\n  \"plaintext_secret\": \"my-plain-secret\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "clients",
-                    "{{client_id}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Get Client",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "clients",
-                    "{{client_id}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Add Allowed Flow",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"flow\": \"authorization_code\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/flows",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "clients",
-                    "{{client_id}}",
-                    "flows"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Add Redirect URI",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"redirect_uri\": \"https://example.com/callback\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/redirect-uris",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "clients",
-                    "{{client_id}}",
-                    "redirect-uris"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Soft Delete Client",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{admin_token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "v1",
-                    "backoffice",
-                    "admins",
-                    "users",
-                    "{{user_id}}",
-                    "clients",
-                    "{{client_id}}"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ],
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{access_token}}",
-                "type": "string"
-              }
-            ]
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {},
-                "exec": [
-                  ""
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Admin",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{access_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Admin Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.collectionVariables.set(\"access_token\", response.access_token);"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/x-www-form-urlencoded"
-              },
-              {
-                "key": "role",
-                "value": "admin",
-                "type": "text"
-              }
-            ],
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
                 {
                   "key": "grant_type",
-                  "value": "urn:ietf:params:oauth:grant-type:jwt-bearer"
+                  "value": "authorization_code"
                 },
                 {
-                  "key": "assertion",
-                  "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNhYzI2NjE0LWM2MzMtNDhiZS1hYTkzLWQ3MDJmNWRkNWEwNSIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnYXMiLCJleHAiOjIxMzk5NjA1OTEsImlhdCI6MTc3OTk2NDE5MSwiaXNzIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1IiwianRpIjoiOGU1M2M2YTgtM2U0Zi00MTBmLWIwNTUtNDRlOWU0OTQ3YWMzIiwicm9sZSI6ImFkbWluIiwic3ViIjoiYTg5YjJmMDQtOTFmYi00ODEzLTk1ZTgtNmY3OWEyZTliY2Q1In0.WKfPLezmtwQDGb_2IbrBdkqzuP31jaWTiY4GyftWf9BGXB97LA0QEy3c5eUy_kNTlyewoTwJh8t_JOEahtzzvsGAu_84zPqqCT0rE15o8AyEAZTzOKK7tBs-Om_Dz0o_RBfxiQIeP5RczZoIU6mpQFMr7hw-BRlaouPGYLPYO_QvtqQWHQMbbtcXGCuLuXXBQ67z4XpMtvWIm5cmRjXWpIuF5Bedn4GWUtGgwsbq7m2n-uvuFE0PajEtYkCTvc62MadtkkxBV4gzsJU6udyQq2o1a8eAafpl6TLhKrFK7eB_wCnYrg8qWVfChpXK844y_-IEF2lI0BPvcvVnL4tRCQ"
+                  "key": "code",
+                  "value": "{{auth_code}}"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "https://example.com/callback"
+                },
+                {
+                  "key": "code_verifier",
+                  "value": "{{code_verifier}}"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
                 }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/token",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "token"
               ]
             }
           },
-          "response": []
-        }
-      ],
-      "auth": {
-        "type": "noauth"
-      },
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
-    },
-    {
-      "name": "Users (via Admin)",
-      "item": []
-    },
-    {
-      "name": "Scopes (via Admin)",
-      "item": [
-        {
-          "name": "Create Scope",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"read:emails\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "users",
-                "{{user_id}}",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Scope",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "users",
-                "{{user_id}}",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Soft Delete Scope",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "users",
-                "{{user_id}}",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Allowed Client",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "users",
-                "{{user_id}}",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}",
-                "allowed-clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Remove Allowed Client",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "admins",
-                "users",
-                "{{user_id}}",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}",
-                "allowed-clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Users (self)",
-      "item": [
-        {
-          "name": "Get User",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change User Name",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"New Name\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/name",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "name"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Soft Delete User",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Protected Resources (via User)",
-      "item": [
-        {
-          "name": "Create Protected Resource",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"My API\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Protected Resource",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Protected Resource Name",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"New API Name\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/name",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "name"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Soft Delete Protected Resource",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Scopes (via User)",
-      "item": [
-        {
-          "name": "Create Scope",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"read:emails\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Scope",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Soft Delete Scope",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Allowed Client",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}",
-                "allowed-clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Remove Allowed Client",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "protected-resources",
-                "{{protected_resource_id}}",
-                "scopes",
-                "{{scope_id}}",
-                "allowed-clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Clients (via User)",
-      "item": [
-        {
-          "name": "Create Client",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"My App\",\n  \"assertion_key_id\": \"00000000-0000-0000-0000-000000000010\",\n  \"public_key\": \"-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----\",\n  \"secret_id\": \"00000000-0000-0000-0000-000000000011\",\n  \"plaintext_secret\": \"my-plain-secret\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Client",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Allowed Flow",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"flow\": \"authorization_code\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/flows",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "clients",
-                "{{client_id}}",
-                "flows"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Redirect URI",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"redirect_uri\": \"https://example.com/callback\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/redirect-uris",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "clients",
-                "{{client_id}}",
-                "redirect-uris"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Soft Delete Client",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{user_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "users",
-                "clients",
-                "{{client_id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Clients (self)",
-      "item": [
-        {
-          "name": "Get Client",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{client_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/clients",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "clients"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Redirect URI",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{client_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"redirect_uri\": \"https://example.com/callback\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/clients/redirect-uris",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "clients",
-                "redirect-uris"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Add Allowed Flow",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{client_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"flow\": \"authorization_code\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/v1/backoffice/clients/flows",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "v1",
-                "backoffice",
-                "clients",
-                "flows"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
     }
   ],
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:80"
-    },
-    {
-      "key": "admin_token",
-      "value": ""
-    },
-    {
-      "key": "user_token",
-      "value": ""
-    },
-    {
-      "key": "client_token",
-      "value": ""
-    },
-    {
-      "key": "user_id",
-      "value": "00000000-0000-0000-0000-000000000001"
-    },
-    {
-      "key": "protected_resource_id",
-      "value": "00000000-0000-0000-0000-000000000002"
-    },
-    {
-      "key": "scope_id",
-      "value": "00000000-0000-0000-0000-000000000003"
-    },
-    {
-      "key": "client_id",
-      "value": "00000000-0000-0000-0000-000000000004"
-    },
-    {
-      "key": "access_token",
-      "value": ""
+      "value": "http://localhost:8090"
     }
   ]
 }

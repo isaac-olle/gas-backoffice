@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
 
@@ -38,10 +37,6 @@ type DatabasesConfig struct {
 }
 
 func Load() (*Config, error) {
-	if EnvOr("ENVIRONMENT", "local") == "local" {
-		_ = godotenv.Load("config/.env")
-	}
-
 	configPath := EnvOr("CONFIG_FILE_PATH", "config/config.yaml")
 
 	raw, err := os.ReadFile(configPath)

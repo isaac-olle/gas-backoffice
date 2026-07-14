@@ -1,4 +1,4 @@
-.PHONY: up down seed token run build test lint
+.PHONY: up down seed local-token dev-token run build test lint
 
 up:
 	docker compose -f deploy/docker-compose.yml up -d
@@ -7,13 +7,16 @@ down:
 	docker compose -f deploy/docker-compose.yml down
 
 seed:
-	go run ./cmd/db_seed --env-file config/.env
+	go run ./cmd/db_seed --env-file .env.local
 
-token:
-	go run ./scripts/generate_admin_token
+local-token:
+	go run ./scripts/generate_admin_token --env .env.local
+
+dev-token:
+	go run ./scripts/generate_admin_token --env .env.dev
 
 run:
-	go run ./cmd/api
+	go run ./cmd/api --env-file .env.local
 
 build:
 	go build -o build/gas ./cmd/api

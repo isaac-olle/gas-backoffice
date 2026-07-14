@@ -4,7 +4,7 @@
 //
 //	go run ./scripts/generate_admin_token
 //
-// Reads ADMIN_ID, ADMIN_ASSERTION_KEY_ID and ADMIN_ASSERTION_PRIVATE_KEY from config/.env.
+// Reads SEED_ADMIN_ID, ADMIN_ASSERTION_KEY_ID and ADMIN_ASSERTION_PRIVATE_KEY from .env.local (or --env flag).
 // The output JWT can then be used to obtain an admin access token:
 //
 //	curl -X POST http://localhost/v1/backoffice/admins/token \
@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-	envFile := flag.String("env", "scripts/generate_admin_token/.env", "path to the admin token .env file")
+	envFile := flag.String("env", ".env.local", "path to the .env file")
 	ttl := flag.Duration("ttl", 15*time.Minute, "token TTL (e.g. 5m, 1h)")
 	flag.Parse()
 
@@ -37,12 +37,12 @@ func main() {
 		log.Fatalf("load %s: %v", *envFile, err)
 	}
 
-	adminID := os.Getenv("ADMIN_ID")
+	adminID := os.Getenv("SEED_ADMIN_ID")
 	kid := os.Getenv("ADMIN_ASSERTION_KEY_ID")
 	keyB64 := os.Getenv("ADMIN_ASSERTION_PRIVATE_KEY")
 
 	if adminID == "" || kid == "" || keyB64 == "" {
-		log.Fatal("ADMIN_ID, ADMIN_ASSERTION_KEY_ID and ADMIN_ASSERTION_PRIVATE_KEY must be set in the env file")
+		log.Fatal("SEED_ADMIN_ID, ADMIN_ASSERTION_KEY_ID and ADMIN_ASSERTION_PRIVATE_KEY must be set in the env file")
 	}
 
 	keyPEM, err := base64.StdEncoding.DecodeString(keyB64)

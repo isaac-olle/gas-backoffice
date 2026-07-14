@@ -40,6 +40,15 @@ func New(
 ) (context.Context, Server) {
 	router := gin.New()
 	router.Use(gin.RecoveryWithWriter(os.Stderr))
+	router.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		SkipPaths: []string{"/health"},
+		Formatter: func(p gin.LogFormatterParams) string {
+			if p.StatusCode >= 400 {
+				return ""
+			}
+			return fmt.Sprintf("[GIN] %s %s %d %s\n", p.Method, p.Path, p.StatusCode, p.Latency)
+		},
+	}))
 	router.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	srv := Server{
