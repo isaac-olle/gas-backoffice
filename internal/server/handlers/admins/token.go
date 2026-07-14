@@ -9,7 +9,7 @@ import (
 	generateJwtByPrId "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/generate_jwt_by_pr_id"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	vo "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type TokenHandler struct {
@@ -35,7 +35,7 @@ func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.BadRequestError(ErrInvalidTokenRequest).WithCause(err)
 	}
 
-	iAuthor, err := query.DispatchTyped[vo.Author](
+	adminAuthor, err := query.DispatchTyped[*authors.AdminAuthor](
 		c.Request.Context(),
 		h.queryBus,
 		verifyAssertion.NewQuery(req.Assertion, req.GrantType),
@@ -44,7 +44,7 @@ func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	p := iAuthor.ToPrimitives()
+	p := adminAuthor.ToPrimitives()
 
 	tokenString, err := query.DispatchTyped[string](
 		c.Request.Context(),
