@@ -12,7 +12,7 @@ func UserIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, err := ids2.NewUserIdFromString(c.Param(UserIdKey))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_USER_ID").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_USER_ID").WithDescription("invalid user id").WithCause(err))
 			c.Abort()
 			return
 		}

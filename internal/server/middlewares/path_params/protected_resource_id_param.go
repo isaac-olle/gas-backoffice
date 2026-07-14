@@ -12,7 +12,7 @@ func ProtectedResourceIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		protectedResourceId, err := ids2.NewProtectedResourceIdFromString(c.Param(protectedResourceIdParam))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_PROTECTED_RESOURCE_ID").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_PROTECTED_RESOURCE_ID").WithDescription("invalid protected resource id").WithCause(err))
 			c.Abort()
 			return
 		}

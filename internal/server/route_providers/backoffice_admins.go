@@ -84,12 +84,14 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	pr.PATCH("/name",
 		ownership.ProtectedResource(p.queryBus),
+		system_resource.ProtectedResource(p.queryBus),
 		p.executor.Run(prHandlers.NewUpdateProtectedResourceNameHandler(
 			p.commandBus, ids.ProtectedResourceIdFromContext,
 		)),
 	)
 	pr.DELETE("",
 		ownership.ProtectedResource(p.queryBus),
+		system_resource.ProtectedResource(p.queryBus),
 		p.executor.Run(prHandlers.NewSoftDeleteProtectedResourceHandler(
 			p.commandBus, ids.ProtectedResourceIdFromContext,
 		)),
@@ -114,6 +116,7 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	scope.DELETE("",
 		ownership.Scope(p.queryBus),
+		system_resource.Scope(p.queryBus),
 		p.executor.Run(scopeHandlers.NewSoftDeleteScopeHandler(p.commandBus, ids.ScopeIdFromContext)),
 	)
 	scope.POST("/allowed-clients/:client_id",

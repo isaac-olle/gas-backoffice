@@ -29,7 +29,8 @@
                 "backoffice",
                 "admins",
                 "token"
-              ]
+              ],
+              "variable": []
             },
             "body": {
               "mode": "urlencoded",
@@ -82,7 +83,8 @@
                 "v1",
                 "backoffice",
                 "admins"
-              ]
+              ],
+              "variable": []
             }
           },
           "response": [],
@@ -118,7 +120,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -127,7 +129,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}"
+                    ":user_id"
                   ],
                   "variable": [
                     {
@@ -173,7 +175,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -182,7 +184,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}"
+                    ":user_id"
                   ],
                   "variable": [
                     {
@@ -223,7 +225,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/name",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/name",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -232,7 +234,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "name"
                   ],
                   "variable": [
@@ -279,7 +281,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -288,7 +290,7 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}"
+                    ":user_id"
                   ],
                   "variable": [
                     {
@@ -334,7 +336,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -343,9 +345,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -396,7 +398,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -405,9 +407,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -453,7 +455,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/name",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/name",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -462,9 +464,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "name"
                   ],
                   "variable": [
@@ -516,7 +518,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -525,9 +527,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -578,7 +580,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -587,11 +589,11 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -647,7 +649,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -656,11 +658,11 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -707,7 +709,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -716,11 +718,11 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -767,7 +769,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/scopes/:scope_id/allowed-clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -776,13 +778,13 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}",
+                    ":scope_id",
                     "allowed-clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -834,7 +836,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/protected-resources/:protected_resource_id/scopes/:scope_id/allowed-clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -843,13 +845,13 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}",
+                    ":scope_id",
                     "allowed-clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -910,7 +912,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -919,9 +921,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -972,7 +974,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -981,9 +983,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1029,7 +1031,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/flows",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/flows",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1038,9 +1040,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "clients",
-                    "{{client_id}}",
+                    ":client_id",
                     "flows"
                   ],
                   "variable": [
@@ -1096,7 +1098,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}/redirect-uris",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/redirect-uris",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1105,9 +1107,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "clients",
-                    "{{client_id}}",
+                    ":client_id",
                     "redirect-uris"
                   ],
                   "variable": [
@@ -1159,7 +1161,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/{{user_id}}/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1168,9 +1170,9 @@
                     "backoffice",
                     "admins",
                     "users",
-                    "{{user_id}}",
+                    ":user_id",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1230,7 +1232,8 @@
                     "v1",
                     "backoffice",
                     "users"
-                  ]
+                  ],
+                  "variable": []
                 }
               },
               "response": [],
@@ -1272,7 +1275,8 @@
                     "backoffice",
                     "users",
                     "name"
-                  ]
+                  ],
+                  "variable": []
                 },
                 "body": {
                   "mode": "raw",
@@ -1318,7 +1322,8 @@
                     "v1",
                     "backoffice",
                     "users"
-                  ]
+                  ],
+                  "variable": []
                 }
               },
               "response": [],
@@ -1356,7 +1361,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1365,7 +1370,7 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -1411,7 +1416,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1420,7 +1425,7 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -1461,7 +1466,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/name",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/name",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1470,7 +1475,7 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "name"
                   ],
                   "variable": [
@@ -1517,7 +1522,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1526,7 +1531,7 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}"
+                    ":protected_resource_id"
                   ],
                   "variable": [
                     {
@@ -1572,7 +1577,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1581,9 +1586,9 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -1634,7 +1639,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1643,9 +1648,9 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -1687,7 +1692,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/scopes/:scope_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1696,9 +1701,9 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}"
+                    ":scope_id"
                   ],
                   "variable": [
                     {
@@ -1740,7 +1745,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/scopes/:scope_id/allowed-clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1749,11 +1754,11 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}",
+                    ":scope_id",
                     "allowed-clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1800,7 +1805,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/{{protected_resource_id}}/scopes/{{scope_id}}/allowed-clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources/:protected_resource_id/scopes/:scope_id/allowed-clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1809,11 +1814,11 @@
                     "backoffice",
                     "users",
                     "protected-resources",
-                    "{{protected_resource_id}}",
+                    ":protected_resource_id",
                     "scopes",
-                    "{{scope_id}}",
+                    ":scope_id",
                     "allowed-clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1869,7 +1874,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1878,7 +1883,7 @@
                     "backoffice",
                     "users",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1924,7 +1929,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1933,7 +1938,7 @@
                     "backoffice",
                     "users",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -1974,7 +1979,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/flows",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/flows",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1983,7 +1988,7 @@
                     "backoffice",
                     "users",
                     "clients",
-                    "{{client_id}}",
+                    ":client_id",
                     "flows"
                   ],
                   "variable": [
@@ -2034,7 +2039,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}/redirect-uris",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/redirect-uris",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -2043,7 +2048,7 @@
                     "backoffice",
                     "users",
                     "clients",
-                    "{{client_id}}",
+                    ":client_id",
                     "redirect-uris"
                   ],
                   "variable": [
@@ -2090,7 +2095,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/{{client_id}}",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -2099,7 +2104,7 @@
                     "backoffice",
                     "users",
                     "clients",
-                    "{{client_id}}"
+                    ":client_id"
                   ],
                   "variable": [
                     {
@@ -2151,7 +2156,8 @@
                 "v1",
                 "backoffice",
                 "clients"
-              ]
+              ],
+              "variable": []
             }
           },
           "response": [],
@@ -2193,7 +2199,8 @@
                 "backoffice",
                 "clients",
                 "redirect-uris"
-              ]
+              ],
+              "variable": []
             },
             "body": {
               "mode": "raw",
@@ -2244,7 +2251,8 @@
                 "backoffice",
                 "clients",
                 "flows"
-              ]
+              ],
+              "variable": []
             },
             "body": {
               "mode": "raw",
@@ -2319,7 +2327,8 @@
                   "key": "state",
                   "value": "{{state}}"
                 }
-              ]
+              ],
+              "variable": []
             }
           },
           "response": [],
@@ -2355,7 +2364,8 @@
               "path": [
                 "v1",
                 "token"
-              ]
+              ],
+              "variable": []
             },
             "body": {
               "mode": "urlencoded",
