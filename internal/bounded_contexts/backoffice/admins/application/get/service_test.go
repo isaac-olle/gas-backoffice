@@ -36,8 +36,9 @@ func TestGet(t *testing.T) {
 		result, err := svc.Get(context.Background(), get.NewQuery(adminId))
 		require.NoError(t, err)
 
-		prims, ok := result.(admins.AdminPrimitives)
+		a, ok := result.(*admins.Admin)
 		require.True(t, ok)
+		prims := a.ToPrimitives()
 		assert.Equal(t, adminId.String(), prims.Id)
 		assert.Equal(t, "Test", prims.Name)
 		assert.Empty(t, prims.UserIds)
@@ -55,8 +56,9 @@ func TestGet(t *testing.T) {
 		result, err := svc.Get(context.Background(), get.NewQuery(adminId))
 		require.NoError(t, err)
 
-		prims, ok := result.(admins.AdminPrimitives)
+		a, ok := result.(*admins.Admin)
 		require.True(t, ok)
+		prims := a.ToPrimitives()
 		assert.Equal(t, adminId.String(), prims.Id)
 		assert.Contains(t, prims.UserIds, userId.String())
 	})

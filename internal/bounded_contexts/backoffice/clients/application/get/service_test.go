@@ -26,8 +26,9 @@ func TestGet(t *testing.T) {
 
 		result, err := newService(t, repo).Get(context.Background(), get.NewQuery(clientId.String()))
 		require.NoError(t, err)
-		p, ok := result.(clients.ClientPrimitives)
+		c, ok := result.(*clients.Client)
 		require.True(t, ok)
+		p := c.ToPrimitives()
 		assert.Equal(t, "my-get-client", p.Name)
 		assert.Equal(t, clientId.String(), p.Id)
 	})
