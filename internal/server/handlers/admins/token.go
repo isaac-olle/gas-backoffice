@@ -10,7 +10,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type TokenHandler struct {
@@ -45,12 +44,7 @@ func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	adminAuthor, ok := iAuthor.(*authors.AdminAuthor)
-	if !ok {
-		return nil, app_errors.UnauthorizedError("INVALID_AUTHOR_ROLE")
-	}
-
-	p := adminAuthor.ToPrimitives()
+	p := iAuthor.ToPrimitives()
 
 	tokenString, err := query.DispatchTyped[string](
 		c.Request.Context(),
