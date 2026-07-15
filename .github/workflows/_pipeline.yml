@@ -98,7 +98,7 @@ jobs:
 
       - name: Pin image to sha-${{ github.sha }}
         env:
-          DO_APP_ID: ${{ secrets[format('{0}_DO_APP_ID', upper(inputs.environment))] }}
+          DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', upper(inputs.environment))] }}
         run: |
           doctl apps spec get $DO_APP_ID | \
             sed "s/tag:.*/tag: sha-${{ github.sha }}/" | \

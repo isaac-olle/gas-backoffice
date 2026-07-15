@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
@@ -50,7 +50,7 @@ func TestAccessToken(t *testing.T) {
 		{
 			name:       "valid_token_sets_actor_and_continues",
 			authHeader: "Bearer validtoken",
-			busResult:  vo.Author(validAuthor),
+			busResult:  &verifyJwt.VerifyJWTResult{Author: validAuthor, Scopes: []string{"users:read"}},
 			busCalled:  true,
 			wantNext:   true,
 		},
