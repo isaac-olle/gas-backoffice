@@ -23,18 +23,18 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	)
 
 	t.GET("",
-		middlewares.ScopeMiddleware("users:read"),
+		middlewares.ScopeMiddleware(vo.ScopeUsersRead),
 		ownership.User(p.queryBus),
 		p.executor.Run(userHandlers.NewGetUserHandler(p.queryBus, helpers.UserIdFromAuthor)),
 	)
 	t.PATCH("/name",
-		middlewares.ScopeMiddleware("users:rename"),
+		middlewares.ScopeMiddleware(vo.ScopeUsersRename),
 		ownership.User(p.queryBus),
 		system_resource.User(p.queryBus),
 		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandBus, helpers.UserIdFromAuthor)),
 	)
 	t.DELETE("",
-		middlewares.ScopeMiddleware("users:delete"),
+		middlewares.ScopeMiddleware(vo.ScopeUsersDelete),
 		ownership.User(p.queryBus),
 		system_resource.User(p.queryBus),
 		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandBus, helpers.UserIdFromAuthor)),
@@ -45,7 +45,7 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		path_params.ProtectedResourceIdParam(),
 	)
 	pr.PUT("",
-		middlewares.ScopeMiddleware("protected_resources:create"),
+		middlewares.ScopeMiddleware(vo.ScopeProtectedResourcesCreate),
 		ownership.User(p.queryBus),
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(prHandlers.NewCreateProtectedResourceHandler(
@@ -63,12 +63,12 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		)),
 	)
 	pr.GET("",
-		middlewares.ScopeMiddleware("protected_resources:read"),
+		middlewares.ScopeMiddleware(vo.ScopeProtectedResourcesRead),
 		ownership.ProtectedResource(p.queryBus),
 		p.executor.Run(prHandlers.NewGetProtectedResourceHandler(p.queryBus, ids.ProtectedResourceIdFromContext)),
 	)
 	pr.PATCH("/name",
-		middlewares.ScopeMiddleware("protected_resources:rename"),
+		middlewares.ScopeMiddleware(vo.ScopeProtectedResourcesRename),
 		ownership.ProtectedResource(p.queryBus),
 		system_resource.ProtectedResource(p.queryBus),
 		p.executor.Run(prHandlers.NewUpdateProtectedResourceNameHandler(
@@ -76,7 +76,7 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		)),
 	)
 	pr.DELETE("",
-		middlewares.ScopeMiddleware("protected_resources:delete"),
+		middlewares.ScopeMiddleware(vo.ScopeProtectedResourcesDelete),
 		ownership.ProtectedResource(p.queryBus),
 		system_resource.ProtectedResource(p.queryBus),
 		p.executor.Run(prHandlers.NewSoftDeleteProtectedResourceHandler(
@@ -89,7 +89,7 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		path_params.ScopeIdParam(),
 	)
 	scope.PUT("",
-		middlewares.ScopeMiddleware("scopes:create"),
+		middlewares.ScopeMiddleware(vo.ScopeScopesCreate),
 		ownership.ProtectedResource(p.queryBus),
 		p.executor.Run(scopeHandlers.NewCreateScopeHandler(
 			p.commandBus,
@@ -99,24 +99,24 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		)),
 	)
 	scope.GET("",
-		middlewares.ScopeMiddleware("scopes:read"),
+		middlewares.ScopeMiddleware(vo.ScopeScopesRead),
 		ownership.Scope(p.queryBus),
 		p.executor.Run(scopeHandlers.NewGetScopeHandler(p.queryBus, ids.ScopeIdFromContext)),
 	)
 	scope.DELETE("",
-		middlewares.ScopeMiddleware("scopes:delete"),
+		middlewares.ScopeMiddleware(vo.ScopeScopesDelete),
 		ownership.Scope(p.queryBus),
 		system_resource.Scope(p.queryBus),
 		p.executor.Run(scopeHandlers.NewSoftDeleteScopeHandler(p.commandBus, ids.ScopeIdFromContext)),
 	)
 	scope.POST("/allowed-clients/:client_id",
-		middlewares.ScopeMiddleware("scopes:add_allowed_client"),
+		middlewares.ScopeMiddleware(vo.ScopeScopesAddAllowedClient),
 		ownership.Scope(p.queryBus),
 		system_resource.Scope(p.queryBus),
 		p.executor.Run(scopeHandlers.NewAddScopeAllowedClientHandler(p.commandBus, ids.ScopeIdFromContext)),
 	)
 	scope.DELETE("/allowed-clients/:client_id",
-		middlewares.ScopeMiddleware("scopes:remove_allowed_client"),
+		middlewares.ScopeMiddleware(vo.ScopeScopesRemoveAllowedClient),
 		ownership.Scope(p.queryBus),
 		system_resource.Scope(p.queryBus),
 		p.executor.Run(scopeHandlers.NewRemoveScopeAllowedClientHandler(
@@ -129,7 +129,7 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		path_params.ClientIdParam(),
 	)
 	client.PUT("",
-		middlewares.ScopeMiddleware("clients:create"),
+		middlewares.ScopeMiddleware(vo.ScopeClientsCreate),
 		ownership.User(p.queryBus),
 		middlewares.Transactor(p.pgxPool),
 		p.executor.Run(clientHandlers.NewCreateClientHandler(
@@ -143,22 +143,22 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		)),
 	)
 	client.GET("",
-		middlewares.ScopeMiddleware("clients:read"),
+		middlewares.ScopeMiddleware(vo.ScopeClientsRead),
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewGetClientHandler(p.queryBus, ids.ClientIdFromContext)),
 	)
 	client.DELETE("",
-		middlewares.ScopeMiddleware("clients:delete"),
+		middlewares.ScopeMiddleware(vo.ScopeClientsDelete),
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewSoftDeleteClientHandler(p.commandBus, ids.ClientIdFromContext)),
 	)
 	client.POST("/flows",
-		middlewares.ScopeMiddleware("clients:add_flow"),
+		middlewares.ScopeMiddleware(vo.ScopeClientsAddFlow),
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewAddAllowedFlowHandler(p.commandBus, ids.ClientIdFromContext)),
 	)
 	client.POST("/redirect-uris",
-		middlewares.ScopeMiddleware("clients:add_redirect_uri"),
+		middlewares.ScopeMiddleware(vo.ScopeClientsAddRedirectUri),
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewAddRedirectUriHandler(p.commandBus, ids.ClientIdFromContext)),
 	)
