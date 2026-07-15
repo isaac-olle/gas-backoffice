@@ -19,7 +19,7 @@ func AccessToken(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		author, err := query.DispatchTyped[vo.Author](
+		result, err := query.DispatchTyped[*verifyJwt.VerifyJWTResult](
 			c.Request.Context(),
 			queryBus,
 			verifyJwt.NewQuery(token),
@@ -30,12 +30,11 @@ func AccessToken(queryBus query.Bus) gin.HandlerFunc {
 			return
 		}
 
-		c.Request = c.Request.WithContext(
-			vo.WithAuthor(
-				c.Request.Context(),
-				author,
-			),
-		)
+		ctx := vo.WithAuthor(c.Request.Context(), result.Author)
+		if len(result.Scopes) > 0 {
+			ctx = vo.WithScopes(ctx, result.Scopes)
+		}
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
 }

@@ -7,11 +7,12 @@ import (
 )
 
 type TokenClaims struct {
-	sub  string
-	iss  string
-	aud  string
-	role vo2.Role
-	raw  map[string]any
+	sub    string
+	iss    string
+	aud    string
+	role   vo2.Role
+	scopes []string
+	raw    map[string]any
 }
 
 func NewTokenClaims(claims map[string]any) (*TokenClaims, error) {
@@ -33,10 +34,14 @@ func NewTokenClaims(claims map[string]any) (*TokenClaims, error) {
 	roleStr, _ := claims["role"].(string)
 	role, _ := vo2.NewRole(roleStr)
 
-	return &TokenClaims{sub: sub, iss: iss, aud: aud, role: role, raw: claims}, nil
+	scopeStr, _ := claims["scope"].(string)
+	scopes := vo2.ParseScopes(scopeStr)
+
+	return &TokenClaims{sub: sub, iss: iss, aud: aud, role: role, scopes: scopes, raw: claims}, nil
 }
 
 func (t *TokenClaims) Sub() string         { return t.sub }
+func (t *TokenClaims) Scopes() []string    { return t.scopes }
 func (t *TokenClaims) Raw() map[string]any { return t.raw }
 
 func (t *TokenClaims) CheckIssuer(expectedIss string) error {

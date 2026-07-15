@@ -29,20 +29,8 @@ resource "github_repository_file" "pipeline_trigger" {
   YAML
 }
 
-resource "github_actions_secret" "do_token" {
-  repository      = var.github_repo
-  secret_name     = "DO_TOKEN"
-  plaintext_value = var.do_token
-}
-
 resource "github_actions_secret" "do_app_id" {
   repository      = var.github_repo
-  secret_name     = "DO_APP_ID"
+  secret_name     = "${upper(var.env)}_DO_APP_ID"
   plaintext_value = digitalocean_app.backoffice.id
-}
-
-resource "github_actions_secret" "do_registry" {
-  repository      = var.github_repo
-  secret_name     = "DO_REGISTRY"
-  plaintext_value = "registry.digitalocean.com/${var.registry_name}"
 }

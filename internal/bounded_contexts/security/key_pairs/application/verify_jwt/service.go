@@ -3,11 +3,17 @@ package verify_jwt
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	vo "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/domain_services"
 )
+
+type VerifyJWTResult struct {
+	Author vo.Author
+	Scopes []string
+}
 
 type Service struct {
 	finder     *domain_services.KeyPairFinder
@@ -65,5 +71,5 @@ func (s *Service) VerifyJWT(ctx context.Context, qry *Query) (any, error) {
 			WithDescription("invalid author").
 			WithCause(err)
 	}
-	return author, nil
+	return &VerifyJWTResult{Author: author, Scopes: claims.Scopes()}, nil
 }
