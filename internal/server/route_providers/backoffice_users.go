@@ -1,6 +1,8 @@
 package route_providers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	clientHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
@@ -47,19 +49,21 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	pr.PUT("",
 		middlewares.ScopeMiddleware(vo.ScopeProtectedResourcesCreate),
 		ownership.User(p.queryBus),
-		middlewares.Transactor(p.pgxPool),
-		p.executor.Run(prHandlers.NewCreateProtectedResourceHandler(
-			p.commandBus,
-			helpers.UserOwnershipFromAuthor,
-			ids.ProtectedResourceIdFromContext,
-			helpers.UserIdFromAuthor,
-		)),
-		p.executor.Run(scopeHandlers.NewCreateScopesFromBodyHandler(
-			p.commandBus,
-			helpers.UserOwnershipFromAuthor,
-			ids.ProtectedResourceIdFromContext,
-			helpers.UserIdFromAuthor,
-			helpers.GenerateScopeId,
+		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
+			func(c *gin.Context) error { c.Status(http.StatusCreated); return nil },
+			prHandlers.NewCreateProtectedResourceHandler(
+				p.commandBus,
+				helpers.UserOwnershipFromAuthor,
+				ids.ProtectedResourceIdFromContext,
+				helpers.UserIdFromAuthor,
+			),
+			scopeHandlers.NewCreateScopesFromBodyHandler(
+				p.commandBus,
+				helpers.UserOwnershipFromAuthor,
+				ids.ProtectedResourceIdFromContext,
+				helpers.UserIdFromAuthor,
+				helpers.GenerateScopeId,
+			),
 		)),
 	)
 	pr.GET("",
@@ -131,15 +135,17 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	client.PUT("",
 		middlewares.ScopeMiddleware(vo.ScopeClientsCreate),
 		ownership.User(p.queryBus),
-		middlewares.Transactor(p.pgxPool),
-		p.executor.Run(clientHandlers.NewCreateClientHandler(
-			p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromAuthor, helpers.UserOwnershipFromAuthor,
-		)),
-		p.executor.Run(clientHandlers.NewCreateClientAssertionKeyHandler(
-			p.commandBus, ids.ClientIdFromContext,
-		)),
-		p.executor.Run(clientHandlers.NewCreateClientSecretHandler(
-			p.commandBus, ids.ClientIdFromContext,
+		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
+			func(c *gin.Context) error { c.JSON(http.StatusCreated, gin.H{}); return nil },
+			clientHandlers.NewCreateClientHandler(
+				p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromAuthor, helpers.UserOwnershipFromAuthor,
+			),
+			clientHandlers.NewCreateClientAssertionKeyHandler(
+				p.commandBus, ids.ClientIdFromContext,
+			),
+			clientHandlers.NewCreateClientSecretHandler(
+				p.commandBus, ids.ClientIdFromContext,
+			),
 		)),
 	)
 	client.GET("",

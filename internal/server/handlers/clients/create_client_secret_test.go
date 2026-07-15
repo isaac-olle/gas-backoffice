@@ -46,7 +46,7 @@ func TestCreateClientSecretHandler(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name:       "success_returns_200",
+			name:       "success_is_noop",
 			body:       handlerstest.JsonBody(map[string]string{"secret_id": "secret-123", "plaintext_secret": "s3cr3t"}),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
 			wantErr:    false,

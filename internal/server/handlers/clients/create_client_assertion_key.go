@@ -31,7 +31,7 @@ type createClientAssertionKeyRequest struct {
 func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 	var req createClientAssertionKeyRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, err
+		return nil, app_errors.BadRequestError("INVALID_ASSERTION_KEY_REQUEST").WithCause(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

@@ -2,13 +2,13 @@ package clients
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	clientSecretCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type CreateClientSecretHandler struct {
@@ -31,7 +31,7 @@ type createClientSecretRequest struct {
 func (h *CreateClientSecretHandler) Execute(c *gin.Context) (any, error) {
 	var req createClientSecretRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, err
+		return nil, app_errors.BadRequestError("INVALID_CLIENT_SECRET_REQUEST").WithCause(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

@@ -940,7 +940,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\"\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"assertion_key_id\": \"{{$guid}}\",\n  \"public_key\": \"{{client_public_key}}\",\n  \"secret_id\": \"{{$guid}}\",\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1895,7 +1895,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\"\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"assertion_key_id\": \"{{$guid}}\",\n  \"public_key\": \"{{client_public_key}}\",\n  \"secret_id\": \"{{$guid}}\",\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"

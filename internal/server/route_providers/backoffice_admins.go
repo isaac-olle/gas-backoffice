@@ -1,6 +1,8 @@
 package route_providers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/admins"
 	clientHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/clients"
@@ -61,19 +63,21 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	pr.PUT("",
 		ownership.User(p.queryBus),
-		middlewares.Transactor(p.pgxPool),
-		p.executor.Run(prHandlers.NewCreateProtectedResourceHandler(
-			p.commandBus,
-			helpers.UserOwnershipFromContext,
-			ids.ProtectedResourceIdFromContext,
-			ids.UserIdFromContext,
-		)),
-		p.executor.Run(scopeHandlers.NewCreateScopesFromBodyHandler(
-			p.commandBus,
-			helpers.UserOwnershipFromContext,
-			ids.ProtectedResourceIdFromContext,
-			ids.UserIdFromContext,
-			helpers.GenerateScopeId,
+		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
+			func(c *gin.Context) error { c.Status(http.StatusCreated); return nil },
+			prHandlers.NewCreateProtectedResourceHandler(
+				p.commandBus,
+				helpers.UserOwnershipFromContext,
+				ids.ProtectedResourceIdFromContext,
+				ids.UserIdFromContext,
+			),
+			scopeHandlers.NewCreateScopesFromBodyHandler(
+				p.commandBus,
+				helpers.UserOwnershipFromContext,
+				ids.ProtectedResourceIdFromContext,
+				ids.UserIdFromContext,
+				helpers.GenerateScopeId,
+			),
 		)),
 	)
 	pr.GET("",
@@ -136,15 +140,17 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	client.PUT("",
 		ownership.User(p.queryBus),
-		middlewares.Transactor(p.pgxPool),
-		p.executor.Run(clientHandlers.NewCreateClientHandler(
-			p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
-		)),
-		p.executor.Run(clientHandlers.NewCreateClientAssertionKeyHandler(
-			p.commandBus, ids.ClientIdFromContext,
-		)),
-		p.executor.Run(clientHandlers.NewCreateClientSecretHandler(
-			p.commandBus, ids.ClientIdFromContext,
+		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
+			func(c *gin.Context) error { c.JSON(http.StatusCreated, gin.H{}); return nil },
+			clientHandlers.NewCreateClientHandler(
+				p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
+			),
+			clientHandlers.NewCreateClientAssertionKeyHandler(
+				p.commandBus, ids.ClientIdFromContext,
+			),
+			clientHandlers.NewCreateClientSecretHandler(
+				p.commandBus, ids.ClientIdFromContext,
+			),
 		)),
 	)
 	client.DELETE("",
