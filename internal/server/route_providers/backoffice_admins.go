@@ -9,7 +9,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
 	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
-	securityHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/se
+	securityHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/security"
 	userHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
