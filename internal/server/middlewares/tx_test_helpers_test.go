@@ -29,10 +29,8 @@ func (f *fakeTx) Exec(_ context.Context, _ string, _ ...any) (pgconn.CommandTag,
 }
 
 type fakeTxPool struct {
-	tx         *fakeTx
-	beginErr   error
-	committed  bool
-	rolledBack bool
+	tx       *fakeTx
+	beginErr error
 }
 
 func newFakeTxPool(beginErr, commitErr error) *fakeTxPool {
