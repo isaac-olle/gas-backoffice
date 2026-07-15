@@ -9,6 +9,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/helpers"
 	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 	scopeHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/scopes"
+	securityHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/se
 	userHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
@@ -145,10 +146,10 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 			clientHandlers.NewCreateClientHandler(
 				p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
 			),
-			clientHandlers.NewCreateClientAssertionKeyHandler(
+			securityHandlers.NewCreateClientAssertionKeyHandler(
 				p.commandBus, ids.ClientIdFromContext,
 			),
-			clientHandlers.NewCreateClientSecretHandler(
+			securityHandlers.NewCreateClientSecretHandler(
 				p.commandBus, ids.ClientIdFromContext,
 			),
 		)),

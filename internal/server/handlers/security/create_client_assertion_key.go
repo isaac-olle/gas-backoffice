@@ -1,24 +1,24 @@
-package clients
+package security
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	clientAssertionKeyCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type CreateClientAssertionKeyHandler struct {
 	commandBus command.Bus
-	clientId   func(context.Context) (ids2.ClientId, bool)
+	clientId   func(context.Context) (ids.ClientId, bool)
 }
 
 func NewCreateClientAssertionKeyHandler(
 	commandBus command.Bus,
-	clientId func(context.Context) (ids2.ClientId, bool),
+	clientId func(context.Context) (ids.ClientId, bool),
 ) *CreateClientAssertionKeyHandler {
 	return &CreateClientAssertionKeyHandler{commandBus: commandBus, clientId: clientId}
 }
@@ -39,7 +39,7 @@ func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	keyId, err := ids2.NewClientAssertionKeyIdFromString(req.AssertionKeyID)
+	keyId, err := ids.NewClientAssertionKeyIdFromString(req.AssertionKeyID)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,15 +16,15 @@ import (
 
 type CreateClientHandler struct {
 	commandBus    command.Bus
-	clientId      func(context.Context) (ids2.ClientId, bool)
-	userId        func(context.Context) (ids2.UserId, bool)
+	clientId      func(context.Context) (ids.ClientId, bool)
+	userId        func(context.Context) (ids.UserId, bool)
 	userOwnership func(context.Context) (users.Ownership, bool)
 }
 
 func NewCreateClientHandler(
 	commandBus command.Bus,
-	clientId func(context.Context) (ids2.ClientId, bool),
-	userId func(context.Context) (ids2.UserId, bool),
+	clientId func(context.Context) (ids.ClientId, bool),
+	userId func(context.Context) (ids.UserId, bool),
 	userOwnership func(context.Context) (users.Ownership, bool),
 ) *CreateClientHandler {
 	return &CreateClientHandler{
