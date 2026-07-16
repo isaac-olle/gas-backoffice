@@ -2,10 +2,10 @@ package protocol
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 type tokenAuthContextKey struct{}
@@ -39,6 +39,5 @@ func (h *TokenAuthenticationHandler) Success(c *gin.Context, _ any) error {
 }
 
 func (h *TokenAuthenticationHandler) Default(c *gin.Context) {
-	_ = c.Error(app_errors.UnauthorizedError("UNAUTHORIZED"))
-	c.Abort()
+	c.AbortWithStatus(http.StatusUnauthorized)
 }
