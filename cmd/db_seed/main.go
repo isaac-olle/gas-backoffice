@@ -86,6 +86,7 @@ func main() {
 	scopeClientReadID := uuid.New().String()
 	scopeClientDeleteID := uuid.New().String()
 	scopeClientAddFlowID := uuid.New().String()
+	scopeClientRemoveFlowID := uuid.New().String()
 	scopeClientAddRedirectUriID := uuid.New().String()
 
 	adminPrivKey, adminPubKeyPEM, err := generateRSAKeyPair()
@@ -179,6 +180,7 @@ func main() {
 		{scopeClientReadID, "clients:read"},
 		{scopeClientDeleteID, "clients:delete"},
 		{scopeClientAddFlowID, "clients:add_flow"},
+		{scopeClientRemoveFlowID, "clients:remove_flow"},
 		{scopeClientAddRedirectUriID, "clients:add_redirect_uri"},
 	}
 

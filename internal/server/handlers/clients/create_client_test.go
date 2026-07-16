@@ -39,7 +39,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:        "missing_client_id_returns_error",
-			body:        handlerstest.JsonBody(map[string]string{"name": "My Client"}),
+			body:        handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn:  handlerstest.MissingClientIdExtractor(),
 			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
@@ -47,7 +47,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:        "missing_user_id_returns_error",
-			body:        handlerstest.JsonBody(map[string]string{"name": "My Client"}),
+			body:        handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn:  handlerstest.ValidClientIdExtractor(),
 			userIdFn:    handlerstest.MissingUserIdExtractor(),
 			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
@@ -55,7 +55,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:        "missing_ownership_returns_error",
-			body:        handlerstest.JsonBody(map[string]string{"name": "My Client"}),
+			body:        handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn:  handlerstest.ValidClientIdExtractor(),
 			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			ownershipFn: handlerstest.MissingUserOwnershipExtractor(),
@@ -63,7 +63,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:        "bus_error_returns_error",
-			body:        handlerstest.JsonBody(map[string]string{"name": "My Client"}),
+			body:        handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn:  handlerstest.ValidClientIdExtractor(),
 			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),
@@ -72,7 +72,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:        "success_returns_201",
-			body:        handlerstest.JsonBody(map[string]string{"name": "My Client"}),
+			body:        handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn:  handlerstest.ValidClientIdExtractor(),
 			userIdFn:    handlerstest.ValidUserIdExtractor(),
 			ownershipFn: handlerstest.ValidUserOwnershipExtractor(),

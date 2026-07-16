@@ -13,6 +13,7 @@ import (
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
 	clientGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
 	clientHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/hard_delete"
+	clientRemoveAllowedFlow "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/remove_allowed_flow"
 	clientSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/soft_delete"
 	clientDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 	clientInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/infrastructure"
@@ -72,6 +73,7 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	// clients
 	cmdBus.Register(clientCreate.CommandType, clientCreate.NewCommandHandler(clientCreate.NewService(clientRepo, evtBus)))
 	cmdBus.Register(clientAddAllowedFlow.CommandType, clientAddAllowedFlow.NewCommandHandler(clientAddAllowedFlow.NewService(clientRepo, evtBus)))
+	cmdBus.Register(clientRemoveAllowedFlow.CommandType, clientRemoveAllowedFlow.NewCommandHandler(clientRemoveAllowedFlow.NewService(clientFinder, clientRepo, evtBus)))
 	cmdBus.Register(clientAddRedirectUri.CommandType, clientAddRedirectUri.NewCommandHandler(clientAddRedirectUri.NewService(clientRepo, evtBus)))
 	cmdBus.Register(clientSoftDelete.CommandType, clientSoftDelete.NewCommandHandler(clientSoftDelete.NewService(clientFinder, clientRepo, evtBus)))
 	cmdBus.Register(clientHardDelete.CommandType, clientHardDelete.NewCommandHandler(clientHardDelete.NewService(clientRepo)))

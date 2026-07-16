@@ -940,7 +940,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\",\n  \"assertion_key_id\": \"{{$guid}}\",\n  \"public_key\": \"{{client_public_key}}\",\n  \"secret_id\": \"{{$guid}}\",\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_flows\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1084,6 +1084,73 @@
               ]
             },
             {
+              "name": "Remove Allowed Flow",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/flows",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    ":user_id",
+                    "clients",
+                    ":client_id",
+                    "flows"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flow\": \"client_credentials\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 204\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(204);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
               "name": "Add Redirect URI",
               "request": {
                 "method": "POST",
@@ -1197,6 +1264,152 @@
                     "exec": [
                       "pm.test(\"Status 200, 204\", function() {",
                       "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Assertion Key",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/assertion-keys/:assertion_key_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    ":user_id",
+                    "clients",
+                    ":client_id",
+                    "assertion-keys",
+                    ":assertion_key_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "assertion_key_id",
+                      "value": "{{$guid}}",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"public_key\": \"{{client_public_key}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 201\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(201);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Secret",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/secrets/:secret_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "admins",
+                    "users",
+                    ":user_id",
+                    "clients",
+                    ":client_id",
+                    "secrets",
+                    ":secret_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "user_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "secret_id",
+                      "value": "{{$guid}}",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 201\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(201);",
                       "});"
                     ]
                   }
@@ -1895,7 +2108,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\",\n  \"assertion_key_id\": \"{{$guid}}\",\n  \"public_key\": \"{{client_public_key}}\",\n  \"secret_id\": \"{{$guid}}\",\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_flows\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2025,6 +2238,66 @@
               ]
             },
             {
+              "name": "Remove Allowed Flow",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/flows",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    ":client_id",
+                    "flows"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"flow\": \"client_credentials\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 204\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(204);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
               "name": "Add Redirect URI",
               "request": {
                 "method": "POST",
@@ -2124,6 +2397,138 @@
                     "exec": [
                       "pm.test(\"Status 200, 204\", function() {",
                       "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Assertion Key",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/assertion-keys/:assertion_key_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    ":client_id",
+                    "assertion-keys",
+                    ":assertion_key_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "assertion_key_id",
+                      "value": "{{$guid}}",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"public_key\": \"{{client_public_key}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 201\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(201);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Add Secret",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/secrets/:secret_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients",
+                    ":client_id",
+                    "secrets",
+                    ":secret_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "client_id",
+                      "value": "",
+                      "description": ""
+                    },
+                    {
+                      "key": "secret_id",
+                      "value": "{{$guid}}",
+                      "description": ""
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plaintext_secret\": \"{{client_plaintext_secret}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 201\", function() {",
+                      "    pm.expect(pm.response.code).to.equal(201);",
                       "});"
                     ]
                   }

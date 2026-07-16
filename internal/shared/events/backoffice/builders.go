@@ -83,6 +83,16 @@ func (b *clientRedirectUriAddedBuilder) Build(p *event2.Primitives) (event2.Even
 	}, nil
 }
 
+type clientFlowRemovedBuilder struct{}
+
+func NewClientFlowRemovedBuilder() event2.PrimitiveEventBuilder { return &clientFlowRemovedBuilder{} }
+func (b *clientFlowRemovedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return ClientFlowRemoved{
+		Flow:      str(p.Data, "flow"),
+		BaseEvent: event2.FromPrimitivesBase(p),
+	}, nil
+}
+
 // ── ProtectedResource ─────────────────────────────────────────────────────────
 
 type protectedResourceCreatedBuilder struct{}

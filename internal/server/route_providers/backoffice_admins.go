@@ -167,6 +167,10 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewAddAllowedFlowHandler(p.commandBus, ids.ClientIdFromContext)),
 	)
+	client.DELETE("/flows",
+		ownership.Client(p.queryBus),
+		p.executor.Run(clientHandlers.NewRemoveAllowedFlowHandler(p.commandBus, ids.ClientIdFromContext)),
+	)
 	client.GET("",
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewGetClientHandler(p.queryBus, ids.ClientIdFromContext)),

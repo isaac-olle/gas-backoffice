@@ -36,7 +36,9 @@ func NewCreateClientHandler(
 }
 
 type createClientRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name         string   `json:"name" binding:"required"`
+	AllowedFlows []string `json:"allowed_flows" binding:"required,min=1"`
+	RedirectUris []string `json:"redirect_uris" binding:"required,min=1"`
 }
 
 func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
@@ -61,7 +63,7 @@ func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 	}
 
 	return nil, h.commandBus.Dispatch(c.Request.Context(), clientCreate.NewCommand(
-		clientId, req.Name, clients.NewOwnership(ownership.AdminId, userId), nil, nil,
+		clientId, req.Name, clients.NewOwnership(ownership.AdminId, userId), req.AllowedFlows, req.RedirectUris,
 	))
 }
 

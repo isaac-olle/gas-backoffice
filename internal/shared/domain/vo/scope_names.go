@@ -26,5 +26,6 @@ const (
 	ScopeClientsRead           = "clients:read"
 	ScopeClientsDelete         = "clients:delete"
 	ScopeClientsAddFlow        = "clients:add_flow"
+	ScopeClientsRemoveFlow     = "clients:remove_flow"
 	ScopeClientsAddRedirectUri = "clients:add_redirect_uri"
 )

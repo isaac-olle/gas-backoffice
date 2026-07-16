@@ -171,6 +171,11 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		ownership.Client(p.queryBus),
 		p.executor.Run(clientHandlers.NewAddAllowedFlowHandler(p.commandBus, ids.ClientIdFromContext)),
 	)
+	client.DELETE("/flows",
+		middlewares.ScopeMiddleware(vo.ScopeClientsRemoveFlow),
+		ownership.Client(p.queryBus),
+		p.executor.Run(clientHandlers.NewRemoveAllowedFlowHandler(p.commandBus, ids.ClientIdFromContext)),
+	)
 	client.POST("/redirect-uris",
 		middlewares.ScopeMiddleware(vo.ScopeClientsAddRedirectUri),
 		ownership.Client(p.queryBus),

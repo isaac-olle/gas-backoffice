@@ -174,6 +174,11 @@ func (c *Client) AddAllowedFlow(flow vos.Flow) {
 	c.Record(backoffice.NewClientFlowAdded(c.id.String(), flow.String()))
 }
 
+func (c *Client) RemoveAllowedFlow(flow vos.Flow) {
+	c.allowedFlows.Remove(flow)
+	c.Record(backoffice.NewClientFlowRemoved(c.id.String(), flow.String()))
+}
+
 func (c *Client) AddRedirectUri(uri vos.RedirectUri) {
 	c.redirectUris.Add(uri)
 	c.Record(backoffice.NewClientRedirectUriAdded(c.id.String(), uri.String()))
