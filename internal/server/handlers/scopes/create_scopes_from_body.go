@@ -44,7 +44,7 @@ type createScopesFromBodyRequest struct {
 func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 	var req createScopesFromBodyRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	if len(req.Scopes) == 0 {

@@ -30,7 +30,7 @@ type addScopeAllowedClientRequest struct {
 func (h *AddScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
 	var req addScopeAllowedClientRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	scopeId, ok := h.scopeId(c.Request.Context())

@@ -55,8 +55,14 @@ func (e *AppError) Error() string {
 	return string(jsonError)
 }
 
+var ErrInvalidRequestBody ErrorCode = "INVALID_REQUEST_BODY"
+
 func BadRequestError(code ErrorCode) *AppError {
 	return newAppError(BadRequestErrorType, code)
+}
+
+func InvalidRequestBodyError(cause error) *AppError {
+	return newAppError(BadRequestErrorType, ErrInvalidRequestBody).WithCause(cause)
 }
 
 func InternalError(code ErrorCode) *AppError {

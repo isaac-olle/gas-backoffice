@@ -35,7 +35,7 @@ func (h *ChangeUserNameHandler) Execute(c *gin.Context) (any, error) {
 
 	var req changeUserNameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	return nil, h.commandBus.Dispatch(c.Request.Context(), userChangeName.NewCommand(userId, req.Name))

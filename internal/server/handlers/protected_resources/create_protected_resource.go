@@ -57,7 +57,7 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 
 	var req createProtectedResourceRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	prOwnership := protected_resources.NewOwnership(userId, userOwnership.AdminId)

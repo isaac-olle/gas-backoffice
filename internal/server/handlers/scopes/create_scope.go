@@ -51,7 +51,7 @@ func (h *CreateScopeHandler) Execute(c *gin.Context) (any, error) {
 
 	var req createScopeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	ownership := scopes.NewOwnershipFromVos(prId, prOwnership.UserId, prOwnership.AdminId)

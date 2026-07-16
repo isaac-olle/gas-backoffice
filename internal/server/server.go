@@ -41,6 +41,7 @@ func New(
 	router := gin.New()
 	router.Use(gin.RecoveryWithWriter(os.Stderr))
 	router.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		Output:    os.Stdout,
 		SkipPaths: []string{"/health"},
 		Formatter: func(p gin.LogFormatterParams) string {
 			return fmt.Sprintf("[GIN] %s %s %d %s\n", p.Method, p.Path, p.StatusCode, p.Latency)

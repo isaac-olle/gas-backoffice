@@ -30,7 +30,7 @@ type removeAllowedFlowRequest struct {
 func (h *RemoveAllowedFlowHandler) Execute(c *gin.Context) (any, error) {
 	var req removeAllowedFlowRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

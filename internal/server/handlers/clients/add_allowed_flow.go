@@ -30,7 +30,7 @@ type addAllowedFlowRequest struct {
 func (h *AddAllowedFlowHandler) Execute(c *gin.Context) (any, error) {
 	var req addAllowedFlowRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

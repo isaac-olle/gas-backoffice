@@ -44,7 +44,7 @@ type createClientRequest struct {
 func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 	var req createClientRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

@@ -30,7 +30,7 @@ type addRedirectUriRequest struct {
 func (h *AddRedirectUriHandler) Execute(c *gin.Context) (any, error) {
 	var req addRedirectUriRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())

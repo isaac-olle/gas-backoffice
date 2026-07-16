@@ -30,7 +30,7 @@ type updateProtectedResourceNameRequest struct {
 func (h *UpdateProtectedResourceNameHandler) Execute(c *gin.Context) (any, error) {
 	var req updateProtectedResourceNameRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	prId, ok := h.prId(c.Request.Context())

@@ -33,7 +33,7 @@ type createUserRequest struct {
 func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
 	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
 	adminId, ok := h.adminId(c.Request.Context())
