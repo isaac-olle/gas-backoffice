@@ -7,7 +7,7 @@ down:
 	docker compose -f deploy/docker-compose.yml down
 
 seed:
-	go run ./cmd/db_seed --env-file .env.local
+	go run ./cmd/db_seed --env-file .env.dev
 
 local-token:
 	go run ./scripts/generate_admin_token --env .env.local

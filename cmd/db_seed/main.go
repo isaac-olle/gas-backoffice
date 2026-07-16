@@ -106,16 +106,31 @@ func main() {
 		fatalf("marshal backoffice private key: %v", err)
 	}
 
+	alreadyApplied := false
+
 	// Recover existing seed IDs if already applied
 	var existingAdminID string
 	err = pool.QueryRow(ctx, `SELECT id FROM backoffice.admins WHERE name = $1 LIMIT 1`, "Gas-Seed-Admin").Scan(&existingAdminID)
 	if err == nil {
+		alreadyApplied = true
 		adminID = existingAdminID
 		fmt.Fprintf(os.Stderr, "⚠ Seed already applied, recovering existing IDs\n")
 		_ = pool.QueryRow(ctx, `SELECT id FROM security.admin_assertion_keys WHERE admin_id = $1 LIMIT 1`, adminID).Scan(&adminAssertionKeyID)
 		_ = pool.QueryRow(ctx, `SELECT id FROM backoffice.users WHERE admin_id = $1 AND name = $2 LIMIT 1`, adminID, "Gas-User").Scan(&userID)
 		_ = pool.QueryRow(ctx, `SELECT id FROM backoffice.protected_resources WHERE name = $1 LIMIT 1`, "Gas-Backoffice").Scan(&prID)
 		_ = pool.QueryRow(ctx, `SELECT id FROM security.key_pairs WHERE protected_resource_id = $1 LIMIT 1`, prID).Scan(&keyPairID)
+
+		existingPrivKeyB64 := os.Getenv("ADMIN_ASSERTION_PRIVATE_KEY")
+		if existingPrivKeyB64 != "" {
+			existingPrivKeyPEM, decErr := base64.StdEncoding.DecodeString(existingPrivKeyB64)
+			if decErr == nil {
+				recovered, parseErr := parsePrivateKey(string(existingPrivKeyPEM))
+				if parseErr == nil {
+					adminPrivKey = recovered
+					adminPrivKeyPEM = string(existingPrivKeyPEM)
+				}
+			}
+		}
 	}
 
 	tx, err := pool.Begin(ctx)
@@ -192,7 +207,7 @@ func main() {
 	for _, s := range seedScopes {
 		exec_(`INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
 			      VALUES ($1, $2, $3, $4, $5, TRUE, '', '')
-			ON CONFLICT (name, protected_resource_id) DO NOTHING`,
+			ON CONFLICT (protected_resource_id, name) WHERE deleted_at IS NULL DO NOTHING`,
 			s.id, s.name, prID, userID, adminID)
 	}
 
@@ -224,7 +239,7 @@ func main() {
 	if targetEnv == "" {
 		targetEnv = *envFile
 	}
-	if targetEnv != "" {
+	if targetEnv != "" && !alreadyApplied {
 		if err = writeEnvFile(targetEnv, map[string]string{
 			"SEED_ADMIN_ID":               adminID,
 			"ADMIN_ASSERTION_KEY_ID":      adminAssertionKeyID,
@@ -263,6 +278,22 @@ func writeEnvFile(file string, vars map[string]string) error {
 		existing[k] = v
 	}
 	return godotenv.Write(existing, file)
+}
+
+func parsePrivateKey(pemStr string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, fmt.Errorf("failed to decode PEM block")
+	}
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	rsaKey, ok := key.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("not an RSA private key")
+	}
+	return rsaKey, nil
 }
 
 func generateRSAKeyPair() (*rsa.PrivateKey, string, error) {
