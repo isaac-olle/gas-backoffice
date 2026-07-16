@@ -1,1 +1,1 @@
-DROP INDEX IF EXISTS scopes_name_protected_resource_id_unique;
+DROP INDEX IF EXISTS backoffice.scopes_name_protected_resource_id_unique;
