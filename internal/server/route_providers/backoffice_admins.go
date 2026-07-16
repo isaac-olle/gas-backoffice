@@ -141,17 +141,22 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	)
 	client.PUT("",
 		ownership.User(p.queryBus),
-		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
-			func(c *gin.Context) error { c.JSON(http.StatusCreated, gin.H{}); return nil },
-			clientHandlers.NewCreateClientHandler(
-				p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
-			),
-			securityHandlers.NewCreateClientAssertionKeyHandler(
-				p.commandBus, ids.ClientIdFromContext,
-			),
-			securityHandlers.NewCreateClientSecretHandler(
-				p.commandBus, ids.ClientIdFromContext,
-			),
+		p.executor.Run(clientHandlers.NewCreateClientHandler(
+			p.commandBus, ids.ClientIdFromContext, ids.UserIdFromContext, helpers.UserOwnershipFromContext,
+		)),
+	)
+	client.PUT("/assertion-keys/:assertion_key_id",
+		path_params.ClientAssertionKeyIdParam(),
+		ownership.Client(p.queryBus),
+		p.executor.Run(securityHandlers.NewCreateClientAssertionKeyHandler(
+			p.commandBus, ids.ClientIdFromContext, ids.ClientAssertionKeyIdFromContext,
+		)),
+	)
+	client.PUT("/secrets/:secret_id",
+		path_params.ClientSecretIdParam(),
+		ownership.Client(p.queryBus),
+		p.executor.Run(securityHandlers.NewCreateClientSecretHandler(
+			p.commandBus, ids.ClientIdFromContext, ids.ClientSecretIdFromContext,
 		)),
 	)
 	client.DELETE("",

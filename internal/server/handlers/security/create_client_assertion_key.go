@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -12,26 +13,31 @@ import (
 )
 
 type CreateClientAssertionKeyHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
+	commandBus     command.Bus
+	clientId       func(context.Context) (ids.ClientId, bool)
+	assertionKeyId func(context.Context) (ids.ClientAssertionKeyId, bool)
 }
 
 func NewCreateClientAssertionKeyHandler(
 	commandBus command.Bus,
 	clientId func(context.Context) (ids.ClientId, bool),
+	assertionKeyId func(context.Context) (ids.ClientAssertionKeyId, bool),
 ) *CreateClientAssertionKeyHandler {
-	return &CreateClientAssertionKeyHandler{commandBus: commandBus, clientId: clientId}
+	return &CreateClientAssertionKeyHandler{
+		commandBus:     commandBus,
+		clientId:       clientId,
+		assertionKeyId: assertionKeyId,
+	}
 }
 
 type createClientAssertionKeyRequest struct {
-	AssertionKeyID string `json:"assertion_key_id" binding:"required"`
-	PublicKey      string `json:"public_key" binding:"required"`
+	PublicKey string `json:"public_key" binding:"required"`
 }
 
 func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 	var req createClientAssertionKeyRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, app_errors.BadRequestError("INVALID_ASSERTION_KEY_REQUEST").WithCause(err)
+		return nil, app_errors.BadRequestError("INVALID_ASSERTION_KEY_REQUEST").WithDescription(err.Error())
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())
@@ -39,9 +45,9 @@ func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	keyId, err := ids.NewClientAssertionKeyIdFromString(req.AssertionKeyID)
-	if err != nil {
-		return nil, app_errors.AddTrace(err)
+	keyId, ok := h.assertionKeyId(c.Request.Context())
+	if !ok {
+		return nil, app_errors.InternalError("MISSING_ASSERTION_KEY_ID")
 	}
 
 	return nil, h.commandBus.Dispatch(
@@ -50,10 +56,11 @@ func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 	)
 }
 
-func (h *CreateClientAssertionKeyHandler) Success(_ *gin.Context, _ any) error {
+func (h *CreateClientAssertionKeyHandler) Success(c *gin.Context, _ any) error {
+	c.Status(http.StatusCreated)
 	return nil
 }
 
 func (h *CreateClientAssertionKeyHandler) Default(c *gin.Context) {
-	c.Status(500)
+	c.Status(http.StatusInternalServerError)
 }

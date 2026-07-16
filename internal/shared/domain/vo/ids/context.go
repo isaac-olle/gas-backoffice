@@ -5,6 +5,8 @@ import "context"
 type adminIdContextKey struct{}
 type userIdContextKey struct{}
 type clientIdContextKey struct{}
+type clientAssertionKeyIdContextKey struct{}
+type clientSecretIdContextKey struct{}
 type protectedResourceIdContextKey struct{}
 type scopeIdContextKey struct{}
 
@@ -23,6 +25,24 @@ func WithUserId(ctx context.Context, id UserId) context.Context {
 
 func UserIdFromContext(ctx context.Context) (UserId, bool) {
 	id, ok := ctx.Value(userIdContextKey{}).(UserId)
+	return id, ok
+}
+
+func WithClientAssertionKeyId(ctx context.Context, id ClientAssertionKeyId) context.Context {
+	return context.WithValue(ctx, clientAssertionKeyIdContextKey{}, id)
+}
+
+func ClientAssertionKeyIdFromContext(ctx context.Context) (ClientAssertionKeyId, bool) {
+	id, ok := ctx.Value(clientAssertionKeyIdContextKey{}).(ClientAssertionKeyId)
+	return id, ok
+}
+
+func WithClientSecretId(ctx context.Context, id ClientSecretId) context.Context {
+	return context.WithValue(ctx, clientSecretIdContextKey{}, id)
+}
+
+func ClientSecretIdFromContext(ctx context.Context) (ClientSecretId, bool) {
+	id, ok := ctx.Value(clientSecretIdContextKey{}).(ClientSecretId)
 	return id, ok
 }
 

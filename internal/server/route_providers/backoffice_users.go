@@ -136,17 +136,24 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	client.PUT("",
 		middlewares.ScopeMiddleware(vo.ScopeClientsCreate),
 		ownership.User(p.queryBus),
-		p.executor.Run(middlewares.NewHandlerChain(p.pgxPool,
-			func(c *gin.Context) error { c.JSON(http.StatusCreated, gin.H{}); return nil },
-			clientHandlers.NewCreateClientHandler(
-				p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromAuthor, helpers.UserOwnershipFromAuthor,
-			),
-			securityHandlers.NewCreateClientAssertionKeyHandler(
-				p.commandBus, ids.ClientIdFromContext,
-			),
-			securityHandlers.NewCreateClientSecretHandler(
-				p.commandBus, ids.ClientIdFromContext,
-			),
+		p.executor.Run(clientHandlers.NewCreateClientHandler(
+			p.commandBus, ids.ClientIdFromContext, helpers.UserIdFromAuthor, helpers.UserOwnershipFromAuthor,
+		)),
+	)
+	client.PUT("/assertion-keys/:assertion_key_id",
+		path_params.ClientAssertionKeyIdParam(),
+		middlewares.ScopeMiddleware(vo.ScopeClientsCreate),
+		ownership.Client(p.queryBus),
+		p.executor.Run(securityHandlers.NewCreateClientAssertionKeyHandler(
+			p.commandBus, ids.ClientIdFromContext, ids.ClientAssertionKeyIdFromContext,
+		)),
+	)
+	client.PUT("/secrets/:secret_id",
+		path_params.ClientSecretIdParam(),
+		middlewares.ScopeMiddleware(vo.ScopeClientsCreate),
+		ownership.Client(p.queryBus),
+		p.executor.Run(securityHandlers.NewCreateClientSecretHandler(
+			p.commandBus, ids.ClientIdFromContext, ids.ClientSecretIdFromContext,
 		)),
 	)
 	client.GET("",

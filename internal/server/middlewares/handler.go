@@ -2,7 +2,6 @@ package middlewares
 
 import "github.com/gin-gonic/gin"
 
-// Handler interface that all handlers must implement
 type Handler interface {
 	Execute(c *gin.Context) (any, error)
 	Success(c *gin.Context, result any) error
