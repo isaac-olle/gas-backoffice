@@ -48,7 +48,8 @@ func (p *OpenIDAuthorizeErrorPresenter) Present(c *gin.Context, err *app_errors2
 		params.Set("state", state)
 	}
 
-	c.Redirect(http.StatusFound, redirectURI+"?"+params.Encode())
+	target := redirectURI + "?" + params.Encode()
+	c.Redirect(http.StatusFound, target)
 }
 
 func toOIDCErrorCode(err *app_errors2.AppError) string {

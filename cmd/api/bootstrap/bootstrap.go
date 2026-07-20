@@ -85,7 +85,7 @@ func Run() error {
 		presenter,
 		managers,
 		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, cfg.Application.BackofficePrId, cfg.Application.Name),
-		route_providers.NewProtocol(hm, cmdBus, qryBus),
+		route_providers.NewProtocol(hm, cmdBus, qryBus, managers...),
 	)
 
 	consumer := eventinfra.NewOutboxConsumer(outboxRepo, eventBus, registry, 500*time.Millisecond, log)

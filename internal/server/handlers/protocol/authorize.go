@@ -55,6 +55,7 @@ func (h *AuthorizeHandler) Execute(c *gin.Context) (any, error) {
 }
 
 func (h *AuthorizeHandler) Success(c *gin.Context, result any) error {
+	c.Set("redirect", result.(string))
 	c.Redirect(http.StatusFound, result.(string))
 	return nil
 }

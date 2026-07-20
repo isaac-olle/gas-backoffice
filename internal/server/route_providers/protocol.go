@@ -6,6 +6,7 @@ import (
 	protocolHandler "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	error_presenters "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_presenters"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
@@ -15,10 +16,16 @@ type Protocol struct {
 	executor   *middlewares.HandlerMiddleware
 	commandBus command.Bus
 	queryBus   query.Bus
+	managers   []app_errors.ErrorManager
 }
 
-func NewProtocol(hm *middlewares.HandlerMiddleware, cmdBus command.Bus, qryBus query.Bus) *Protocol {
-	return &Protocol{executor: hm, commandBus: cmdBus, queryBus: qryBus}
+func NewProtocol(hm *middlewares.HandlerMiddleware, cmdBus command.Bus, qryBus query.Bus, managers ...app_errors.ErrorManager) *Protocol {
+	return &Protocol{
+		executor:   hm,
+		commandBus: cmdBus,
+		queryBus:   qryBus,
+		managers:   managers,
+	}
 }
 
 func (p *Protocol) Register(group *gin.RouterGroup) {
@@ -29,11 +36,11 @@ func (p *Protocol) Register(group *gin.RouterGroup) {
 	tokenPresenter := error_presenters.NewOAuth2TokenErrorPresenter()
 
 	group.GET("/authorize",
-		middlewares.HttpError(authorizePresenter),
+		middlewares.HttpError(authorizePresenter, p.managers...),
 		p.executor.Run(protocolHandler.NewAuthorizeHandler(p.commandBus, p.queryBus)),
 	)
 	group.POST("/token",
-		middlewares.HttpError(tokenPresenter),
+		middlewares.HttpError(tokenPresenter, p.managers...),
 		p.executor.Run(protocolHandler.NewTokenAuthenticationHandler(
 			authentication_methods.NewClientAuthMethodFactory(
 				authentication_methods.NewBasicAuthMethod(p.queryBus),
