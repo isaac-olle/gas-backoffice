@@ -14,31 +14,29 @@ import (
 type AddScopeAllowedClientHandler struct {
 	commandBus command.Bus
 	scopeId    func(context.Context) (ids.ScopeId, bool)
+	clientId   func(context.Context) (ids.ClientId, bool)
 }
 
 func NewAddScopeAllowedClientHandler(
 	commandBus command.Bus,
 	scopeId func(context.Context) (ids.ScopeId, bool),
+	clientId func(context.Context) (ids.ClientId, bool),
 ) *AddScopeAllowedClientHandler {
-	return &AddScopeAllowedClientHandler{commandBus: commandBus, scopeId: scopeId}
-}
-
-type addScopeAllowedClientRequest struct {
-	ClientID string `json:"client_id" binding:"required"`
+	return &AddScopeAllowedClientHandler{commandBus: commandBus, scopeId: scopeId, clientId: clientId}
 }
 
 func (h *AddScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
-	var req addScopeAllowedClientRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, app_errors.InvalidRequestBodyError(err)
-	}
-
 	scopeId, ok := h.scopeId(c.Request.Context())
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_SCOPE_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeAddClient.NewCommand(scopeId.String(), req.ClientID))
+	clientId, ok := h.clientId(c.Request.Context())
+	if !ok {
+		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
+	}
+
+	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeAddClient.NewCommand(scopeId.String(), clientId.String()))
 }
 
 func (h *AddScopeAllowedClientHandler) Success(c *gin.Context, _ any) error {

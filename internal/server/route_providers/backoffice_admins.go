@@ -125,8 +125,9 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 		p.executor.Run(scopeHandlers.NewSoftDeleteScopeHandler(p.commandBus, ids.ScopeIdFromContext)),
 	)
 	scope.POST("/allowed-clients/:client_id",
+		path_params.ClientIdParam(),
 		ownership.Scope(p.queryBus),
-		p.executor.Run(scopeHandlers.NewAddScopeAllowedClientHandler(p.commandBus, ids.ScopeIdFromContext)),
+		p.executor.Run(scopeHandlers.NewAddScopeAllowedClientHandler(p.commandBus, ids.ScopeIdFromContext, ids.ClientIdFromContext)),
 	)
 	scope.DELETE("/allowed-clients/:client_id",
 		ownership.Scope(p.queryBus),

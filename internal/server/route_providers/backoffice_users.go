@@ -115,10 +115,11 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 		p.executor.Run(scopeHandlers.NewSoftDeleteScopeHandler(p.commandBus, ids.ScopeIdFromContext)),
 	)
 	scope.POST("/allowed-clients/:client_id",
+		path_params.ClientIdParam(),
 		middlewares.ScopeMiddleware(vo.ScopeScopesAddAllowedClient),
 		ownership.Scope(p.queryBus),
 		system_resource.Scope(p.queryBus),
-		p.executor.Run(scopeHandlers.NewAddScopeAllowedClientHandler(p.commandBus, ids.ScopeIdFromContext)),
+		p.executor.Run(scopeHandlers.NewAddScopeAllowedClientHandler(p.commandBus, ids.ScopeIdFromContext, ids.ClientIdFromContext)),
 	)
 	scope.DELETE("/allowed-clients/:client_id",
 		middlewares.ScopeMiddleware(vo.ScopeScopesRemoveAllowedClient),
