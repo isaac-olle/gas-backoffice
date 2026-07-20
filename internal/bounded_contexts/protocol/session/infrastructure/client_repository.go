@@ -28,10 +28,10 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			s.name,
 			s.protected_resource_id,
 			pr.name
-		FROM clients c
-		LEFT JOIN scopes s
+		FROM backoffice.clients c
+		LEFT JOIN backoffice.scopes s
 			ON s.id = ANY(c.allowed_scopes) AND s.deleted_at IS NULL
-		LEFT JOIN protected_resources pr
+		LEFT JOIN backoffice.protected_resources pr
 			ON pr.id = s.protected_resource_id AND pr.deleted_at IS NULL
 		WHERE c.id = $1 AND c.deleted_at IS NULL
 	`, clientID)
