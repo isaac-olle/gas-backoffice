@@ -25,16 +25,16 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	ownership := users.NewOwnership(qry.adminId)
-
 	user, err := s.finder.Find(ctx, userId)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
 
-	if !user.CheckOwnership(users.NewOwnership(qry.adminId)) {
+	ownership := users.NewOwnership(userId)
+
+	if !user.CheckOwnership(ownership) {
 		return nil, app_errors.ForbiddenError(users.ErrInvalidOwnership).
-			WithDescription("user does not belong to the provided admin")
+			WithDescription("user not found with the provided id")
 	}
 
 	return ownership, nil

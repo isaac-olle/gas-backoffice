@@ -23,7 +23,6 @@ type ClientCredentialsSessionPrimitives struct {
 	ID       string
 	ClientID string
 	UserId   string
-	AdminID  string
 	Scope    string
 	IssuedAt string
 }

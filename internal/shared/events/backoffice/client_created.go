@@ -8,24 +8,22 @@ import (
 const ClientCreatedType event.Type = "backoffice.client.created"
 
 type ClientCreated struct {
-	Name    string
-	AdminId string
-	UserId  string
+	Name   string
+	UserId string
 	event.BaseEvent
 }
 
 func (e ClientCreated) Type() event.Type { return ClientCreatedType }
 
-func NewClientCreated(aggregateId, name, adminId, userId string) ClientCreated {
+func NewClientCreated(aggregateId, name, userId string) ClientCreated {
 	return ClientCreated{
-		Name:    name,
-		AdminId: adminId,
-		UserId:  userId,
+		Name:   name,
+		UserId: userId,
 		BaseEvent: event.NewEvent(
 			aggregateId,
 			ClientCreatedType,
 			false,
-			map[string]any{"name": name, "admin_id": adminId, "user_id": userId},
+			map[string]any{"name": name, "user_id": userId},
 			aggregate.Client,
 		),
 	}

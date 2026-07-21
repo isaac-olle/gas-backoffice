@@ -58,7 +58,7 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 
 	name := vos.ProtectedResourceNameFromPrimitives(p.Name)
 
-	ownership, err := NewOwnershipFromStrings(p.UserId, p.AdminId)
+	ownership, err := NewOwnershipFromStrings(p.UserId)
 	if err != nil {
 		errArr.AddError(err)
 	}

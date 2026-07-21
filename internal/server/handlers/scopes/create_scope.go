@@ -54,7 +54,7 @@ func (h *CreateScopeHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	ownership := scopes.NewOwnershipFromVos(prId, prOwnership.UserId, prOwnership.AdminId)
+	ownership := scopes.NewOwnershipFromVos(prId, prOwnership.UserId)
 	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeCreate.NewCommand(scopeId, req.Name, ownership))
 }
 

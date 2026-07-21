@@ -24,17 +24,16 @@ func newService(t *testing.T) (*check_ownership.Service, *prmocks.MockRepository
 func TestCheckOwnership(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns ownership with matching user and admin ids", func(t *testing.T) {
+	t.Run("returns ownership with matching user id", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		prId := ids2.NewProtectedResourceId()
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
-		pr := aPRWithOwnership(t, prId, userId, adminId)
+		pr := aPRWithOwnership(t, prId, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		result, err := svc.CheckOwnership(context.Background(), check_ownership.NewQuery(prId.String(), userId.String(), adminId))
+		result, err := svc.CheckOwnership(context.Background(), check_ownership.NewQuery(prId.String(), userId.String()))
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
@@ -42,46 +41,44 @@ func TestCheckOwnership(t *testing.T) {
 		require.True(t, ok)
 		prims := ownership.ToPrimitives()
 		assert.Equal(t, userId.String(), prims.UserId)
-		assert.Equal(t, adminId.String(), prims.AdminId)
 	})
 
 	errCases := []struct {
 		desc      string
-		setupRepo func(repo *prmocks.MockRepository) (prIdStr string, userIdStr string, adminId ids2.AdminId)
+		setupRepo func(repo *prmocks.MockRepository) (prIdStr string, userIdStr string)
 		wantCode  app_errors.ErrorCode
 	}{
 		{
 			desc: "returns bad request error for invalid user id",
-			setupRepo: func(_ *prmocks.MockRepository) (string, string, ids2.AdminId) {
-				return ids2.NewProtectedResourceId().String(), "not-a-uuid", ids2.NewAdminId()
+			setupRepo: func(_ *prmocks.MockRepository) (string, string) {
+				return ids2.NewProtectedResourceId().String(), "not-a-uuid"
 			},
 			wantCode: protected_resources.ErrInvalidUserId,
 		},
 		{
 			desc: "returns bad request error for invalid protected resource id",
-			setupRepo: func(_ *prmocks.MockRepository) (string, string, ids2.AdminId) {
-				return "bad-id", ids2.NewUserId().String(), ids2.NewAdminId()
+			setupRepo: func(_ *prmocks.MockRepository) (string, string) {
+				return "bad-id", ids2.NewUserId().String()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
 			desc: "returns not found error when resource is not in repo",
-			setupRepo: func(repo *prmocks.MockRepository) (string, string, ids2.AdminId) {
+			setupRepo: func(repo *prmocks.MockRepository) (string, string) {
 				prId := ids2.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, fmt.Errorf("not found"))
-				return prId.String(), ids2.NewUserId().String(), ids2.NewAdminId()
+				return prId.String(), ids2.NewUserId().String()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
 			desc: "returns forbidden error when ownership does not match",
-			setupRepo: func(repo *prmocks.MockRepository) (string, string, ids2.AdminId) {
+			setupRepo: func(repo *prmocks.MockRepository) (string, string) {
 				prId := ids2.NewProtectedResourceId()
 				userId := ids2.NewUserId()
-				adminId := ids2.NewAdminId()
-				pr := aPRWithOwnership(t, prId, userId, adminId)
+				pr := aPRWithOwnership(t, prId, userId)
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
-				return prId.String(), ids2.NewUserId().String(), adminId // different user
+				return prId.String(), ids2.NewUserId().String() // different user
 			},
 			wantCode: protected_resources.ErrInvalidOwnership,
 		},
@@ -91,8 +88,8 @@ func TestCheckOwnership(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			svc, repo := newService(t)
-			prIdStr, userIdStr, adminId := tc.setupRepo(repo)
-			_, err := svc.CheckOwnership(context.Background(), check_ownership.NewQuery(prIdStr, userIdStr, adminId))
+			prIdStr, userIdStr := tc.setupRepo(repo)
+			_, err := svc.CheckOwnership(context.Background(), check_ownership.NewQuery(prIdStr, userIdStr))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

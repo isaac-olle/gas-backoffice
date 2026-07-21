@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// commandOpt is a functional option for commandBuilder.
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
@@ -21,7 +20,6 @@ func withUserId(userId string) commandOpt {
 	return func(b *commandBuilder) { b.userId = userId }
 }
 
-// aCommand builds a soft_delete.Command using the Object Mother pattern.
 func aCommand(t *testing.T, opts ...commandOpt) *soft_delete.Command {
 	t.Helper()
 	b := &commandBuilder{userId: uuid.New().String()}
@@ -33,20 +31,19 @@ func aCommand(t *testing.T, opts ...commandOpt) *soft_delete.Command {
 	return soft_delete.NewCommand(id)
 }
 
-// aUser builds a User aggregate for use in tests.
 func aUser(t *testing.T) *users.User {
 	t.Helper()
-	user, err := users.NewUser(ids2.NewUserId(), "Test User", users.NewOwnership(ids2.NewAdminId()))
+	userId := ids2.NewUserId()
+	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
 	require.NoError(t, err)
-	user.PullDomainEvents() // clear creation event
+	user.PullDomainEvents()
 	return user
 }
 
-// aUserWithId builds a User aggregate bound to the given userId.
 func aUserWithId(t *testing.T, userId ids2.UserId) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(ids2.NewAdminId()))
+	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
 	require.NoError(t, err)
-	user.PullDomainEvents() // clear creation event
+	user.PullDomainEvents()
 	return user
 }

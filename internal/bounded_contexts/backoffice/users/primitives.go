@@ -3,18 +3,18 @@ package users
 type UserPrimitives struct {
 	Id                   string
 	Name                 string
-	AdminId              string
+	Role                 string
 	ClientIds            []string
 	ProtectedResourceIds []string
 	IsSystem             bool
 }
 
 type OwnershipPrimitives struct {
-	AdminId string
+	UserId string
 }
 
 func (o Ownership) ToPrimitives() OwnershipPrimitives {
-	return OwnershipPrimitives{AdminId: o.AdminId.String()}
+	return OwnershipPrimitives{UserId: o.UserId.String()}
 }
 
 func (t *User) ToPrimitives() UserPrimitives {
@@ -29,7 +29,7 @@ func (t *User) ToPrimitives() UserPrimitives {
 	return UserPrimitives{
 		Id:                   t.id.String(),
 		Name:                 t.name.String(),
-		AdminId:              t.ownership.AdminId.String(),
+		Role:                 t.role.String(),
 		ClientIds:            clientIds,
 		ProtectedResourceIds: prIds,
 		IsSystem:             t.isSystem,

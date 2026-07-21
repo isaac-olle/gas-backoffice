@@ -3,27 +3,27 @@ package clients
 import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
-var clientAggregateName aggregate2.Name = aggregate2.Client
+var clientAggregateName aggregate.Name = aggregate.Client
 
 type Client struct {
-	*aggregate2.Root
-	id            ids2.ClientId
+	*aggregate.Root
+	id            ids.ClientId
 	name          vos.ClientName
 	ownership     Ownership
 	allowedFlows  *vo.SetVo[vos.Flow]
-	allowedScopes *vo.SetVo[ids2.ScopeId]
+	allowedScopes *vo.SetVo[ids.ScopeId]
 	redirectUris  *vo.SetVo[vos.RedirectUri]
-	keyIds        *vo.SetVo[ids2.ClientAssertionKeyId]
-	secretIds     *vo.SetVo[ids2.ClientSecretId]
+	keyIds        *vo.SetVo[ids.ClientAssertionKeyId]
+	secretIds     *vo.SetVo[ids.ClientSecretId]
 }
 
-func NewClient(id ids2.ClientId, name string, ownership Ownership, redirectUris []string, allowedFlows []string) (*Client, error) {
+func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris []string, allowedFlows []string) (*Client, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	clientName, err := vos.NewClientName(name)
@@ -56,24 +56,24 @@ func NewClient(id ids2.ClientId, name string, ownership Ownership, redirectUris 
 	}
 
 	c := &Client{
-		Root:          aggregate2.NewRoot(clientAggregateName),
+		Root:          aggregate.NewRoot(clientAggregateName),
 		id:            id,
 		name:          clientName,
 		ownership:     ownership,
 		allowedFlows:  flows,
-		allowedScopes: vo.NewEmptySetVo[ids2.ScopeId](),
+		allowedScopes: vo.NewEmptySetVo[ids.ScopeId](),
 		redirectUris:  uris,
-		keyIds:        vo.NewEmptySetVo[ids2.ClientAssertionKeyId](),
-		secretIds:     vo.NewEmptySetVo[ids2.ClientSecretId](),
+		keyIds:        vo.NewEmptySetVo[ids.ClientAssertionKeyId](),
+		secretIds:     vo.NewEmptySetVo[ids.ClientSecretId](),
 	}
-	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.AdminId.String(), c.ownership.UserId.String()))
+	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.UserId.String()))
 	return c, nil
 }
 
 func FromPrimitives(p ClientPrimitives) (*Client, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
-	id, err := ids2.NewClientIdFromString(p.Id)
+	id, err := ids.NewClientIdFromString(p.Id)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -83,12 +83,7 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		errArr.AddError(err)
 	}
 
-	adminId, err := ids2.NewAdminIdFromString(p.AdminId)
-	if err != nil {
-		errArr.AddError(err)
-	}
-
-	userId, err := ids2.NewUserIdFromString(p.UserId)
+	userId, err := ids.NewUserIdFromString(p.UserId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -103,9 +98,9 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		}
 	}
 
-	allowedScopes := vo.NewEmptySetVo[ids2.ScopeId]()
+	allowedScopes := vo.NewEmptySetVo[ids.ScopeId]()
 	for _, rawId := range p.AllowedScopes {
-		scopeId, sErr := ids2.NewScopeIdFromString(rawId)
+		scopeId, sErr := ids.NewScopeIdFromString(rawId)
 		if sErr != nil {
 			errArr.AddError(sErr)
 		} else {
@@ -123,9 +118,9 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		}
 	}
 
-	keyIds := vo.NewEmptySetVo[ids2.ClientAssertionKeyId]()
+	keyIds := vo.NewEmptySetVo[ids.ClientAssertionKeyId]()
 	for _, raw := range p.KeyIds {
-		keyId, kErr := ids2.NewClientAssertionKeyIdFromString(raw)
+		keyId, kErr := ids.NewClientAssertionKeyIdFromString(raw)
 		if kErr != nil {
 			errArr.AddError(kErr)
 		} else {
@@ -133,9 +128,9 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		}
 	}
 
-	secretIds := vo.NewEmptySetVo[ids2.ClientSecretId]()
+	secretIds := vo.NewEmptySetVo[ids.ClientSecretId]()
 	for _, raw := range p.SecretIds {
-		secretId, sErr := ids2.NewClientSecretIdFromString(raw)
+		secretId, sErr := ids.NewClientSecretIdFromString(raw)
 		if sErr != nil {
 			errArr.AddError(sErr)
 		} else {
@@ -148,10 +143,10 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 	}
 
 	c := &Client{
-		Root:          aggregate2.NewRoot(clientAggregateName),
+		Root:          aggregate.NewRoot(clientAggregateName),
 		id:            id,
 		name:          name,
-		ownership:     NewOwnership(adminId, userId),
+		ownership:     NewOwnership(userId),
 		allowedFlows:  allowedFlows,
 		allowedScopes: allowedScopes,
 		redirectUris:  redirectUris,
@@ -184,18 +179,18 @@ func (c *Client) AddRedirectUri(uri vos.RedirectUri) {
 	c.Record(backoffice.NewClientRedirectUriAdded(c.id.String(), uri.String()))
 }
 
-func (c *Client) AddAllowedScope(scopeId ids2.ScopeId) {
+func (c *Client) AddAllowedScope(scopeId ids.ScopeId) {
 	c.allowedScopes.Add(scopeId)
 }
 
-func (c *Client) RemoveAllowedScope(scopeId ids2.ScopeId) {
+func (c *Client) RemoveAllowedScope(scopeId ids.ScopeId) {
 	c.allowedScopes.Remove(scopeId)
 }
 
-func (c *Client) AddKeyId(keyId ids2.ClientAssertionKeyId) {
+func (c *Client) AddKeyId(keyId ids.ClientAssertionKeyId) {
 	c.keyIds.Add(keyId)
 }
 
-func (c *Client) AddSecretId(secretId ids2.ClientSecretId) {
+func (c *Client) AddSecretId(secretId ids.ClientSecretId) {
 	c.secretIds.Add(secretId)
 }

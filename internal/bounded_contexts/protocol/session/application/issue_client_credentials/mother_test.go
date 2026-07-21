@@ -43,7 +43,7 @@ func (m *mockEventBus) Publish(_ context.Context, evts []event.Event) {
 func newClientWithCCMother(clientID string) *session.Client {
 	return session.NewClient(
 		clientID, "TestClient",
-		uuid.New().String(), uuid.New().String(),
+		uuid.New().String(),
 		[]string{"client_credentials"},
 		[]string{},
 		[]*session.Scope{

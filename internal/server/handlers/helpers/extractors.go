@@ -10,14 +10,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
-func AdminIdFromAuthor(ctx context.Context) (ids2.AdminId, bool) {
-	author, ok := vo2.AuthorFromContext[*authors2.AdminAuthor](ctx)
-	if !ok {
-		return ids2.AdminId{}, false
-	}
-	return author.Id, true
-}
-
 func UserIdFromAuthor(ctx context.Context) (ids2.UserId, bool) {
 	author, ok := vo2.AuthorFromContext[*authors2.UserAuthor](ctx)
 	if !ok {
@@ -43,7 +35,7 @@ func UserOwnershipFromAuthor(ctx context.Context) (users.Ownership, bool) {
 	if !ok {
 		return users.Ownership{}, false
 	}
-	return author.Ownership(), true
+	return users.NewOwnership(author.Id), true
 }
 
 func ProtectedResourceOwnershipFromContext(ctx context.Context) (protected_resources.Ownership, bool) {

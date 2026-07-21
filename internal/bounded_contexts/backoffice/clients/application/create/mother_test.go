@@ -16,7 +16,6 @@ type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
 	name         string
-	adminId      ids2.AdminId
 	userId       ids2.UserId
 	allowedFlows []string
 	redirectUris []string
@@ -37,15 +36,14 @@ func withRedirectUris(uris ...string) commandOpt {
 func aCommand(t *testing.T, opts ...commandOpt) *create.Command {
 	t.Helper()
 	b := &commandBuilder{
-		name:    "valid-client",
-		adminId: ids2.NewAdminId(),
-		userId:  ids2.NewUserId(),
+		name:   "valid-client",
+		userId: ids2.NewUserId(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
 	clientId := ids2.NewClientId()
-	ownership := clients.NewOwnership(b.adminId, b.userId)
+	ownership := clients.NewOwnership(b.userId)
 	cmd := create.NewCommand(clientId, b.name, ownership, b.allowedFlows, b.redirectUris)
 	require.NotNil(t, cmd)
 	return cmd

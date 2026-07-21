@@ -3,8 +3,8 @@ CREATE TABLE public.outbox_event_bus (
     event_name   TEXT        NOT NULL,
     aggregate_id TEXT        NOT NULL,
     payload      JSONB       NOT NULL,
-    actor_id     TEXT,
-    actor_role   TEXT,
+    author_id    TEXT,
+    author_role  TEXT,
     occurred_at  TIMESTAMPTZ NOT NULL,
     inserted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

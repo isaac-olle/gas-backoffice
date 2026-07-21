@@ -18,10 +18,10 @@ import (
 func aPR(t *testing.T, isSystem bool) *protected_resources.ProtectedResource {
 	t.Helper()
 	pr, err := protected_resources.FromPrimitives(protected_resources.ProtectedResourcePrimitives{
-		Id:       ids.NewProtectedResourceId().String(),
-		Name:     "Test Resource",
-		UserId:   ids.NewUserId().String(),
-		AdminId:  ids.NewAdminId().String(),
+		Id:     ids.NewProtectedResourceId().String(),
+		Name:   "Test Resource",
+		UserId: ids.NewUserId().String(),
+
 		IsSystem: isSystem,
 	})
 	require.NoError(t, err)

@@ -68,7 +68,7 @@ func newPKCESessionMother(t *testing.T, clientID string) *session.AuthorizationC
 func newPKCEClientMother(clientID, redirectURI string) *session.Client {
 	return session.NewClient(
 		clientID, "TC",
-		uuid.New().String(), uuid.New().String(),
+		uuid.New().String(),
 		[]string{"pkce"}, []string{redirectURI},
 		[]*session.Scope{
 			session.NewScope(uuid.New().String(), "openid", uuid.New().String(), "Resource A"),

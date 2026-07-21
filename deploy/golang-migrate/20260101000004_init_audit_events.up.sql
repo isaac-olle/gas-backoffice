@@ -3,8 +3,8 @@ CREATE TABLE public.audit_events (
     event_type     TEXT        NOT NULL,
     aggregate_id   TEXT        NOT NULL,
     aggregate_type TEXT        NOT NULL,
-    actor_id       TEXT,
-    actor_role     TEXT,
+    author_id      TEXT,
+    author_role    TEXT,
     payload        JSONB       NOT NULL,
     occurred_at    TIMESTAMPTZ NOT NULL,
     recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()

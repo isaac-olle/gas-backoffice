@@ -6,28 +6,21 @@ import (
 )
 
 type Ownership struct {
-	UserId  ids2.UserId
-	AdminId ids2.AdminId
+	UserId ids2.UserId
 }
 
-func NewOwnership(userId ids2.UserId, adminId ids2.AdminId) Ownership {
-	return Ownership{UserId: userId, AdminId: adminId}
+func NewOwnership(userId ids2.UserId) Ownership {
+	return Ownership{UserId: userId}
 }
 
-func NewOwnershipFromStrings(userId string, adminId string) (Ownership, error) {
+func NewOwnershipFromStrings(userId string) (Ownership, error) {
 	tId, err := ids2.NewUserIdFromString(userId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
 			WithDescription("invalid user id").
 			WithCause(err)
 	}
-	aId, err := ids2.NewAdminIdFromString(adminId)
-	if err != nil {
-		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid admin id").
-			WithCause(err)
-	}
-	return NewOwnership(tId, aId), nil
+	return NewOwnership(tId), nil
 }
 
 func (o Ownership) Equals(other Ownership) bool {

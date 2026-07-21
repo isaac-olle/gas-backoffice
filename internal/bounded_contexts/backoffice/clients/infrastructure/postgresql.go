@@ -28,8 +28,8 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 	p := client.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.clients (id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO backoffice.clients (id, name, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			allowed_flows = EXCLUDED.allowed_flows,
@@ -38,7 +38,7 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 			key_ids = EXCLUDED.key_ids,
 			secret_ids = EXCLUDED.secret_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.AdminId, p.UserId, p.AllowedFlows, p.AllowedScopes, p.RedirectUris, p.KeyIds, p.SecretIds, authorId, authorRole)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserId, p.AllowedFlows, p.AllowedScopes, p.RedirectUris, p.KeyIds, p.SecretIds, authorId, authorRole)
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
@@ -51,7 +51,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresClientRepository) SearchById(ctx context.Context, id ids.ClientId) (*clients.Client, error) {
-	query := `SELECT id, name, admin_id, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -71,7 +71,7 @@ func (r *PostgresClientRepository) HardDelete(ctx context.Context, id ids.Client
 
 func (r *PostgresClientRepository) fromRow(row pgx.Row) (*clients.Client, error) {
 	var p clients.ClientPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.AdminId, &p.UserId, &p.AllowedFlows, &p.AllowedScopes, &p.RedirectUris, &p.KeyIds, &p.SecretIds)
+	err := row.Scan(&p.Id, &p.Name, &p.UserId, &p.AllowedFlows, &p.AllowedScopes, &p.RedirectUris, &p.KeyIds, &p.SecretIds)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

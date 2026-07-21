@@ -19,26 +19,23 @@ import (
 func TestCheckOwnership(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns ownership primitives with correct admin when ownership matches", func(t *testing.T) {
+	t.Run("returns ownership when ownership matches", func(t *testing.T) {
 		t.Parallel()
 		repo := usermocks.NewMockRepository(t)
-		adminId := ids2.NewAdminId()
 		userId := ids2.NewUserId()
-		user := aUser(t, userId, adminId)
+		user := aUser(t, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, userId).Return(user, nil)
 
 		svc := check_ownership.NewService(domain_services.NewUserFinder(repo))
 		result, err := svc.CheckOwnership(context.Background(), aQuery(t,
 			withUserId(userId.String()),
-			withAdminId(adminId),
 		))
 
 		require.NoError(t, err)
 		ownership, ok := result.(users.Ownership)
 		require.True(t, ok)
-		assert.Equal(t, adminId.String(), ownership.AdminId.String())
-		assert.NotEmpty(t, ownership.AdminId.String())
+		assert.Equal(t, userId.String(), ownership.UserId.String())
 	})
 
 	errCases := []struct {
@@ -55,7 +52,7 @@ func TestCheckOwnership(t *testing.T) {
 		{
 			desc: "returns not found when user does not exist",
 			qry: func(t *testing.T) *check_ownership.Query {
-				return aQuery(t, withUserId(ids2.NewUserId().String()), withAdminId(ids2.NewAdminId()))
+				return aQuery(t, withUserId(ids2.NewUserId().String()))
 			},
 			setupRepo: func(repo *usermocks.MockRepository) {
 				repo.EXPECT().
@@ -63,19 +60,6 @@ func TestCheckOwnership(t *testing.T) {
 					Return((*users.User)(nil), nil)
 			},
 			wantType: app_errors2.NotFoundErrorType,
-		},
-		{
-			desc: "returns forbidden when admin does not own the user",
-			qry: func(t *testing.T) *check_ownership.Query {
-				userId := ids2.NewUserId()
-				return aQuery(t, withUserId(userId.String()), withAdminId(ids2.NewAdminId()))
-			},
-			setupRepo: func(repo *usermocks.MockRepository) {
-				repo.EXPECT().
-					SearchById(mock.Anything, mock.Anything).
-					Return(aUser(t, ids2.NewUserId(), ids2.NewAdminId()), nil) // different admin
-			},
-			wantType: app_errors2.ForbiddenErrorType,
 		},
 	}
 

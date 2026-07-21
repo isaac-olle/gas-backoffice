@@ -12,7 +12,6 @@ func NewUserCreatedBuilder() event2.PrimitiveEventBuilder { return &userCreatedB
 func (b *userCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return UserCreated{
 		Name:      str(p.Data, "name"),
-		AdminId:   str(p.Data, "admin_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -22,7 +21,6 @@ type userDeletedBuilder struct{}
 func NewUserDeletedBuilder() event2.PrimitiveEventBuilder { return &userDeletedBuilder{} }
 func (b *userDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return UserDeleted{
-		AdminId:   str(p.Data, "admin_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -45,7 +43,6 @@ func NewClientCreatedBuilder() event2.PrimitiveEventBuilder { return &clientCrea
 func (b *clientCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ClientCreated{
 		Name:      str(p.Data, "name"),
-		AdminId:   str(p.Data, "admin_id"),
 		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil

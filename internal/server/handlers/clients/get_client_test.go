@@ -18,10 +18,9 @@ import (
 func TestGetClientHandler(t *testing.T) {
 	t.Parallel()
 	validClient, _ := clientAggregate.FromPrimitives(clientAggregate.ClientPrimitives{
-		Id:      handlerstest.ClientID,
-		Name:    "My App",
-		AdminId: handlerstest.AdminID,
-		UserId:  handlerstest.UserId,
+		Id:     handlerstest.ClientID,
+		Name:   "My App",
+		UserId: handlerstest.UserId,
 	})
 
 	tests := []struct {

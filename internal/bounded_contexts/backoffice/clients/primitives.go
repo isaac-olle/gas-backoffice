@@ -3,7 +3,6 @@ package clients
 type ClientPrimitives struct {
 	Id            string
 	Name          string
-	AdminId       string
 	UserId        string
 	AllowedFlows  []string
 	AllowedScopes []string
@@ -13,14 +12,12 @@ type ClientPrimitives struct {
 }
 
 type OwnershipPrimitives struct {
-	AdminId string
-	UserId  string
+	UserId string
 }
 
 func (o Ownership) ToPrimitives() OwnershipPrimitives {
 	return OwnershipPrimitives{
-		AdminId: o.AdminId.String(),
-		UserId:  o.UserId.String(),
+		UserId: o.UserId.String(),
 	}
 }
 
@@ -53,7 +50,6 @@ func (c *Client) ToPrimitives() ClientPrimitives {
 	return ClientPrimitives{
 		Id:            c.id.String(),
 		Name:          c.name.String(),
-		AdminId:       c.ownership.AdminId.String(),
 		UserId:        c.ownership.UserId.String(),
 		AllowedFlows:  allowedFlows,
 		AllowedScopes: allowedScopes,

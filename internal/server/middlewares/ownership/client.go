@@ -6,19 +6,11 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func Client(queryBus query.Bus) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		author, ok := vo2.AuthorFromContext[*authors.AdminAuthor](c.Request.Context())
-		if !ok {
-			_ = c.Error(app_errors.UnauthorizedError("MISSING_AUTHOR"))
-			c.Abort()
-			return
-		}
-
 		clientId, ok := ids.ClientIdFromContext(c.Request.Context())
 		if !ok {
 			_ = c.Error(app_errors.BadRequestError("MISSING_CLIENT_ID"))
@@ -36,8 +28,7 @@ func Client(queryBus query.Bus) gin.HandlerFunc {
 		result, err := queryBus.Dispatch(c.Request.Context(),
 			clientCheckOwnership.NewQuery(
 				clientId.String(),
-				author.Id,
-				userId,
+				userId.String(),
 			))
 		if err != nil {
 			_ = c.Error(err)

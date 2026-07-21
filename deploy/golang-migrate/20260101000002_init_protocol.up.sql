@@ -1,4 +1,6 @@
-CREATE TABLE protocol_sessions (
+CREATE SCHEMA IF NOT EXISTS protocol;
+
+CREATE TABLE protocol.protocol_sessions (
     session_id     TEXT        NOT NULL PRIMARY KEY,
     client_id      TEXT        NOT NULL,
     redirect_uri   TEXT        NOT NULL,
@@ -15,20 +17,21 @@ CREATE TABLE protocol_sessions (
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at     TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol_sessions
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol.protocol_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE TABLE protocol_client_credentials_sessions (
-    session_id  TEXT        NOT NULL PRIMARY KEY,
+CREATE TABLE protocol.protocol_client_credentials_sessions (
+    session_id TEXT        NOT NULL PRIMARY KEY,
     -- ownership
-    client_id   TEXT        NOT NULL,
-    user_id   TEXT        NOT NULL,
-    admin_id    TEXT        NOT NULL,
+    client_id  TEXT        NOT NULL,
+    user_id    TEXT        NOT NULL,
     -- data
-    scope       TEXT        NOT NULL,
-    issued_at   TIMESTAMPTZ NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    scope      TEXT        NOT NULL,
+    issued_at  TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_sessions                    TO gas_backoffice_service;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE protocol_client_credentials_sessions TO gas_backoffice_service;
+GRANT ALL ON SCHEMA protocol TO gas_backoffice_admin;
+GRANT ALL ON ALL TABLES IN SCHEMA protocol TO gas_backoffice_admin;
+GRANT USAGE ON SCHEMA protocol TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA protocol TO gas_backoffice_service;

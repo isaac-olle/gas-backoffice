@@ -42,11 +42,7 @@ func aCommand(t *testing.T, opts ...commandOpt) *add_allowed_client.Command {
 func aScope(t *testing.T) (*scopes.Scope, ids2.ScopeId) {
 	t.Helper()
 	scopeId := ids2.NewScopeId()
-	ownership := scopes.NewOwnershipFromVos(
-		ids2.NewProtectedResourceId(),
-		ids2.NewUserId(),
-		ids2.NewAdminId(),
-	)
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
 	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
 	require.NoError(t, err)
 	scope.PullDomainEvents() // clear creation event

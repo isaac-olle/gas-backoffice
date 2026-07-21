@@ -14,7 +14,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
 	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -27,8 +26,6 @@ func TestOwnershipProtectedResource_QuerySucceeds_SetsOwnershipAndCallsNext(t *t
 	var capturedCtx context.Context
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -58,31 +55,6 @@ func TestOwnershipProtectedResource_QueryFails_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
-		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
-		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(ids2.WithProtectedResourceId(c.Request.Context(), prId))
-		c.Next()
-	})
-	r.Use(ownership.ProtectedResource(bus))
-	r.GET("/test", func(c *gin.Context) { nextCalled = true; c.Status(http.StatusOK) })
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	r.ServeHTTP(w, req)
-
-	assert.False(t, nextCalled)
-}
-
-func TestOwnershipProtectedResource_MissingActor_Aborts(t *testing.T) {
-	t.Parallel()
-	bus := &querymocks.MockQueryBus{}
-	nextCalled := false
-
-	r := gin.New()
-	r.Use(func(c *gin.Context) {
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -106,8 +78,6 @@ func TestOwnershipProtectedResource_MissingProtectedResourceId_Aborts(t *testing
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		userId, _ := ids2.NewUserIdFromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithUserId(c.Request.Context(), userId))
 		c.Next()
@@ -129,8 +99,6 @@ func TestOwnershipProtectedResource_MissingUserId_Aborts(t *testing.T) {
 
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
-		author, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-ef1234567890")
-		c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 		prId, _ := ids2.NewProtectedResourceIdFromString("d1b2c3d4-e5f6-7890-abcd-ef1234567890")
 		c.Request = c.Request.WithContext(ids2.WithProtectedResourceId(c.Request.Context(), prId))
 		c.Next()

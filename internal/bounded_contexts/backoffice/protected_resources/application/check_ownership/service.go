@@ -24,7 +24,7 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	ownership := protected_resources.NewOwnership(userId, qry.adminId)
+	ownership := protected_resources.NewOwnership(userId)
 
 	prId, err := ids2.NewProtectedResourceIdFromString(qry.protectedResourceId)
 	if err != nil {

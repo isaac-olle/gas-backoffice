@@ -11,11 +11,10 @@ type Query struct {
 	scopeId             string
 	protectedResourceId string
 	userId              string
-	adminId             string
 }
 
-func NewQuery(scopeId, protectedResourceId, userId, adminId string) *Query {
-	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId, userId: userId, adminId: adminId}
+func NewQuery(scopeId, protectedResourceId, userId string) *Query {
+	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId, userId: userId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

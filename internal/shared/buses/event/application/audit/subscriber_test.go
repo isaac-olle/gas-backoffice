@@ -58,7 +58,7 @@ func TestSubscriber_On_ExtractsAuthorFromContext(t *testing.T) {
 	repo := &stubRepo{}
 	sub := audit.NewSubscriber(repo)
 
-	author, err := authors.NewAdminAuthorFromString("00000000-0000-0000-0000-000000000001")
+	author, err := authors.NewUserAuthorFromString("00000000-0000-0000-0000-000000000001", vo.AdminRole)
 	require.NoError(t, err)
 	ctx := vo.WithAuthor(context.Background(), author)
 

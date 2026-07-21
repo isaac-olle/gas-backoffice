@@ -14,37 +14,29 @@ import (
 type queryOpt func(*queryBuilder)
 
 type queryBuilder struct {
-	userId  string
-	adminId ids2.AdminId
+	userId string
 }
 
 func withUserId(userId string) queryOpt {
 	return func(b *queryBuilder) { b.userId = userId }
 }
 
-func withAdminId(adminId ids2.AdminId) queryOpt {
-	return func(b *queryBuilder) { b.adminId = adminId }
-}
-
 // aQuery builds a check_ownership.Query using the Object Mother pattern.
 func aQuery(t *testing.T, opts ...queryOpt) *check_ownership.Query {
 	t.Helper()
-	adminId, err := ids2.NewAdminIdFromString(uuid.New().String())
-	require.NoError(t, err)
 	b := &queryBuilder{
-		userId:  uuid.New().String(),
-		adminId: adminId,
+		userId: uuid.New().String(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
-	return check_ownership.NewQuery(b.userId, b.adminId)
+	return check_ownership.NewQuery(b.userId)
 }
 
-// aUser builds a User aggregate owned by the given admin.
-func aUser(t *testing.T, userId ids2.UserId, adminId ids2.AdminId) *users.User {
+// aUser builds a User aggregate with the given userId as ownership.
+func aUser(t *testing.T, userId ids2.UserId) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(adminId))
+	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
 	require.NoError(t, err)
 	user.PullDomainEvents() // clear creation event
 	return user

@@ -8,22 +8,20 @@ import (
 const UserCreatedType event.Type = "backoffice.user.created"
 
 type UserCreated struct {
-	Name    string
-	AdminId string
+	Name string
 	event.BaseEvent
 }
 
 func (e UserCreated) Type() event.Type { return UserCreatedType }
 
-func NewUserCreated(aggregateId, name, adminId string) UserCreated {
+func NewUserCreated(aggregateId, name string) UserCreated {
 	return UserCreated{
-		Name:    name,
-		AdminId: adminId,
+		Name: name,
 		BaseEvent: event.NewEvent(
 			aggregateId,
 			UserCreatedType,
 			false,
-			map[string]any{"name": name, "admin_id": adminId},
+			map[string]any{"name": name},
 			aggregate.User,
 		),
 	}

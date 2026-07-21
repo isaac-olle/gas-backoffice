@@ -297,7 +297,7 @@ func TestCheckAuthorizationRequest(t *testing.T) {
 			}
 			client := session.NewClient(
 				uuid.New().String(), "TC",
-				uuid.New().String(), uuid.New().String(),
+				uuid.New().String(),
 				tc.flows, tc.uris, scopeObjs,
 			)
 

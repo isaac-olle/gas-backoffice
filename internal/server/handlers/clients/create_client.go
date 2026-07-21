@@ -11,27 +11,23 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateClientHandler struct {
-	commandBus    command.Bus
-	clientId      func(context.Context) (ids.ClientId, bool)
-	userId        func(context.Context) (ids.UserId, bool)
-	userOwnership func(context.Context) (users.Ownership, bool)
+	commandBus command.Bus
+	clientId   func(context.Context) (ids.ClientId, bool)
+	userId     func(context.Context) (ids.UserId, bool)
 }
 
 func NewCreateClientHandler(
 	commandBus command.Bus,
 	clientId func(context.Context) (ids.ClientId, bool),
 	userId func(context.Context) (ids.UserId, bool),
-	userOwnership func(context.Context) (users.Ownership, bool),
 ) *CreateClientHandler {
 	return &CreateClientHandler{
-		commandBus:    commandBus,
-		clientId:      clientId,
-		userId:        userId,
-		userOwnership: userOwnership,
+		commandBus: commandBus,
+		clientId:   clientId,
+		userId:     userId,
 	}
 }
 
@@ -57,13 +53,8 @@ func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
-	ownership, ok := h.userOwnership(c.Request.Context())
-	if !ok {
-		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
-	}
-
 	return nil, h.commandBus.Dispatch(c.Request.Context(), clientCreate.NewCommand(
-		clientId, req.Name, clients.NewOwnership(ownership.AdminId, userId), req.AllowedFlows, req.RedirectUris,
+		clientId, req.Name, clients.NewOwnership(userId), req.AllowedFlows, req.RedirectUris,
 	))
 }
 

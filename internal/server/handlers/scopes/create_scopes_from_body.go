@@ -10,30 +10,26 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	scopeCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateScopesFromBodyHandler struct {
-	commandBus    command.Bus
-	userOwnership func(context.Context) (users.Ownership, bool)
-	prId          func(context.Context) (ids2.ProtectedResourceId, bool)
-	userId        func(context.Context) (ids2.UserId, bool)
-	scopeId       func(context.Context) (ids2.ScopeId, bool)
+	commandBus command.Bus
+	prId       func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId     func(context.Context) (ids2.UserId, bool)
+	scopeId    func(context.Context) (ids2.ScopeId, bool)
 }
 
 func NewCreateScopesFromBodyHandler(
 	commandBus command.Bus,
-	userOwnership func(context.Context) (users.Ownership, bool),
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 	userId func(context.Context) (ids2.UserId, bool),
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 ) *CreateScopesFromBodyHandler {
 	return &CreateScopesFromBodyHandler{
-		commandBus:    commandBus,
-		userOwnership: userOwnership,
-		prId:          prId,
-		userId:        userId,
-		scopeId:       scopeId,
+		commandBus: commandBus,
+		prId:       prId,
+		userId:     userId,
+		scopeId:    scopeId,
 	}
 }
 
@@ -51,11 +47,6 @@ func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, nil
 	}
 
-	userOwnership, ok := h.userOwnership(c.Request.Context())
-	if !ok {
-		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
-	}
-
 	prId, ok := h.prId(c.Request.Context())
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
@@ -68,7 +59,7 @@ func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 
 	for _, scopeName := range req.Scopes {
 		scopeId, _ := h.scopeId(c.Request.Context())
-		ownership := scopes.NewOwnershipFromVos(prId, userId, userOwnership.AdminId)
+		ownership := scopes.NewOwnershipFromVos(prId, userId)
 		if err := h.commandBus.Dispatch(
 			c.Request.Context(), scopeCreate.NewCommand(scopeId, scopeName, ownership),
 		); err != nil {

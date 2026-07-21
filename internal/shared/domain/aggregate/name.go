@@ -14,7 +14,7 @@ const (
 	Client            = sharedtypes.AggregateClient
 
 	ClientAssertionKey = sharedtypes.AggregateClientAssertionKey
-	AdminAssertionKey  = sharedtypes.AggregateAdminAssertionKey
+	UserAssertionKey   = sharedtypes.AggregateUserAssertionKey
 	KeyPair            = sharedtypes.AggregateKeyPair
 	ClientSecret       = sharedtypes.AggregateClientSecret
 

@@ -12,26 +12,6 @@ const (
 	invalidUUID = "not-a-uuid"
 )
 
-// AdminId
-
-func TestNewAdminId(t *testing.T) {
-	t.Parallel()
-	id1 := NewAdminId()
-	id2 := NewAdminId()
-	assert.NotEmpty(t, id1.String())
-	assert.NotEqual(t, id1.String(), id2.String())
-}
-
-func TestNewAdminIdFromString(t *testing.T) {
-	t.Parallel()
-	id, err := NewAdminIdFromString(validUUID)
-	require.NoError(t, err)
-	assert.Equal(t, validUUID, id.String())
-
-	_, err = NewAdminIdFromString(invalidUUID)
-	require.Error(t, err)
-}
-
 // UserId
 
 func TestNewUserId(t *testing.T) {
@@ -152,26 +132,6 @@ func TestNewClientAssertionKeyIdFromString(t *testing.T) {
 	require.Error(t, err)
 }
 
-// AdminAssertionKeyId
-
-func TestNewAdminAssertionKeyId(t *testing.T) {
-	t.Parallel()
-	id1 := NewAdminAssertionKeyId()
-	id2 := NewAdminAssertionKeyId()
-	assert.NotEmpty(t, id1.String())
-	assert.NotEqual(t, id1.String(), id2.String())
-}
-
-func TestNewAdminAssertionKeyIdFromString(t *testing.T) {
-	t.Parallel()
-	id, err := NewAdminAssertionKeyIdFromString(validUUID)
-	require.NoError(t, err)
-	assert.Equal(t, validUUID, id.String())
-
-	_, err = NewAdminAssertionKeyIdFromString(invalidUUID)
-	require.Error(t, err)
-}
-
 // ClientSecretId
 
 func TestNewClientSecretId(t *testing.T) {
@@ -239,14 +199,12 @@ func TestIdFromString_ErrorCodes(t *testing.T) {
 		name string
 		fn   func(string) error
 	}{
-		{"admin", func(s string) error { _, err := NewAdminIdFromString(s); return err }},
 		{"user", func(s string) error { _, err := NewUserIdFromString(s); return err }},
 		{"client", func(s string) error { _, err := NewClientIdFromString(s); return err }},
 		{"scope", func(s string) error { _, err := NewScopeIdFromString(s); return err }},
 		{"protected_resource", func(s string) error { _, err := NewProtectedResourceIdFromString(s); return err }},
 		{"key_pair", func(s string) error { _, err := NewKeyPairIdFromString(s); return err }},
 		{"client_assertion_key", func(s string) error { _, err := NewClientAssertionKeyIdFromString(s); return err }},
-		{"admin_assertion_key", func(s string) error { _, err := NewAdminAssertionKeyIdFromString(s); return err }},
 		{"client_secret", func(s string) error { _, err := NewClientSecretIdFromString(s); return err }},
 		{"session", func(s string) error { _, err := NewSessionIdFromString(s); return err }},
 		{"client_credentials_session", func(s string) error { _, err := NewClientCredentialsSessionIdFromString(s); return err }},

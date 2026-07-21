@@ -21,7 +21,6 @@ func (h *PersistClientCredentialsSessionOnCreatedEventHandler) Handle(ctx contex
 			ID:       evt.AggregateID(),
 			ClientID: evt.ClientID,
 			UserId:   evt.UserId,
-			AdminID:  evt.AdminID,
 			Scope:    evt.Scope,
 			IssuedAt: evt.OccurredOn().Format("2006-01-02T15:04:05Z07:00"),
 		})

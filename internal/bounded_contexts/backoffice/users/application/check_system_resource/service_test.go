@@ -20,7 +20,7 @@ func aUser(t *testing.T, isSystem bool) *users.User {
 	user, err := users.FromPrimitives(users.UserPrimitives{
 		Id:       ids.NewUserId().String(),
 		Name:     "Test User",
-		AdminId:  ids.NewAdminId().String(),
+		Role:     "admin",
 		IsSystem: isSystem,
 	})
 	require.NoError(t, err)

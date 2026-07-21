@@ -68,7 +68,7 @@ func TestIssueClientCredentials_ErrorCases(t *testing.T) {
 			buildSetup: func(clientID string) (*mockClientRepo, *mockTokenGen) {
 				c := session.NewClient(
 					clientID, "TC",
-					uuid.New().String(), uuid.New().String(),
+					uuid.New().String(),
 					[]string{"authorization_code"},
 					[]string{},
 					[]*session.Scope{{ScopeName: "openid"}},
@@ -124,7 +124,7 @@ func TestIssueClientCredentials_NewSessionError(t *testing.T) {
 	clientID := uuid.New().String()
 	client := session.NewClient(
 		clientID, "TC",
-		"invalid-user-id", "invalid-admin-id",
+		"invalid-user-id",
 		[]string{"client_credentials"}, []string{},
 		[]*session.Scope{{ScopeName: "openid"}},
 	)

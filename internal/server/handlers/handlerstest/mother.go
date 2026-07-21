@@ -16,19 +16,6 @@ const (
 	ScopeID  = "e1b2c3d4-e5f6-7890-abcd-ef1234567890"
 )
 
-func ValidAdminIdExtractor() func(context.Context) (ids.AdminId, bool) {
-	return func(_ context.Context) (ids.AdminId, bool) {
-		id, _ := ids.NewAdminIdFromString(AdminID)
-		return id, true
-	}
-}
-
-func MissingAdminIdExtractor() func(context.Context) (ids.AdminId, bool) {
-	return func(_ context.Context) (ids.AdminId, bool) {
-		return ids.AdminId{}, false
-	}
-}
-
 func ValidUserIdExtractor() func(context.Context) (ids.UserId, bool) {
 	return func(_ context.Context) (ids.UserId, bool) {
 		id, _ := ids.NewUserIdFromString(UserId)
@@ -89,8 +76,8 @@ func NewScopeIdExtractor() func(context.Context) (ids.ScopeId, bool) {
 
 func ValidUserOwnershipExtractor() func(context.Context) (users.Ownership, bool) {
 	return func(_ context.Context) (users.Ownership, bool) {
-		adminId, _ := ids.NewAdminIdFromString(AdminID)
-		return users.NewOwnership(adminId), true
+		userId, _ := ids.NewUserIdFromString(UserId)
+		return users.NewOwnership(userId), true
 	}
 }
 
@@ -102,9 +89,8 @@ func MissingUserOwnershipExtractor() func(context.Context) (users.Ownership, boo
 
 func ValidPrOwnershipExtractor() func(context.Context) (protected_resources.Ownership, bool) {
 	return func(_ context.Context) (protected_resources.Ownership, bool) {
-		adminId, _ := ids.NewAdminIdFromString(AdminID)
 		userId, _ := ids.NewUserIdFromString(UserId)
-		return protected_resources.NewOwnership(userId, adminId), true
+		return protected_resources.NewOwnership(userId), true
 	}
 }
 

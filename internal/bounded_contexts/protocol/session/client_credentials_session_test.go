@@ -18,7 +18,6 @@ func TestNewClientCredentialsSession(t *testing.T) {
 		name       string
 		clientID   string
 		userId     string
-		adminID    string
 		scope      string
 		wantErr    bool
 		wantEvents int
@@ -27,7 +26,6 @@ func TestNewClientCredentialsSession(t *testing.T) {
 			name:       "creates session and records domain event",
 			clientID:   uuid.New().String(),
 			userId:     uuid.New().String(),
-			adminID:    uuid.New().String(),
 			scope:      "openid profile",
 			wantEvents: 1,
 		},
@@ -35,7 +33,6 @@ func TestNewClientCredentialsSession(t *testing.T) {
 			name:     "rejects invalid client id",
 			clientID: "bad-id",
 			userId:   uuid.New().String(),
-			adminID:  uuid.New().String(),
 			scope:    "openid",
 			wantErr:  true,
 		},
@@ -43,15 +40,6 @@ func TestNewClientCredentialsSession(t *testing.T) {
 			name:     "rejects invalid user id",
 			clientID: uuid.New().String(),
 			userId:   "bad-user",
-			adminID:  uuid.New().String(),
-			scope:    "openid",
-			wantErr:  true,
-		},
-		{
-			name:     "rejects invalid admin id",
-			clientID: uuid.New().String(),
-			userId:   uuid.New().String(),
-			adminID:  "bad-admin",
 			scope:    "openid",
 			wantErr:  true,
 		},
@@ -59,7 +47,6 @@ func TestNewClientCredentialsSession(t *testing.T) {
 			name:     "rejects empty scope",
 			clientID: uuid.New().String(),
 			userId:   uuid.New().String(),
-			adminID:  uuid.New().String(),
 			scope:    "",
 			wantErr:  true,
 		},
@@ -69,7 +56,7 @@ func TestNewClientCredentialsSession(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			sess, err := session.NewClientCredentialsSession(tc.clientID, tc.userId, tc.adminID, tc.scope)
+			sess, err := session.NewClientCredentialsSession(tc.clientID, tc.userId, tc.scope)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -90,7 +77,6 @@ func TestClientCredentialsSessionFromPrimitives(t *testing.T) {
 			ID:       uuid.New().String(),
 			ClientID: uuid.New().String(),
 			UserId:   uuid.New().String(),
-			AdminID:  uuid.New().String(),
 			Scope:    "read",
 			IssuedAt: time.Now().UTC().Format(time.RFC3339),
 		}
@@ -102,7 +88,6 @@ func TestClientCredentialsSessionFromPrimitives(t *testing.T) {
 		prim := sess.ToPrimitives()
 		assert.Equal(t, p.ClientID, prim.ClientID)
 		assert.Equal(t, p.UserId, prim.UserId)
-		assert.Equal(t, p.AdminID, prim.AdminID)
 		assert.Equal(t, p.Scope, prim.Scope)
 	})
 }
@@ -114,14 +99,12 @@ func TestClientCredentialsSessionToPrimitives_RoundTrip(t *testing.T) {
 		t.Parallel()
 		clientID := uuid.New().String()
 		userId := uuid.New().String()
-		adminID := uuid.New().String()
 
-		orig, err := session.NewClientCredentialsSession(clientID, userId, adminID, "openid")
+		orig, err := session.NewClientCredentialsSession(clientID, userId, "openid")
 		require.NoError(t, err)
 
 		prim := orig.ToPrimitives()
 		assert.Equal(t, clientID, prim.ClientID)
 		assert.Equal(t, userId, prim.UserId)
-		assert.Equal(t, adminID, prim.AdminID)
 	})
 }

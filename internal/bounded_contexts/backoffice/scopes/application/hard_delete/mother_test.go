@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// commandOpt is a functional option for commandBuilder.
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
@@ -20,7 +19,6 @@ func withScopeId(scopeId ids2.ScopeId) commandOpt {
 	return func(b *commandBuilder) { b.scopeId = scopeId }
 }
 
-// aCommand builds a hard_delete.Command using the Object Mother pattern.
 func aCommand(t *testing.T, opts ...commandOpt) *hard_delete.Command {
 	t.Helper()
 	b := &commandBuilder{scopeId: ids2.NewScopeId()}
@@ -30,17 +28,12 @@ func aCommand(t *testing.T, opts ...commandOpt) *hard_delete.Command {
 	return hard_delete.NewCommand(b.scopeId)
 }
 
-// aScope builds a Scope aggregate for use in tests.
 func aScope(t *testing.T) (*scopes.Scope, ids2.ScopeId) {
 	t.Helper()
 	scopeId := ids2.NewScopeId()
-	ownership := scopes.NewOwnershipFromVos(
-		ids2.NewProtectedResourceId(),
-		ids2.NewUserId(),
-		ids2.NewAdminId(),
-	)
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
 	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
 	require.NoError(t, err)
-	scope.PullDomainEvents() // clear creation event
+	scope.PullDomainEvents()
 	return scope, scopeId
 }

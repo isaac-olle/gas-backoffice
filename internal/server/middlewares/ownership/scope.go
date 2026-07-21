@@ -6,19 +6,11 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func Scope(queryBus query.Bus) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		author, ok := vo2.AuthorFromContext[*authors.AdminAuthor](c.Request.Context())
-		if !ok {
-			_ = c.Error(app_errors.UnauthorizedError("MISSING_AUTHOR"))
-			c.Abort()
-			return
-		}
-
 		scopeId, ok := ids.ScopeIdFromContext(c.Request.Context())
 		if !ok {
 			_ = c.Error(app_errors.BadRequestError("MISSING_SCOPE_ID"))
@@ -44,7 +36,6 @@ func Scope(queryBus query.Bus) gin.HandlerFunc {
 			scopeId.String(),
 			protectedResourceId.String(),
 			userId.String(),
-			author.Id.String(),
 		))
 		if err != nil {
 			_ = c.Error(err)

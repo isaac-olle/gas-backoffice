@@ -22,8 +22,8 @@ func aScope(t *testing.T, isSystem bool) *scopes.Scope {
 		Name:                "read:users",
 		ProtectedResourceId: ids.NewProtectedResourceId().String(),
 		UserId:              ids.NewUserId().String(),
-		AdminId:             ids.NewAdminId().String(),
-		IsSystem:            isSystem,
+
+		IsSystem: isSystem,
 	})
 	require.NoError(t, err)
 	return scope

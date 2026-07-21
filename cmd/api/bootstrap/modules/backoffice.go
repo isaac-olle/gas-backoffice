@@ -1,11 +1,6 @@
 package modules
 
 import (
-	adminEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/_event_handlers"
-	adminCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/check_system_resource"
-	adminGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/get"
-	adminDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/domain_services"
-	adminInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/infrastructure"
 	clientEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
 	clientAddAllowedFlow "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_allowed_flow"
 	clientAddRedirectUri "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_redirect_uri"
@@ -58,14 +53,11 @@ import (
 )
 
 func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager, openIDScopeId string) {
-	adminRepo := persistanceInfra.NewInMemoryContextDecorator(adminInfra.NewPostgresAdminRepository(pool))
 	userRepo := persistanceInfra.NewInMemoryContextDecorator(userInfra.NewPostgresUserRepository(pool))
 	prRepo := persistanceInfra.NewInMemoryContextDecorator(prInfra.NewPostgresProtectedResourceRepository(pool))
 	clientRepo := persistanceInfra.NewInMemoryContextDecorator(clientInfra.NewPostgresClientRepository(pool))
 	scopeRepo := persistanceInfra.NewInMemoryContextDecorator(scopeInfra.NewPostgresScopeRepository(pool))
 
-	// finders
-	adminFinder := adminDomainServices.NewAdminFinder(adminRepo)
 	userFinder := userDomainServices.NewUserFinder(userRepo)
 	prFinder := prDomainServices.NewProtectedResourceFinder(prRepo)
 	scopeFinder := scopeDomainServices.NewScopeFinder(scopeRepo)
@@ -105,20 +97,17 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	qryBus.Register(clientCheckOwnership.QueryType, clientCheckOwnership.NewQueryHandler(clientCheckOwnership.NewService(clientRepo)))
 
 	// check_system_resource queries
-	qryBus.Register(adminCheckSystem.QueryType, adminCheckSystem.NewQueryHandler(adminCheckSystem.NewService(adminFinder)))
 	qryBus.Register(userCheckSystem.QueryType, userCheckSystem.NewQueryHandler(userCheckSystem.NewService(userFinder)))
 	qryBus.Register(prCheckSystem.QueryType, prCheckSystem.NewQueryHandler(prCheckSystem.NewService(prFinder)))
 	qryBus.Register(scopeCheckSystem.QueryType, scopeCheckSystem.NewQueryHandler(scopeCheckSystem.NewService(scopeFinder)))
 
 	// get queries
-	qryBus.Register(adminGet.QueryType, adminGet.NewQueryHandler(adminGet.NewService(adminFinder)))
 	qryBus.Register(userGet.QueryType, userGet.NewQueryHandler(userGet.NewService(userFinder)))
 	qryBus.Register(prGet.QueryType, prGet.NewQueryHandler(prGet.NewService(prFinder)))
 	qryBus.Register(scopeGet.QueryType, scopeGet.NewQueryHandler(scopeGet.NewService(scopeFinder)))
 	qryBus.Register(clientGet.QueryType, clientGet.NewQueryHandler(clientGet.NewService(clientFinder)))
 
-	addUserHandler := adminEventHandlers.NewAddUserOnUserCreatedEventHandler(adminRepo, adminFinder, evtBus)
-	removeUserHandler := adminEventHandlers.NewRemoveUserOnUserDeletedEventHandler(adminRepo, adminFinder, evtBus)
+	// event handlers
 	addClientHandler := userEventHandlers.NewAddClientOnClientCreatedEventHandler(userRepo, evtBus)
 	removeClientHandler := userEventHandlers.NewRemoveClientOnClientDeletedEventHandler(userRepo, evtBus)
 	addPRHandler := userEventHandlers.NewAddProtectedResourceOnProtectedResourceCreatedEventHandler(userRepo, evtBus)
@@ -133,8 +122,6 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 		return ids2.NewScopeIdFromString(openIDScopeId)
 	})
 
-	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserCreated](addUserHandler.Handle))
-	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserDeleted](removeUserHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientCreated](addClientHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientCreated](addOpenIDScopeHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientDeleted](removeClientHandler.Handle))

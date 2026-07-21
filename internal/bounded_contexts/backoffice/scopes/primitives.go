@@ -5,7 +5,6 @@ type ScopePrimitives struct {
 	Name                string
 	ProtectedResourceId string
 	UserId              string
-	AdminId             string
 	AllowedClientIds    []string
 	IsSystem            bool
 }
@@ -13,14 +12,12 @@ type ScopePrimitives struct {
 type OwnershipPrimitives struct {
 	ProtectedResourceId string
 	UserId              string
-	AdminId             string
 }
 
 func (o Ownership) ToPrimitives() OwnershipPrimitives {
 	return OwnershipPrimitives{
 		ProtectedResourceId: o.ProtectedResourceId.String(),
 		UserId:              o.UserId.String(),
-		AdminId:             o.AdminId.String(),
 	}
 }
 
@@ -34,7 +31,6 @@ func (s *Scope) ToPrimitives() ScopePrimitives {
 		Name:                s.name.String(),
 		ProtectedResourceId: s.ownership.ProtectedResourceId.String(),
 		UserId:              s.ownership.UserId.String(),
-		AdminId:             s.ownership.AdminId.String(),
 		AllowedClientIds:    allowedClientIds,
 		IsSystem:            s.isSystem,
 	}

@@ -2,20 +2,20 @@ package ids
 
 import "context"
 
-type adminIdContextKey struct{}
 type userIdContextKey struct{}
 type clientIdContextKey struct{}
+type userAssertionKeyIdContextKey struct{}
 type clientAssertionKeyIdContextKey struct{}
 type clientSecretIdContextKey struct{}
 type protectedResourceIdContextKey struct{}
 type scopeIdContextKey struct{}
 
-func WithAdminId(ctx context.Context, id AdminId) context.Context {
-	return context.WithValue(ctx, adminIdContextKey{}, id)
+func WithUserAssertionKeyId(ctx context.Context, id UserAssertionKeyId) context.Context {
+	return context.WithValue(ctx, userAssertionKeyIdContextKey{}, id)
 }
 
-func AdminIdFromContext(ctx context.Context) (AdminId, bool) {
-	id, ok := ctx.Value(adminIdContextKey{}).(AdminId)
+func UserAssertionKeyIdFromContext(ctx context.Context) (UserAssertionKeyId, bool) {
+	id, ok := ctx.Value(userAssertionKeyIdContextKey{}).(UserAssertionKeyId)
 	return id, ok
 }
 

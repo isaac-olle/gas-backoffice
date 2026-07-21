@@ -28,9 +28,7 @@ func aOwnership(t *testing.T) scopes.Ownership {
 	require.NoError(t, err)
 	userId, err := ids2.NewUserIdFromString(uuid.New().String())
 	require.NoError(t, err)
-	adminId, err := ids2.NewAdminIdFromString(uuid.New().String())
-	require.NoError(t, err)
-	return scopes.NewOwnershipFromVos(prId, userId, adminId)
+	return scopes.NewOwnershipFromVos(prId, userId)
 }
 
 // aCommand builds a create.Command using the Object Mother pattern.

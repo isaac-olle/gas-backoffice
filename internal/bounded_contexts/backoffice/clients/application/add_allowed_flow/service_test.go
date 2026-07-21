@@ -73,7 +73,7 @@ func TestAddAllowedFlow(t *testing.T) {
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(
 					func() *clients.Client {
 						clientId := ids2.NewClientId()
-						c, _ := clients.NewClient(clientId, "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()), nil, nil)
+						c, _ := clients.NewClient(clientId, "valid-client", clients.NewOwnership(ids2.NewUserId()), nil, nil)
 						c.PullDomainEvents()
 						return c
 					}(),

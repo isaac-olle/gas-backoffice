@@ -16,7 +16,6 @@ type queryOpt func(*queryBuilder)
 
 type queryBuilder struct {
 	clientId string
-	adminId  ids2.AdminId
 	userId   ids2.UserId
 }
 
@@ -24,31 +23,30 @@ func withClientId(id string) queryOpt {
 	return func(b *queryBuilder) { b.clientId = id }
 }
 
-func withAdminId(id ids2.AdminId) queryOpt {
-	return func(b *queryBuilder) { b.adminId = id }
+func withUserId(id ids2.UserId) queryOpt {
+	return func(b *queryBuilder) { b.userId = id }
 }
 
 func aQuery(t *testing.T, opts ...queryOpt) *check_ownership.Query {
 	t.Helper()
 	b := &queryBuilder{
 		clientId: ids2.NewClientId().String(),
-		adminId:  ids2.NewAdminId(),
 		userId:   ids2.NewUserId(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
-	return check_ownership.NewQuery(b.clientId, b.adminId, b.userId)
+	return check_ownership.NewQuery(b.clientId, b.userId.String())
 }
 
 // ── Client Mother ──────────────────────────────────────────────────────────────
 
-func aClientWithOwnership(t *testing.T, adminId ids2.AdminId, userId ids2.UserId) *clients.Client {
+func aClientWithOwnership(t *testing.T, userId ids2.UserId) *clients.Client {
 	t.Helper()
 	c, err := clients.NewClient(
 		ids2.NewClientId(),
 		"valid-client",
-		clients.NewOwnership(adminId, userId),
+		clients.NewOwnership(userId),
 		nil,
 		nil,
 	)

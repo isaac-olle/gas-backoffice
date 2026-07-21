@@ -22,7 +22,6 @@ func TestGetScopeHandler(t *testing.T) {
 		Name:                "read",
 		ProtectedResourceId: handlerstest.PrID,
 		UserId:              handlerstest.UserId,
-		AdminId:             handlerstest.AdminID,
 	})
 
 	tests := []struct {

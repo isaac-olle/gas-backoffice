@@ -11,27 +11,23 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	prCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/create"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 )
 
 type CreateProtectedResourceHandler struct {
-	commandBus    command.Bus
-	userOwnership func(context.Context) (users.Ownership, bool)
-	prId          func(context.Context) (ids2.ProtectedResourceId, bool)
-	userId        func(context.Context) (ids2.UserId, bool)
+	commandBus command.Bus
+	prId       func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId     func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateProtectedResourceHandler(
 	commandBus command.Bus,
-	userOwnership func(context.Context) (users.Ownership, bool),
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 	userId func(context.Context) (ids2.UserId, bool),
 ) *CreateProtectedResourceHandler {
 	return &CreateProtectedResourceHandler{
-		commandBus:    commandBus,
-		userOwnership: userOwnership,
-		prId:          prId,
-		userId:        userId,
+		commandBus: commandBus,
+		prId:       prId,
+		userId:     userId,
 	}
 }
 
@@ -40,11 +36,6 @@ type createProtectedResourceRequest struct {
 }
 
 func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
-	userOwnership, ok := h.userOwnership(c.Request.Context())
-	if !ok {
-		return nil, app_errors.InternalError("MISSING_USER_OWNERSHIP")
-	}
-
 	prId, ok := h.prId(c.Request.Context())
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
@@ -60,7 +51,7 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	prOwnership := protected_resources.NewOwnership(userId, userOwnership.AdminId)
+	prOwnership := protected_resources.NewOwnership(userId)
 	return nil, h.commandBus.Dispatch(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership))
 }
 

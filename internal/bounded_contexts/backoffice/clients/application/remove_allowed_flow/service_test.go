@@ -79,7 +79,7 @@ func TestRemoveAllowedFlow(t *testing.T) {
 			desc: "wraps repository save failure",
 			cmd:  func(t *testing.T) *remove_allowed_flow.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()), nil, []string{"pkce"})
+				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId()), nil, []string{"pkce"})
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))

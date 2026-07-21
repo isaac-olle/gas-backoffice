@@ -10,7 +10,7 @@ const (
 	AggregateClient            AggregateName = "client"
 
 	AggregateClientAssertionKey AggregateName = "client-assertion-key"
-	AggregateAdminAssertionKey  AggregateName = "admin-assertion-key"
+	AggregateUserAssertionKey   AggregateName = "user-assertion-key"
 	AggregateKeyPair            AggregateName = "key-pair"
 	AggregateClientSecret       AggregateName = "client-secret"
 

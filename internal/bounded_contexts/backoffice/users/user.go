@@ -3,66 +3,62 @@ package users
 import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/vos"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	aggregate2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
-func NewUser(userId ids2.UserId, name string, ownership Ownership) (*User, error) {
-	errArr := app_errors.NewEmptyErrorArray()
+var userAggregateName aggregate.Name = aggregate.User
 
+type User struct {
+	*aggregate.Root
+	id                   ids.UserId
+	name                 vos.UserName
+	role                 vo.Role
+	ownership            Ownership
+	clientIds            *vo.SetVo[ids.ClientId]
+	protectedResourceIds *vo.SetVo[ids.ProtectedResourceId]
+	isSystem             bool
+}
+
+func NewUser(userId ids.UserId, name string, ownership Ownership) (*User, error) {
 	userName, err := vos.NewUserName(name)
 	if err != nil {
-		errArr.AddError(err)
-	}
-
-	if errArr.HasErrors() {
-		return nil, errArr
+		return nil, err
 	}
 
 	t := &User{
-		Root:                 aggregate2.NewRoot(userAggregateName),
+		Root:                 aggregate.NewRoot(userAggregateName),
 		id:                   userId,
 		name:                 userName,
+		role:                 vo.UserRole,
 		ownership:            ownership,
-		clientIds:            vo.NewEmptySetVo[ids2.ClientId](),
-		protectedResourceIds: vo.NewEmptySetVo[ids2.ProtectedResourceId](),
+		clientIds:            vo.NewEmptySetVo[ids.ClientId](),
+		protectedResourceIds: vo.NewEmptySetVo[ids.ProtectedResourceId](),
 	}
-	t.Record(backoffice.NewUserCreated(t.id.String(), t.name.String(), t.ownership.AdminId.String()))
+	t.Record(backoffice.NewUserCreated(t.id.String(), t.name.String()))
 	return t, nil
-}
-
-var userAggregateName aggregate2.Name = aggregate2.User
-
-type User struct {
-	*aggregate2.Root
-	id                   ids2.UserId
-	name                 vos.UserName
-	ownership            Ownership
-	clientIds            *vo.SetVo[ids2.ClientId]
-	protectedResourceIds *vo.SetVo[ids2.ProtectedResourceId]
-	isSystem             bool
 }
 
 func FromPrimitives(p UserPrimitives) (*User, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
-	id, err := ids2.NewUserIdFromString(p.Id)
+	id, err := ids.NewUserIdFromString(p.Id)
 	if err != nil {
 		errArr.AddError(err)
 	}
 
 	name := vos.UserNameFromPrimitives(p.Name)
 
-	adminId, err := ids2.NewAdminIdFromString(p.AdminId)
+	role, err := vo.NewRole(p.Role)
 	if err != nil {
 		errArr.AddError(err)
 	}
 
-	clientIds := vo.NewEmptySetVo[ids2.ClientId]()
+	clientIds := vo.NewEmptySetVo[ids.ClientId]()
 	for _, rawId := range p.ClientIds {
-		clientId, cErr := ids2.NewClientIdFromString(rawId)
+		clientId, cErr := ids.NewClientIdFromString(rawId)
 		if cErr != nil {
 			errArr.AddError(cErr)
 		} else {
@@ -70,9 +66,9 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 		}
 	}
 
-	protectedResourceIds := vo.NewEmptySetVo[ids2.ProtectedResourceId]()
+	protectedResourceIds := vo.NewEmptySetVo[ids.ProtectedResourceId]()
 	for _, rawId := range p.ProtectedResourceIds {
-		prId, prErr := ids2.NewProtectedResourceIdFromString(rawId)
+		prId, prErr := ids.NewProtectedResourceIdFromString(rawId)
 		if prErr != nil {
 			errArr.AddError(prErr)
 		} else {
@@ -85,10 +81,11 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 	}
 
 	t := &User{
-		Root:                 aggregate2.NewRoot(userAggregateName),
+		Root:                 aggregate.NewRoot(userAggregateName),
 		id:                   id,
 		name:                 name,
-		ownership:            NewOwnership(adminId),
+		role:                 role,
+		ownership:            NewOwnership(id),
 		clientIds:            clientIds,
 		protectedResourceIds: protectedResourceIds,
 		isSystem:             p.IsSystem,
@@ -108,17 +105,15 @@ func (t *User) ChangeName(newName vos.UserName) error {
 	return nil
 }
 
-func (t *User) AddClientId(clientId ids2.ClientId)    { t.clientIds.Add(clientId) }
-func (t *User) RemoveClientId(clientId ids2.ClientId) { t.clientIds.Remove(clientId) }
-func (t *User) AddProtectedResourceId(prId ids2.ProtectedResourceId) {
+func (t *User) AddClientId(clientId ids.ClientId)    { t.clientIds.Add(clientId) }
+func (t *User) RemoveClientId(clientId ids.ClientId) { t.clientIds.Remove(clientId) }
+func (t *User) AddProtectedResourceId(prId ids.ProtectedResourceId) {
 	t.protectedResourceIds.Add(prId)
 }
-func (t *User) RemoveProtectedResourceId(prId ids2.ProtectedResourceId) {
+func (t *User) RemoveProtectedResourceId(prId ids.ProtectedResourceId) {
 	t.protectedResourceIds.Remove(prId)
 }
 
 func (t *User) Delete() {
-	t.Record(
-		backoffice.NewUserDeleted(t.id.String(), t.ownership.AdminId.String()),
-	)
+	t.Record(backoffice.NewUserDeleted(t.id.String()))
 }

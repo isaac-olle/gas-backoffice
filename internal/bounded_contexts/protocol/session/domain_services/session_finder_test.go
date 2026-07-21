@@ -164,7 +164,7 @@ func TestClientFinder_Find(t *testing.T) {
 
 	client := session.NewClient(
 		uuid.New().String(), "TestClient",
-		uuid.New().String(), uuid.New().String(),
+		uuid.New().String(),
 		[]string{}, []string{}, []*session.Scope{},
 	)
 

@@ -21,7 +21,7 @@ func RegisterEventBuilders(registry *event.BuilderRegistry) {
 	registry.Register(backoffice.ScopeDeletedType, backoffice.NewScopeDeletedBuilder())
 	registry.Register(backoffice.ScopeClientAddedType, backoffice.NewScopeClientAddedBuilder())
 	registry.Register(backoffice.ScopeClientRemovedType, backoffice.NewScopeClientRemovedBuilder())
-	registry.Register(security.AdminAssertionKeyCreatedType, security.NewAdminAssertionKeyCreatedBuilder())
+	registry.Register(security.UserAssertionKeyCreatedType, security.NewUserAssertionKeyCreatedBuilder())
 	registry.Register(security.ClientAssertionKeyCreatedType, security.NewClientAssertionKeyCreatedBuilder())
 	registry.Register(security.ClientSecretCreatedType, security.NewClientSecretCreatedBuilder())
 	registry.Register(security.KeyPairCreatedType, security.NewKeyPairCreatedBuilder())

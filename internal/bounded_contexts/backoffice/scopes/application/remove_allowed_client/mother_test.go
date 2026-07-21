@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// commandOpt is a functional option for commandBuilder.
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
@@ -25,7 +24,6 @@ func withClientId(clientId string) commandOpt {
 	return func(b *commandBuilder) { b.clientId = clientId }
 }
 
-// aCommand builds a remove_allowed_client.Command using the Object Mother pattern.
 func aCommand(t *testing.T, opts ...commandOpt) *remove_allowed_client.Command {
 	t.Helper()
 	b := &commandBuilder{
@@ -38,7 +36,6 @@ func aCommand(t *testing.T, opts ...commandOpt) *remove_allowed_client.Command {
 	return remove_allowed_client.NewCommand(b.scopeId, b.clientId)
 }
 
-// aScopeWithClient builds a Scope that already contains the given clientId.
 func aScopeWithClient(t *testing.T, clientId ids2.ClientId) (*scopes.Scope, ids2.ScopeId) {
 	t.Helper()
 	scopeId := ids2.NewScopeId()
@@ -47,7 +44,6 @@ func aScopeWithClient(t *testing.T, clientId ids2.ClientId) (*scopes.Scope, ids2
 		Name:                "read:users",
 		ProtectedResourceId: ids2.NewProtectedResourceId().String(),
 		UserId:              ids2.NewUserId().String(),
-		AdminId:             ids2.NewAdminId().String(),
 		AllowedClientIds:    []string{clientId.String()},
 	}
 	scope, err := scopes.FromPrimitives(prims)

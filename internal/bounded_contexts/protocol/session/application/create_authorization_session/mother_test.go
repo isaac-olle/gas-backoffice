@@ -55,7 +55,7 @@ func (c *mockCodeGen) Generate() (string, error) { return c.code, nil }
 func newClientMother(clientID string) *session.Client {
 	return session.NewClient(
 		clientID, "Test Client",
-		uuid.New().String(), uuid.New().String(),
+		uuid.New().String(),
 		[]string{"authorization_code"},
 		[]string{"https://example.com/callback"},
 		[]*session.Scope{{ScopeName: "openid"}},

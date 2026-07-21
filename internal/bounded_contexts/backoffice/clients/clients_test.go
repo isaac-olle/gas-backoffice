@@ -17,9 +17,8 @@ func TestNewClient(t *testing.T) {
 	t.Run("creates client with valid fields and records domain event", func(t *testing.T) {
 		t.Parallel()
 		clientId := ids2.NewClientId()
-		adminId := ids2.NewAdminId()
 		userId := ids2.NewUserId()
-		ownership := clients.NewOwnership(adminId, userId)
+		ownership := clients.NewOwnership(userId)
 
 		client, err := clients.NewClient(
 			clientId,
@@ -33,7 +32,6 @@ func TestNewClient(t *testing.T) {
 		prims := client.ToPrimitives()
 		assert.Equal(t, clientId.String(), prims.Id)
 		assert.Equal(t, "My Client", prims.Name)
-		assert.Equal(t, adminId.String(), prims.AdminId)
 		assert.Equal(t, userId.String(), prims.UserId)
 		assert.Len(t, prims.RedirectUris, 1)
 		assert.Len(t, prims.AllowedFlows, 1)
@@ -75,7 +73,6 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("reconstructs client without recording events", func(t *testing.T) {
 		t.Parallel()
 		clientId := ids2.NewClientId()
-		adminId := ids2.NewAdminId()
 		userId := ids2.NewUserId()
 		scopeId := ids2.NewScopeId()
 		keyId := ids2.NewClientAssertionKeyId()
@@ -84,7 +81,6 @@ func TestFromPrimitives(t *testing.T) {
 		prims := clients.ClientPrimitives{
 			Id:            clientId.String(),
 			Name:          "My Client",
-			AdminId:       adminId.String(),
 			UserId:        userId.String(),
 			AllowedFlows:  []string{"authorization_code"},
 			AllowedScopes: []string{scopeId.String()},
@@ -110,10 +106,9 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("returns error for invalid id", func(t *testing.T) {
 		t.Parallel()
 		prims := clients.ClientPrimitives{
-			Id:      "bad-id",
-			Name:    "C",
-			AdminId: ids2.NewAdminId().String(),
-			UserId:  ids2.NewUserId().String(),
+			Id:     "bad-id",
+			Name:   "C",
+			UserId: ids2.NewUserId().String(),
 		}
 		_, err := clients.FromPrimitives(prims)
 		assert.Error(t, err)
@@ -122,22 +117,9 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("returns error for invalid name", func(t *testing.T) {
 		t.Parallel()
 		prims := clients.ClientPrimitives{
-			Id:      ids2.NewClientId().String(),
-			Name:    "",
-			AdminId: ids2.NewAdminId().String(),
-			UserId:  ids2.NewUserId().String(),
-		}
-		_, err := clients.FromPrimitives(prims)
-		assert.Error(t, err)
-	})
-
-	t.Run("returns error for invalid admin id", func(t *testing.T) {
-		t.Parallel()
-		prims := clients.ClientPrimitives{
-			Id:      ids2.NewClientId().String(),
-			Name:    "C",
-			AdminId: "bad-id",
-			UserId:  ids2.NewUserId().String(),
+			Id:     ids2.NewClientId().String(),
+			Name:   "",
+			UserId: ids2.NewUserId().String(),
 		}
 		_, err := clients.FromPrimitives(prims)
 		assert.Error(t, err)
@@ -146,10 +128,9 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("returns error for invalid user id", func(t *testing.T) {
 		t.Parallel()
 		prims := clients.ClientPrimitives{
-			Id:      ids2.NewClientId().String(),
-			Name:    "C",
-			AdminId: ids2.NewAdminId().String(),
-			UserId:  "bad-id",
+			Id:     ids2.NewClientId().String(),
+			Name:   "C",
+			UserId: "bad-id",
 		}
 		_, err := clients.FromPrimitives(prims)
 		assert.Error(t, err)
@@ -160,7 +141,6 @@ func TestFromPrimitives(t *testing.T) {
 		prims := clients.ClientPrimitives{
 			Id:           ids2.NewClientId().String(),
 			Name:         "C",
-			AdminId:      ids2.NewAdminId().String(),
 			UserId:       ids2.NewUserId().String(),
 			AllowedFlows: []string{"implicit"},
 		}
@@ -173,7 +153,6 @@ func TestFromPrimitives(t *testing.T) {
 		prims := clients.ClientPrimitives{
 			Id:            ids2.NewClientId().String(),
 			Name:          "C",
-			AdminId:       ids2.NewAdminId().String(),
 			UserId:        ids2.NewUserId().String(),
 			AllowedScopes: []string{"not-a-uuid"},
 		}
@@ -186,7 +165,6 @@ func TestFromPrimitives(t *testing.T) {
 		prims := clients.ClientPrimitives{
 			Id:           ids2.NewClientId().String(),
 			Name:         "C",
-			AdminId:      ids2.NewAdminId().String(),
 			UserId:       ids2.NewUserId().String(),
 			RedirectUris: []string{"ftp://not-valid"},
 		}
@@ -197,11 +175,10 @@ func TestFromPrimitives(t *testing.T) {
 	t.Run("returns error for invalid key id", func(t *testing.T) {
 		t.Parallel()
 		prims := clients.ClientPrimitives{
-			Id:      ids2.NewClientId().String(),
-			Name:    "C",
-			AdminId: ids2.NewAdminId().String(),
-			UserId:  ids2.NewUserId().String(),
-			KeyIds:  []string{"not-a-uuid"},
+			Id:     ids2.NewClientId().String(),
+			Name:   "C",
+			UserId: ids2.NewUserId().String(),
+			KeyIds: []string{"not-a-uuid"},
 		}
 		_, err := clients.FromPrimitives(prims)
 		assert.Error(t, err)
@@ -212,7 +189,6 @@ func TestFromPrimitives(t *testing.T) {
 		prims := clients.ClientPrimitives{
 			Id:        ids2.NewClientId().String(),
 			Name:      "C",
-			AdminId:   ids2.NewAdminId().String(),
 			UserId:    ids2.NewUserId().String(),
 			SecretIds: []string{"not-a-uuid"},
 		}
@@ -226,9 +202,8 @@ func TestCheckOwnership(t *testing.T) {
 
 	t.Run("returns true when ownership matches", func(t *testing.T) {
 		t.Parallel()
-		adminId := ids2.NewAdminId()
 		userId := ids2.NewUserId()
-		ownership := clients.NewOwnership(adminId, userId)
+		ownership := clients.NewOwnership(userId)
 
 		client, err := clients.NewClient(ids2.NewClientId(), "C", ownership, nil, nil)
 		require.NoError(t, err)
@@ -236,15 +211,15 @@ func TestCheckOwnership(t *testing.T) {
 		assert.True(t, client.CheckOwnership(ownership))
 	})
 
-	t.Run("returns false when admin id differs", func(t *testing.T) {
+	t.Run("returns false when user id differs", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		ownership := clients.NewOwnership(ids2.NewAdminId(), userId)
+		ownership := clients.NewOwnership(userId)
 
 		client, err := clients.NewClient(ids2.NewClientId(), "C", ownership, nil, nil)
 		require.NoError(t, err)
 
-		otherOwnership := clients.NewOwnership(ids2.NewAdminId(), userId)
+		otherOwnership := clients.NewOwnership(ids2.NewUserId())
 		assert.False(t, client.CheckOwnership(otherOwnership))
 	})
 }
@@ -354,31 +329,28 @@ func TestAddRemoveAllowedScope(t *testing.T) {
 func TestOwnershipEquals(t *testing.T) {
 	t.Parallel()
 
-	adminId := ids2.NewAdminId()
 	userId := ids2.NewUserId()
 
 	t.Run("returns true for same ids", func(t *testing.T) {
 		t.Parallel()
-		o1 := clients.NewOwnership(adminId, userId)
-		o2 := clients.NewOwnership(adminId, userId)
+		o1 := clients.NewOwnership(userId)
+		o2 := clients.NewOwnership(userId)
 		assert.True(t, o1.Equals(o2))
 	})
 
-	t.Run("returns false when admin id differs", func(t *testing.T) {
+	t.Run("returns false when user id differs", func(t *testing.T) {
 		t.Parallel()
-		o1 := clients.NewOwnership(adminId, userId)
-		o2 := clients.NewOwnership(ids2.NewAdminId(), userId)
+		o1 := clients.NewOwnership(userId)
+		o2 := clients.NewOwnership(ids2.NewUserId())
 		assert.False(t, o1.Equals(o2))
 	})
 }
 
 func TestOwnershipToPrimitives(t *testing.T) {
 	t.Parallel()
-	adminId := ids2.NewAdminId()
 	userId := ids2.NewUserId()
-	o := clients.NewOwnership(adminId, userId)
+	o := clients.NewOwnership(userId)
 	p := o.ToPrimitives()
-	assert.Equal(t, adminId.String(), p.AdminId)
 	assert.Equal(t, userId.String(), p.UserId)
 }
 
@@ -386,5 +358,5 @@ func TestOwnershipToPrimitives(t *testing.T) {
 
 func aOwnership(t *testing.T) clients.Ownership {
 	t.Helper()
-	return clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId())
+	return clients.NewOwnership(ids2.NewUserId())
 }

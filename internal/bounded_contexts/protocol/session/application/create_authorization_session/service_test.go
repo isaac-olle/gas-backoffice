@@ -90,7 +90,7 @@ func TestCreateAuthorizationSession_ErrorCases(t *testing.T) {
 			scope:       "openid",
 			clientResult: session.NewClient(
 				clientID, "TC",
-				uuid.New().String(), uuid.New().String(),
+				uuid.New().String(),
 				[]string{"authorization_code"},
 				[]string{"https://other.com/callback"},
 				[]*session.Scope{{ScopeName: "openid"}},

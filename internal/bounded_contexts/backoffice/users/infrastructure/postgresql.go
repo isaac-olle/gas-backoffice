@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -28,14 +29,14 @@ func (r *PostgresUserRepository) Save(ctx context.Context, user *users.User) err
 	p := user.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.users (id, name, admin_id, client_ids, protected_resource_ids, is_system, author_id, author_role)
+		INSERT INTO backoffice.users (id, name, role, client_ids, protected_resource_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			client_ids = EXCLUDED.client_ids,
 			protected_resource_ids = EXCLUDED.protected_resource_ids
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.AdminId, p.ClientIds, p.ProtectedResourceIds, p.IsSystem, authorId, authorRole)
+	return r.postgres.Save(ctx, query, p.Id, p.Name, p.Role, p.ClientIds, p.ProtectedResourceIds, p.IsSystem, authorId, authorRole)
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
@@ -48,7 +49,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresUserRepository) SearchById(ctx context.Context, id ids.UserId) (*users.User, error) {
-	query := `SELECT id, name, admin_id, client_ids, protected_resource_ids, is_system FROM backoffice.users WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, role, client_ids, protected_resource_ids, is_system FROM backoffice.users WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -68,7 +69,7 @@ func (r *PostgresUserRepository) HardDelete(ctx context.Context, id ids.UserId) 
 
 func (r *PostgresUserRepository) fromRow(row pgx.Row) (*users.User, error) {
 	var p users.UserPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.AdminId, &p.ClientIds, &p.ProtectedResourceIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.Role, &p.ClientIds, &p.ProtectedResourceIds, &p.IsSystem)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

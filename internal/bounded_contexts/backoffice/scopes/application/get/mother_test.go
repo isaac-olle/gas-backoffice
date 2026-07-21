@@ -10,7 +10,7 @@ import (
 
 func aScope(t *testing.T, scopeId ids2.ScopeId) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewAdminId())
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
 	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
 	require.NoError(t, err)
 	scope.PullDomainEvents()

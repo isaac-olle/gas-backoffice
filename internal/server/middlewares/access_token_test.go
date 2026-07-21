@@ -13,12 +13,13 @@ import (
 	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	querymocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/mocks"
+	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 func TestAccessToken(t *testing.T) {
 	t.Parallel()
-	validAuthor, _ := authors.NewAdminAuthorFromString("b1b2c3d4-e5f6-7890-abcd-000000000001")
+	validAuthor, _ := authors.NewUserAuthorFromString("b1b2c3d4-e5f6-7890-abcd-000000000001", vo2.AdminRole)
 
 	tests := []struct {
 		name       string

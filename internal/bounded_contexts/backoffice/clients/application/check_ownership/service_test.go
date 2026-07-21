@@ -21,21 +21,19 @@ func TestCheckOwnership(t *testing.T) {
 	t.Run("returns ownership primitives when owner matches", func(t *testing.T) {
 		t.Parallel()
 		repo := clientmocks.NewMockRepository(t)
-		adminId := ids2.NewAdminId()
 		userId := ids2.NewUserId()
 		clientId := ids2.NewClientId()
-		c := aClientWithOwnership(t, adminId, userId)
+		c := aClientWithOwnership(t, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 
 		result, err := check_ownership.NewService(repo).CheckOwnership(
 			context.Background(),
-			check_ownership.NewQuery(clientId.String(), adminId, userId),
+			check_ownership.NewQuery(clientId.String(), userId.String()),
 		)
 		require.NoError(t, err)
 		p, ok := result.(clients.OwnershipPrimitives)
 		require.True(t, ok)
-		assert.Equal(t, adminId.String(), p.AdminId)
 		assert.Equal(t, userId.String(), p.UserId)
 	})
 
@@ -59,10 +57,10 @@ func TestCheckOwnership(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc:  "returns forbidden when admin does not match",
-			query: func(t *testing.T) *check_ownership.Query { return aQuery(t, withAdminId(ids2.NewAdminId())) },
+			desc:  "returns forbidden when user does not match",
+			query: func(t *testing.T) *check_ownership.Query { return aQuery(t, withUserId(ids2.NewUserId())) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c := aClientWithOwnership(t, ids2.NewAdminId(), ids2.NewUserId())
+				c := aClientWithOwnership(t, ids2.NewUserId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrInvalidOwnership,

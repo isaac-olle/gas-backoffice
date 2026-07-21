@@ -21,7 +21,6 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			c.id,
 			c.name,
 			c.user_id,
-			c.admin_id,
 			c.allowed_flows,
 			c.redirect_uris,
 			s.id,
@@ -47,7 +46,6 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			id           string
 			name         string
 			userId       string
-			adminID      string
 			allowedFlows []string
 			redirectURIs []string
 			scopeID      *string
@@ -56,12 +54,12 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			prName       *string
 		)
 
-		if err = rows.Scan(&id, &name, &userId, &adminID, &allowedFlows, &redirectURIs, &scopeID, &scopeName, &prID, &prName); err != nil {
+		if err = rows.Scan(&id, &name, &userId, &allowedFlows, &redirectURIs, &scopeID, &scopeName, &prID, &prName); err != nil {
 			return nil, err
 		}
 
 		if client == nil {
-			client = session.NewClient(id, name, userId, adminID, allowedFlows, redirectURIs, nil)
+			client = session.NewClient(id, name, userId, allowedFlows, redirectURIs, nil)
 		}
 
 		if scopeID != nil {

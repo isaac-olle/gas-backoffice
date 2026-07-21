@@ -38,7 +38,7 @@ func (s *Service) IssueClientCredentials(ctx context.Context, qry *Query) (any, 
 		return nil, err
 	}
 
-	ccSession, err := session.NewClientCredentialsSession(client.ClientID, client.UserId, client.AdminID, qry.scope)
+	ccSession, err := session.NewClientCredentialsSession(client.ClientID, client.UserId, qry.scope)
 	if err != nil {
 		return nil, err
 	}

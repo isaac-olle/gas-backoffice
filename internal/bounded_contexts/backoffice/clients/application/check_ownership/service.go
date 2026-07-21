@@ -24,7 +24,14 @@ func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
 			WithCause(err)
 	}
 
-	ownership := clients.NewOwnership(qry.adminId, qry.userId)
+	userId, err := ids.NewUserIdFromString(qry.userId)
+	if err != nil {
+		return nil, app_errors.BadRequestError(clients.ErrClientNotFound).
+			WithDescription("invalid user id").
+			WithCause(err)
+	}
+
+	ownership := clients.NewOwnership(userId)
 
 	client, err := s.repository.SearchById(ctx, clientId)
 	if err != nil {

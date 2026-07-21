@@ -10,16 +10,14 @@ const ClientCredentialsSessionCreatedType event.Type = "protocol.client_credenti
 type ClientCredentialsSessionCreated struct {
 	ClientID string
 	UserId   string
-	AdminID  string
 	Scope    string
 	event.BaseEvent
 }
 
-func NewClientCredentialsSessionCreated(aggregateId, clientID, userId, adminID, scope string) ClientCredentialsSessionCreated {
+func NewClientCredentialsSessionCreated(aggregateId, clientID, userId, scope string) ClientCredentialsSessionCreated {
 	return ClientCredentialsSessionCreated{
 		ClientID: clientID,
 		UserId:   userId,
-		AdminID:  adminID,
 		Scope:    scope,
 		BaseEvent: event.NewEvent(
 			aggregateId,
@@ -28,7 +26,6 @@ func NewClientCredentialsSessionCreated(aggregateId, clientID, userId, adminID, 
 			map[string]any{
 				"client_id": clientID,
 				"user_id":   userId,
-				"admin_id":  adminID,
 				"scope":     scope,
 			},
 			aggregate.ClientCredentialsSession,

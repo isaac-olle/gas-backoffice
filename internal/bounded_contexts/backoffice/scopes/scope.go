@@ -70,11 +70,6 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		errArr.AddError(err)
 	}
 
-	adminId, err := ids2.NewAdminIdFromString(p.AdminId)
-	if err != nil {
-		errArr.AddError(err)
-	}
-
 	allowedClientIds := vo.NewEmptySetVo[ids2.ClientId]()
 	for _, rawId := range p.AllowedClientIds {
 		clientId, cErr := ids2.NewClientIdFromString(rawId)
@@ -93,7 +88,7 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		Root:             aggregate2.NewRoot(scopeAggregateName),
 		id:               id,
 		name:             name,
-		ownership:        newOwnership(protectedResourceId, userId, adminId),
+		ownership:        newOwnership(protectedResourceId, userId),
 		allowedClientIds: allowedClientIds,
 		isSystem:         p.IsSystem,
 	}

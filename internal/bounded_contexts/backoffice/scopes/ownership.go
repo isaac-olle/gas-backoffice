@@ -8,22 +8,21 @@ import (
 type Ownership struct {
 	ProtectedResourceId ids2.ProtectedResourceId
 	UserId              ids2.UserId
-	AdminId             ids2.AdminId
 }
 
-func newOwnership(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId, adminId ids2.AdminId) Ownership {
-	return Ownership{ProtectedResourceId: protectedResourceId, UserId: userId, AdminId: adminId}
+func newOwnership(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId) Ownership {
+	return Ownership{ProtectedResourceId: protectedResourceId, UserId: userId}
 }
 
 func (o Ownership) Equals(other Ownership) bool {
 	return o == other
 }
 
-func NewOwnershipFromVos(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId, adminId ids2.AdminId) Ownership {
-	return newOwnership(protectedResourceId, userId, adminId)
+func NewOwnershipFromVos(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId) Ownership {
+	return newOwnership(protectedResourceId, userId)
 }
 
-func NewOwnership(protectedResourceId, userId, adminId string) (Ownership, error) {
+func NewOwnership(protectedResourceId, userId string) (Ownership, error) {
 	prId, err := ids2.NewProtectedResourceIdFromString(protectedResourceId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
@@ -36,11 +35,5 @@ func NewOwnership(protectedResourceId, userId, adminId string) (Ownership, error
 			WithDescription("invalid user id").
 			WithCause(err)
 	}
-	aId, err := ids2.NewAdminIdFromString(adminId)
-	if err != nil {
-		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid admin id").
-			WithCause(err)
-	}
-	return newOwnership(prId, tId, aId), nil
+	return newOwnership(prId, tId), nil
 }

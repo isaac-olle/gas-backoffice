@@ -20,7 +20,7 @@ const (
 func newFullClient() *session.Client {
 	return session.NewClient(
 		uuid.New().String(), "TestClient",
-		uuid.New().String(), uuid.New().String(),
+		uuid.New().String(),
 		[]string{"authorization_code", "client_credentials"},
 		[]string{"https://example.com/cb"},
 		[]*session.Scope{
@@ -104,7 +104,7 @@ func TestClient_ResolveProtectedResourceId(t *testing.T) {
 	clientWithScopes := func(scopes []*session.Scope) *session.Client {
 		return session.NewClient(
 			uuid.New().String(), "TC",
-			uuid.New().String(), uuid.New().String(),
+			uuid.New().String(),
 			[]string{"client_credentials"},
 			[]string{},
 			scopes,
@@ -252,7 +252,7 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 
 			c := session.NewClient(
 				uuid.New().String(), "TC",
-				uuid.New().String(), uuid.New().String(),
+				uuid.New().String(),
 				tc.flows, []string{},
 				tc.scopes,
 			)

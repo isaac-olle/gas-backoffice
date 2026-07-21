@@ -15,11 +15,10 @@ type ClientCredentialsSession struct {
 	BaseSession
 	id       ids2.ClientCredentialsSessionId
 	userId   ids2.UserId
-	adminID  ids2.AdminId
 	issuedAt time.Time
 }
 
-func NewClientCredentialsSession(clientID, rawUserId, adminID, scope string) (*ClientCredentialsSession, error) {
+func NewClientCredentialsSession(clientID, rawUserId, scope string) (*ClientCredentialsSession, error) {
 	errorArray := app_errors.NewEmptyErrorArray()
 
 	clientId, err := ids2.NewClientIdFromString(clientID)
@@ -28,11 +27,6 @@ func NewClientCredentialsSession(clientID, rawUserId, adminID, scope string) (*C
 	}
 
 	userId, err := ids2.NewUserIdFromString(rawUserId)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	adminId, err := ids2.NewAdminIdFromString(adminID)
 	if err != nil {
 		errorArray.AddError(err)
 	}
@@ -50,14 +44,12 @@ func NewClientCredentialsSession(clientID, rawUserId, adminID, scope string) (*C
 		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
 		id:          ids2.NewClientCredentialsSessionId(),
 		userId:      userId,
-		adminID:     adminId,
 		issuedAt:    time.Now().UTC(),
 	}
 	sess.Record(protocoEvents.NewClientCredentialsSessionCreated(
 		sess.id.String(),
 		clientID,
 		rawUserId,
-		adminID,
 		scope,
 	))
 	return sess, nil
@@ -79,11 +71,6 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 		return nil, err
 	}
 
-	adminId, err := ids2.NewAdminIdFromString(p.AdminID)
-	if err != nil {
-		return nil, err
-	}
-
 	scopeVO, err := sessionvos.NewScope(p.Scope)
 	if err != nil {
 		return nil, err
@@ -98,7 +85,6 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
 		id:          id,
 		userId:      userId,
-		adminID:     adminId,
 		issuedAt:    issuedAt,
 	}, nil
 }
@@ -108,7 +94,6 @@ func (s *ClientCredentialsSession) ToPrimitives() *ClientCredentialsSessionPrimi
 		ID:       s.id.String(),
 		ClientID: s.clientID.String(),
 		UserId:   s.userId.String(),
-		AdminID:  s.adminID.String(),
 		Scope:    s.scope.String(),
 		IssuedAt: s.issuedAt.Format(time.RFC3339),
 	}

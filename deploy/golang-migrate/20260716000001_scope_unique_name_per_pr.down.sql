@@ -1,1 +1,0 @@
-DROP INDEX IF EXISTS backoffice.scopes_name_protected_resource_id_unique;

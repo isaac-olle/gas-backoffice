@@ -19,14 +19,13 @@ import (
 func TestCheckOwnership(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns ownership primitives with all correct ids when ownership matches", func(t *testing.T) {
+	t.Run("returns ownership primitives when ownership matches", func(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids2.NewScopeId()
 		prId := ids2.NewProtectedResourceId()
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
-		scope := aScope(t, scopeId, prId, userId, adminId)
+		scope := aScope(t, scopeId, prId, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 
@@ -35,7 +34,6 @@ func TestCheckOwnership(t *testing.T) {
 			withScopeId(scopeId.String()),
 			withProtectedResourceId(prId.String()),
 			withUserId(userId.String()),
-			withAdminId(adminId.String()),
 		))
 
 		require.NoError(t, err)
@@ -44,7 +42,6 @@ func TestCheckOwnership(t *testing.T) {
 		prims := ownership.ToPrimitives()
 		assert.Equal(t, prId.String(), prims.ProtectedResourceId)
 		assert.Equal(t, userId.String(), prims.UserId)
-		assert.Equal(t, adminId.String(), prims.AdminId)
 	})
 
 	errCases := []struct {
@@ -76,15 +73,13 @@ func TestCheckOwnership(t *testing.T) {
 		{
 			desc: "returns forbidden when protected resource id does not match",
 			qry: func(t *testing.T) *check_ownership.Query {
-				// query uses a different protected resource id so ownership check fails
 				return aQuery(t, withProtectedResourceId(ids2.NewProtectedResourceId().String()))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				scopeId := ids2.NewScopeId()
 				prId := ids2.NewProtectedResourceId()
 				userId := ids2.NewUserId()
-				adminId := ids2.NewAdminId()
-				scope := aScope(t, scopeId, prId, userId, adminId)
+				scope := aScope(t, scopeId, prId, userId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -109,8 +104,6 @@ func TestCheckOwnership(t *testing.T) {
 		})
 	}
 }
-
-// --- helpers ---
 
 func assertErrType(t *testing.T, err error, errType app_errors2.ErrorType) {
 	t.Helper()

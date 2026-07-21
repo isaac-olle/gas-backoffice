@@ -3,18 +3,16 @@ package check_ownership
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const QueryType query.Type = "query.backoffice.user.check_ownership"
 
 type Query struct {
-	userId  string
-	adminId ids.AdminId
+	userId string
 }
 
-func NewQuery(userId string, adminId ids.AdminId) *Query {
-	return &Query{userId: userId, adminId: adminId}
+func NewQuery(userId string) *Query {
+	return &Query{userId: userId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

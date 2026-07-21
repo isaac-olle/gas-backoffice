@@ -13,10 +13,9 @@ func aPRWithOwnership(
 	t *testing.T,
 	prId ids2.ProtectedResourceId,
 	userId ids2.UserId,
-	adminId ids2.AdminId,
 ) *protected_resources.ProtectedResource {
 	t.Helper()
-	ownership := protected_resources.NewOwnership(userId, adminId)
+	ownership := protected_resources.NewOwnership(userId)
 	pr, err := protected_resources.NewProtectedResource(prId, "R", ownership)
 	require.NoError(t, err)
 	pr.PullDomainEvents() // drain creation event

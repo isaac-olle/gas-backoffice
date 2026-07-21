@@ -29,8 +29,7 @@ func TestChangeName(t *testing.T) {
 		bus := eventmocks.NewMockBus(t)
 
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
-		user := aUser(t, userId, adminId, "Old Name")
+		user := aUser(t, userId, nil, "Old Name")
 
 		var saved *users.User
 		repo.EXPECT().SearchById(mock.Anything, userId).Return(user, nil)
@@ -92,7 +91,7 @@ func TestChangeName(t *testing.T) {
 			setupRepo: func(repo *usermocks.MockRepository) {
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
-					Return(aUser(t, ids2.NewUserId(), ids2.NewAdminId(), "Old Name"), nil)
+					Return(aUser(t, ids2.NewUserId(), nil, "Old Name"), nil)
 				repo.EXPECT().
 					Save(mock.Anything, mock.AnythingOfType("*users.User")).
 					Return(fmt.Errorf("db error"))

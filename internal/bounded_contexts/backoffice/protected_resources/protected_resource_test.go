@@ -24,10 +24,6 @@ func withPrUserId(userId string) prPrimOpt {
 	return func(p *protected_resources.ProtectedResourcePrimitives) { p.UserId = userId }
 }
 
-func withPrAdminId(adminId string) prPrimOpt {
-	return func(p *protected_resources.ProtectedResourcePrimitives) { p.AdminId = adminId }
-}
-
 func withPrScopeIds(scopeIds ...string) prPrimOpt {
 	return func(p *protected_resources.ProtectedResourcePrimitives) { p.ScopeIds = scopeIds }
 }
@@ -38,7 +34,6 @@ func aPrPrimitives(t *testing.T, opts ...prPrimOpt) protected_resources.Protecte
 		Id:       ids2.NewProtectedResourceId().String(),
 		Name:     "My Resource",
 		UserId:   ids2.NewUserId().String(),
-		AdminId:  ids2.NewAdminId().String(),
 		ScopeIds: []string{},
 	}
 	for _, o := range opts {
@@ -47,16 +42,15 @@ func aPrPrimitives(t *testing.T, opts ...prPrimOpt) protected_resources.Protecte
 	return p
 }
 
-func anOwnership(t *testing.T) (ids2.UserId, ids2.AdminId, protected_resources.Ownership) {
+func anOwnership(t *testing.T) (ids2.UserId, protected_resources.Ownership) {
 	t.Helper()
 	userId := ids2.NewUserId()
-	adminId := ids2.NewAdminId()
-	return userId, adminId, protected_resources.NewOwnership(userId, adminId)
+	return userId, protected_resources.NewOwnership(userId)
 }
 
 func aProtectedResource(t *testing.T, name string) *protected_resources.ProtectedResource {
 	t.Helper()
-	_, _, ownership := anOwnership(t)
+	_, ownership := anOwnership(t)
 	pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), name, ownership)
 	require.NoError(t, err)
 	return pr
@@ -79,7 +73,7 @@ func TestNewProtectedResource(t *testing.T) {
 	t.Run("creates protected resource with expected primitives", func(t *testing.T) {
 		t.Parallel()
 		prId := ids2.NewProtectedResourceId()
-		userId, adminId, ownership := anOwnership(t)
+		userId, ownership := anOwnership(t)
 
 		pr, err := protected_resources.NewProtectedResource(prId, "My Resource", ownership)
 		require.NoError(t, err)
@@ -88,7 +82,6 @@ func TestNewProtectedResource(t *testing.T) {
 		assert.Equal(t, prId.String(), prims.Id)
 		assert.Equal(t, "My Resource", prims.Name)
 		assert.Equal(t, userId.String(), prims.UserId)
-		assert.Equal(t, adminId.String(), prims.AdminId)
 	})
 
 	t.Run("records a created domain event", func(t *testing.T) {
@@ -110,7 +103,7 @@ func TestNewProtectedResource(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			_, _, ownership := anOwnership(t)
+			_, ownership := anOwnership(t)
 			_, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), tc.name, ownership)
 			assert.Error(t, err)
 		})
@@ -128,13 +121,11 @@ func TestFromPrimitives(t *testing.T) {
 		t.Parallel()
 		prId := ids2.NewProtectedResourceId()
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
 		scopeId := ids2.NewScopeId()
 
 		prims := aPrPrimitives(t,
 			withPrId(prId.String()),
 			withPrUserId(userId.String()),
-			withPrAdminId(adminId.String()),
 			withPrScopeIds(scopeId.String()),
 		)
 
@@ -276,19 +267,18 @@ func TestOwnershipEquals(t *testing.T) {
 	t.Parallel()
 
 	userId := ids2.NewUserId()
-	adminId := ids2.NewAdminId()
 
 	t.Run("returns true for same ownership", func(t *testing.T) {
 		t.Parallel()
-		o1 := protected_resources.NewOwnership(userId, adminId)
-		o2 := protected_resources.NewOwnership(userId, adminId)
+		o1 := protected_resources.NewOwnership(userId)
+		o2 := protected_resources.NewOwnership(userId)
 		assert.True(t, o1.Equals(o2))
 	})
 
 	t.Run("returns false when user differs", func(t *testing.T) {
 		t.Parallel()
-		o1 := protected_resources.NewOwnership(userId, adminId)
-		o2 := protected_resources.NewOwnership(ids2.NewUserId(), adminId)
+		o1 := protected_resources.NewOwnership(userId)
+		o2 := protected_resources.NewOwnership(ids2.NewUserId())
 		assert.False(t, o1.Equals(o2))
 	})
 }
@@ -296,11 +286,9 @@ func TestOwnershipEquals(t *testing.T) {
 func TestOwnershipToPrimitives(t *testing.T) {
 	t.Parallel()
 	userId := ids2.NewUserId()
-	adminId := ids2.NewAdminId()
-	o := protected_resources.NewOwnership(userId, adminId)
+	o := protected_resources.NewOwnership(userId)
 	p := o.ToPrimitives()
 	assert.Equal(t, userId.String(), p.UserId)
-	assert.Equal(t, adminId.String(), p.AdminId)
 }
 
 // ---------------------------------------------------------------------------
@@ -312,21 +300,21 @@ func TestCheckOwnership(t *testing.T) {
 
 	t.Run("returns true when ownership matches", func(t *testing.T) {
 		t.Parallel()
-		userId, adminId, ownership := anOwnership(t)
+		userId, ownership := anOwnership(t)
 		pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "R", ownership)
 		require.NoError(t, err)
 
-		sameOwnership := protected_resources.NewOwnership(userId, adminId)
+		sameOwnership := protected_resources.NewOwnership(userId)
 		assert.True(t, pr.CheckOwnership(sameOwnership))
 	})
 
 	t.Run("returns false when ownership does not match", func(t *testing.T) {
 		t.Parallel()
-		_, adminId, ownership := anOwnership(t)
+		_, ownership := anOwnership(t)
 		pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "R", ownership)
 		require.NoError(t, err)
 
-		otherOwnership := protected_resources.NewOwnership(ids2.NewUserId(), adminId)
+		otherOwnership := protected_resources.NewOwnership(ids2.NewUserId())
 		assert.False(t, pr.CheckOwnership(otherOwnership))
 	})
 }

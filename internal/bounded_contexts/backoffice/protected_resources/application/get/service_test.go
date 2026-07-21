@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, "My Resource", prims.Name)
 		assert.Empty(t, prims.ScopeIds)
 		assert.NotEmpty(t, prims.UserId)
-		assert.NotEmpty(t, prims.AdminId)
+		assert.NotEmpty(t, prims.UserId)
 	})
 
 	t.Run("includes scope ids in the returned primitives", func(t *testing.T) {
