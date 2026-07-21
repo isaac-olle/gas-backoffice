@@ -26,8 +26,9 @@ func (s ServerConfig) ShutdownTimeout() time.Duration {
 }
 
 type ApplicationConfig struct {
-	Name           string `yaml:"name"`
-	BackofficePrId string `yaml:"backoffice_pr_id"`
+	Name             string `yaml:"name"`
+	SeedAdminName    string `yaml:"seed_admin_name"`
+	BackofficePRName string `yaml:"backoffice_pr_name"`
 }
 
 type DatabasesConfig struct {

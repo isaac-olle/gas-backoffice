@@ -50,13 +50,14 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 	persistanceInfra "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager) {
+func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager, openIDScopeId string) {
 	adminRepo := persistanceInfra.NewInMemoryContextDecorator(adminInfra.NewPostgresAdminRepository(pool))
 	userRepo := persistanceInfra.NewInMemoryContextDecorator(userInfra.NewPostgresUserRepository(pool))
 	prRepo := persistanceInfra.NewInMemoryContextDecorator(prInfra.NewPostgresProtectedResourceRepository(pool))
@@ -128,10 +129,14 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	removeScopeFromClientHandler := clientEventHandlers.NewRemoveScopeOnScopeClientRemovedEventHandler(clientRepo, evtBus)
 	addKeyHandler := clientEventHandlers.NewAddKeyOnClientAssertionKeyCreatedEventHandler(clientFinder, clientRepo, evtBus)
 	addSecretHandler := clientEventHandlers.NewAddSecretOnClientSecretCreatedEventHandler(clientFinder, clientRepo, evtBus)
+	addOpenIDScopeHandler := clientEventHandlers.NewAddOpenIDScopeOnClientCreatedEventHandler(clientRepo, evtBus, func() (ids2.ScopeId, error) {
+		return ids2.NewScopeIdFromString(openIDScopeId)
+	})
 
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserCreated](addUserHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.UserDeleted](removeUserHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientCreated](addClientHandler.Handle))
+	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientCreated](addOpenIDScopeHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ClientDeleted](removeClientHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ProtectedResourceCreated](addPRHandler.Handle))
 	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[backoffice.ProtectedResourceDeleted](removePRHandler.Handle))

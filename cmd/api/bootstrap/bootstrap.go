@@ -46,6 +46,18 @@ func Run() error {
 	}
 	defer postgresPool.Close()
 
+	if err = (SystemSetup{
+		SeedAdminName:    cfg.Application.SeedAdminName,
+		BackofficePRName: cfg.Application.BackofficePRName,
+	}).Setup(context.Background(), postgresPool); err != nil {
+		return fmt.Errorf("failed to run app setup: %w", err)
+	}
+
+	backofficePrId, openIDScopeId, err := resolveApplicationIDs(context.Background(), postgresPool, cfg.Application.BackofficePRName)
+	if err != nil {
+		return fmt.Errorf("failed to resolve application IDs: %w", err)
+	}
+
 	workerPool := workers.NewPool(10)
 	outboxRepo := eventinfra.NewOutboxRepository(postgresPool)
 	outboxEventBus := outboxapp.NewEventBus(outboxRepo, log)
@@ -56,7 +68,7 @@ func Run() error {
 	auditRepo := eventinfra.NewPostgresAuditRepository(postgresPool)
 	subsManager.AddInMemorySubscription(auditapp.NewSubscriber(auditRepo))
 
-	modules.RegisterBackoffice(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager)
+	modules.RegisterBackoffice(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, openIDScopeId)
 	modules.RegisterSecurity(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
 	modules.RegisterProtocol(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
 
@@ -84,7 +96,7 @@ func Run() error {
 		log,
 		presenter,
 		managers,
-		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, cfg.Application.BackofficePrId, cfg.Application.Name),
+		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, backofficePrId, cfg.Application.Name),
 		route_providers.NewProtocol(hm, cmdBus, qryBus, managers...),
 	)
 

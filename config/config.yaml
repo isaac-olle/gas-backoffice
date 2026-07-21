@@ -7,7 +7,8 @@ server:
 
 application:
   name: gas
-  backoffice_pr_id: ${BACKOFFICE_PR_ID}
+  seed_admin_name: ${GAS_SEED_ADMIN_NAME}
+  backoffice_pr_name: ${GAS_BACKOFFICE_PR_NAME}
 
 databases:
   postgres: ${POSTGRES_DSN}
