@@ -48,7 +48,7 @@ type SystemSetup struct {
 func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
 	var adminID string
 	if err := pool.QueryRow(ctx,
-		`SELECT id FROM backoffice.admins WHERE name = $1 AND is_system = TRUE LIMIT 1`,
+		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
 		s.SeedAdminName,
 	).Scan(&adminID); err != nil {
 		return fmt.Errorf("system admin %q not found — run db_seed first: %w", s.SeedAdminName, err)
@@ -114,10 +114,10 @@ func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	if _, err = tx.Exec(ctx, `
-		INSERT INTO backoffice.protected_resources (id, name, user_id, admin_id, scope_ids, is_system, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, TRUE, '', '')
+		INSERT INTO backoffice.protected_resources (id, name, user_id, scope_ids, is_system, author_id, author_role)
+		VALUES ($1, $2, $3, $4, TRUE, '', '')
 		ON CONFLICT (id) DO UPDATE SET scope_ids = EXCLUDED.scope_ids`,
-		prID, s.BackofficePRName, userID, adminID, allScopeIDs); err != nil {
+		prID, s.BackofficePRName, userID, allScopeIDs); err != nil {
 		return fmt.Errorf("insert system protected resource: %w", err)
 	}
 
@@ -130,10 +130,10 @@ func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
 
 	for _, s := range scopes {
 		if _, err = tx.Exec(ctx, `
-			INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, admin_id, is_system, author_id, author_role)
-			VALUES ($1, $2, $3, $4, $5, TRUE, '', '')
+			INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, is_system, author_id, author_role)
+			VALUES ($1, $2, $3, $4, TRUE, '', '')
 			ON CONFLICT (protected_resource_id, name) WHERE deleted_at IS NULL DO NOTHING`,
-			s.id, s.name, prID, userID, adminID); err != nil {
+			s.id, s.name, prID, userID); err != nil {
 			return fmt.Errorf("insert scope %q: %w", s.name, err)
 		}
 	}

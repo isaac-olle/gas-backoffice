@@ -13,5 +13,3 @@ CREATE TABLE public.audit_events (
 CREATE INDEX idx__audit_events__aggregate_id ON public.audit_events(aggregate_id);
 CREATE INDEX idx__audit_events__event_type   ON public.audit_events(event_type);
 CREATE INDEX idx__audit_events__occurred_at  ON public.audit_events(occurred_at);
-
-GRANT SELECT, INSERT ON TABLE public.audit_events TO gas_backoffice_service;

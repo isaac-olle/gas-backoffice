@@ -10,5 +10,3 @@ CREATE TABLE public.outbox_event_bus (
 );
 
 CREATE INDEX idx__outbox_event_bus__inserted_at ON public.outbox_event_bus(inserted_at);
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.outbox_event_bus TO gas_backoffice_service;
