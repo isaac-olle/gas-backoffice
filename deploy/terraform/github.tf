@@ -37,8 +37,8 @@ resource "github_repository_file" "pipeline_trigger" {
   YAML
 }
 
-resource "github_actions_secret" "do_app_id" {
-  repository      = var.github_repo
-  secret_name     = "${upper(var.env)}_DO_APP_ID"
-  plaintext_value = digitalocean_app.backoffice.id
+resource "github_actions_variable" "do_app_id" {
+  repository    = var.github_repo
+  variable_name = "${var.env}_DO_APP_ID"
+  value         = digitalocean_app.backoffice.id
 }
