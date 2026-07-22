@@ -10,8 +10,9 @@ CREATE SCHEMA IF NOT EXISTS backoffice;
 
 CREATE TABLE backoffice.users (
     id                     TEXT        NOT NULL PRIMARY KEY,
+    admin_id               TEXT        NOT NULL,
     name                   TEXT        NOT NULL,
-    role                   TEXT        NOT NULL DEFAULT 'user',
+    role                   TEXT        NOT NULL DEFAULT 'tenant',
     is_system              BOOLEAN     NOT NULL DEFAULT FALSE,
     client_ids             TEXT[]      NOT NULL DEFAULT '{}',
     protected_resource_ids TEXT[]      NOT NULL DEFAULT '{}',

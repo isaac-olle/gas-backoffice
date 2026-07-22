@@ -17,7 +17,7 @@ func NewService(repository users.Repository, eventBus event.Bus) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	user, err := users.NewUser(cmd.id, cmd.name, cmd.ownership)
+	user, err := users.NewUser(cmd.id, cmd.name, cmd.role, cmd.adminId)
 	if err != nil {
 		return app_errors.BadRequestError(users.ErrUserNotCreated).
 			WithDescription("failed to create user").

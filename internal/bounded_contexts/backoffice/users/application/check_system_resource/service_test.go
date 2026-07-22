@@ -17,8 +17,10 @@ import (
 
 func aUser(t *testing.T, isSystem bool) *users.User {
 	t.Helper()
+	id := ids.NewUserId().String()
 	user, err := users.FromPrimitives(users.UserPrimitives{
-		Id:       ids.NewUserId().String(),
+		Id:       id,
+		AdminId:  id,
 		Name:     "Test User",
 		Role:     "admin",
 		IsSystem: isSystem,

@@ -18,9 +18,10 @@ import (
 func TestGetUserHandler(t *testing.T) {
 	t.Parallel()
 	validUser, _ := userAggregate.FromPrimitives(userAggregate.UserPrimitives{
-		Id:   handlerstest.UserId,
-		Name: "Acme",
-		Role: "user",
+		Id:      handlerstest.UserId,
+		AdminId: handlerstest.UserId,
+		Name:    "Acme",
+		Role:    "tenant",
 	})
 
 	tests := []struct {

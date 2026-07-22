@@ -34,8 +34,8 @@ import (
 	scopeInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/infrastructure"
 	userEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/_event_handlers"
 	userChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/change_name"
-	userCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_ownership"
 	userCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_system_resource"
+	userCheckTenantAccess "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_tenant_access"
 	userCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create"
 	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
 	userHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/hard_delete"
@@ -91,7 +91,7 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	cmdBus.Register(userHardDelete.CommandType, userHardDelete.NewCommandHandler(userHardDelete.NewService(userFinder, userRepo, evtBus)))
 
 	// check_ownership queries
-	qryBus.Register(userCheckOwnership.QueryType, userCheckOwnership.NewQueryHandler(userCheckOwnership.NewService(userFinder)))
+	qryBus.Register(userCheckTenantAccess.QueryType, userCheckTenantAccess.NewQueryHandler(userCheckTenantAccess.NewService(userFinder)))
 	qryBus.Register(prCheckOwnership.QueryType, prCheckOwnership.NewQueryHandler(prCheckOwnership.NewService(prRepo)))
 	qryBus.Register(scopeCheckOwnership.QueryType, scopeCheckOwnership.NewQueryHandler(scopeCheckOwnership.NewService(scopeRepo)))
 	qryBus.Register(clientCheckOwnership.QueryType, clientCheckOwnership.NewQueryHandler(clientCheckOwnership.NewService(clientRepo)))

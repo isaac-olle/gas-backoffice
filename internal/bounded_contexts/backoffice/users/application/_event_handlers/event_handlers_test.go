@@ -28,7 +28,7 @@ func TestAddClientOnClientCreated(t *testing.T) {
 		repo := usermocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
+		adminId := ids2.NewUserId()
 		clientId := ids2.NewClientId()
 		user := aUser(t, userId, adminId)
 
@@ -70,7 +70,7 @@ func TestAddClientOnClientCreated(t *testing.T) {
 			setupRepo: func(repo *usermocks.MockRepository) {
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
-					Return(aUser(t, ids2.NewUserId(), ids2.NewAdminId()), nil)
+					Return(aUser(t, ids2.NewUserId(), ids2.NewUserId()), nil)
 				repo.EXPECT().
 					Save(mock.Anything, mock.AnythingOfType("*users.User")).
 					Return(fmt.Errorf("save error"))
@@ -90,7 +90,7 @@ func TestAddClientOnClientCreated(t *testing.T) {
 			}
 
 			userId := ids2.NewUserId()
-			adminId := ids2.NewAdminId()
+			adminId := ids2.NewUserId()
 			clientId := ids2.NewClientId()
 
 			handler := NewAddClientOnClientCreatedEventHandler(repo, bus)
@@ -112,7 +112,7 @@ func TestAddProtectedResourceOnProtectedResourceCreated(t *testing.T) {
 		repo := usermocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
+		adminId := ids2.NewUserId()
 		prId := ids2.NewProtectedResourceId()
 		user := aUser(t, userId, adminId)
 
@@ -183,7 +183,7 @@ func TestRemoveClientOnClientDeleted(t *testing.T) {
 		repo := usermocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
+		adminId := ids2.NewUserId()
 		clientId := ids2.NewClientId()
 
 		prims := users.UserPrimitives{
@@ -261,7 +261,7 @@ func TestRemoveProtectedResourceOnProtectedResourceDeleted(t *testing.T) {
 		repo := usermocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		userId := ids2.NewUserId()
-		adminId := ids2.NewAdminId()
+		adminId := ids2.NewUserId()
 		prId := ids2.NewProtectedResourceId()
 
 		prims := users.UserPrimitives{
@@ -333,7 +333,7 @@ func TestRemoveProtectedResourceOnProtectedResourceDeleted(t *testing.T) {
 
 func aUser(t *testing.T, userId ids2.UserId, adminId ids2.AdminId) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(adminId))
+	user, err := users.NewUser(userId, "Test User", "tenant", adminId)
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user

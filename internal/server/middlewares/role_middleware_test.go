@@ -21,8 +21,8 @@ func withAdminAuthor(c *gin.Context) {
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
-func withUserAuthor(c *gin.Context) {
-	author, _ := authors2.NewUserAuthorFromString(testUserId, vo2.UserRole)
+func withTenantAuthor(c *gin.Context) {
+	author, _ := authors2.NewUserAuthorFromString(testUserId, vo2.TenantRole)
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
@@ -49,13 +49,13 @@ func TestRoleMiddleware(t *testing.T) {
 		{
 			name:         "wrong_role_aborts",
 			setupAuthor:  withAdminAuthor,
-			allowedRoles: []vo2.Role{vo2.UserRole},
+			allowedRoles: []vo2.Role{vo2.TenantRole},
 			wantNext:     false,
 		},
 		{
 			name:         "multiple_allowed_user_in_list_passes",
-			setupAuthor:  withUserAuthor,
-			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.UserRole},
+			setupAuthor:  withTenantAuthor,
+			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.TenantRole},
 			wantNext:     true,
 		},
 	}

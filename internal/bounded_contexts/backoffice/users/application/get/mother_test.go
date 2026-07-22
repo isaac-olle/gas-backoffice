@@ -10,7 +10,7 @@ import (
 
 func aUserWithId(t *testing.T, userId ids2.UserId) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
+	user, err := users.NewUser(userId, "Test User", "tenant", ids2.NewUserId())
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user

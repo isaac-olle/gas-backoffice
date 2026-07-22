@@ -11,4 +11,5 @@ var (
 	ErrUserNameNotChanged app_errors.ErrorCode = "USER_NAME_NOT_CHANGED"
 	ErrInvalidOwnership   app_errors.ErrorCode = "USER_INVALID_OWNERSHIP"
 	ErrSystemResource     app_errors.ErrorCode = "USER_IS_SYSTEM_RESOURCE"
+	ErrInvalidRole        app_errors.ErrorCode = "USER_INVALID_ROLE"
 )

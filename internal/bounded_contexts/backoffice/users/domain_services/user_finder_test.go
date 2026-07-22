@@ -69,7 +69,7 @@ func TestUserFinder_Find(t *testing.T) {
 func aUser(t *testing.T) *users.User {
 	t.Helper()
 	userId := ids2.NewUserId()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
+	user, err := users.NewUser(userId, "Test User", "tenant", ids2.NewUserId())
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user

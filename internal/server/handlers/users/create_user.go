@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	userCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
@@ -14,18 +13,21 @@ import (
 
 type CreateUserHandler struct {
 	commandBus command.Bus
-	userId     func(context.Context) (ids2.UserId, bool)
+	tenantId   func(context.Context) (ids2.UserId, bool)
+	adminId    func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateUserHandler(
 	commandBus command.Bus,
-	userId func(context.Context) (ids2.UserId, bool),
+	tenantId func(context.Context) (ids2.UserId, bool),
+	adminId func(context.Context) (ids2.UserId, bool),
 ) *CreateUserHandler {
-	return &CreateUserHandler{commandBus: commandBus, userId: userId}
+	return &CreateUserHandler{commandBus: commandBus, tenantId: tenantId, adminId: adminId}
 }
 
 type createUserRequest struct {
 	Name string `json:"name" binding:"required"`
+	Role string `json:"role" binding:"required"`
 }
 
 func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
@@ -34,14 +36,19 @@ func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	userId, ok := h.userId(c.Request.Context())
+	tenantId, ok := h.tenantId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_USER_ID")
+		return nil, app_errors.InternalError("MISSING_TENANT_ID")
+	}
+
+	adminId, ok := h.adminId(c.Request.Context())
+	if !ok {
+		return nil, app_errors.InternalError("MISSING_ADMIN_ID")
 	}
 
 	return nil, h.commandBus.Dispatch(
 		c.Request.Context(),
-		userCreate.NewCommand(userId, req.Name, users.NewOwnership(userId)),
+		userCreate.NewCommand(tenantId, adminId, req.Name, req.Role),
 	)
 }
 

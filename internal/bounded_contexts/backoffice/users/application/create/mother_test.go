@@ -1,12 +1,11 @@
 package create_test
 
 import (
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type commandOpt func(*commandBuilder)
@@ -26,10 +25,11 @@ func aCommand(t *testing.T, opts ...commandOpt) *create.Command {
 		o(b)
 	}
 
-	userId, err := ids2.NewUserIdFromString(uuid.New().String())
+	tenantId, err := ids2.NewUserIdFromString(uuid.New().String())
 	if err != nil {
 		t.Fatal(err)
 	}
+	adminId := ids2.NewUserId()
 
-	return create.NewCommand(userId, b.name, users.NewOwnership(userId))
+	return create.NewCommand(tenantId, adminId, b.name, "tenant")
 }

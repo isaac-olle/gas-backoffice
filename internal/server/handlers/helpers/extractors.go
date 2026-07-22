@@ -18,14 +18,6 @@ func UserIdFromAuthor(ctx context.Context) (ids2.UserId, bool) {
 	return author.Id, true
 }
 
-func ClientIdFromAuthor(ctx context.Context) (ids2.ClientId, bool) {
-	author, ok := vo2.AuthorFromContext[*authors2.ClientAuthor](ctx)
-	if !ok {
-		return ids2.ClientId{}, false
-	}
-	return author.Id, true
-}
-
 func UserOwnershipFromContext(ctx context.Context) (users.Ownership, bool) {
 	return vo2.OwnershipFromContext[users.Ownership](ctx)
 }

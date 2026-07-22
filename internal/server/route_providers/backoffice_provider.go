@@ -36,6 +36,6 @@ func NewBackoffice(
 
 func (p *Backoffice) Register(group *gin.RouterGroup) {
 	g := group.Group("/backoffice")
+	registerAdmins(g, p)
 	registerUsers(g, p)
-	registerClients(g, p)
 }

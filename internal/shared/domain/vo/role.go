@@ -1,21 +1,17 @@
 package vo
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type Role string
 
 const (
-	UserRole   Role = "user"
+	TenantRole Role = "tenant"
 	AdminRole  Role = "admin"
-	ClientRole Role = "client"
 )
 
 var allowedRoles = map[string]Role{
-	string(UserRole):   UserRole,
+	string(TenantRole): TenantRole,
 	string(AdminRole):  AdminRole,
-	string(ClientRole): ClientRole,
 }
 
 func NewRole(s string) (Role, error) {
@@ -27,7 +23,6 @@ func NewRole(s string) (Role, error) {
 }
 
 func (r Role) IsAdmin() bool          { return r == AdminRole }
-func (r Role) IsUser() bool           { return r == UserRole }
-func (r Role) IsClient() bool         { return r == ClientRole }
+func (r Role) IsTenant() bool         { return r == TenantRole }
 func (r Role) String() string         { return string(r) }
 func (r Role) Equals(other Role) bool { return r.String() == other.String() }

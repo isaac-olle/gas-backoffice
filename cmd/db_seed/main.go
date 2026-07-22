@@ -74,7 +74,7 @@ func main() {
 	alreadyApplied := false
 	var existingAdminID string
 	if err = pool.QueryRow(ctx,
-		`SELECT id FROM backoffice.admins WHERE name = $1 AND is_system = TRUE LIMIT 1`,
+		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
 		"Gas-Seed-Admin",
 	).Scan(&existingAdminID); err == nil {
 		alreadyApplied = true
@@ -109,7 +109,7 @@ func main() {
 		}
 	}
 
-	exec_(`INSERT INTO backoffice.admins (id, name, is_system) VALUES ($1, $2, TRUE)
+	exec_(`INSERT INTO backoffice.users (id, admin_id, name, role, is_system) VALUES ($1, $1, $2, 'admin', TRUE)
 		ON CONFLICT (id) DO NOTHING`,
 		adminID, "Gas-Seed-Admin")
 

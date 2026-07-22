@@ -3,32 +3,22 @@ package ownership
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
-	userCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/check_ownership"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
-func User(queryBus query.Bus) gin.HandlerFunc {
+func User() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, ok := ids.UserIdFromContext(c.Request.Context())
+		author, ok := vo2.AuthorFromContext[*authors.UserAuthor](c.Request.Context())
 		if !ok {
-			_ = c.Error(app_errors.BadRequestError("MISSING_USER_ID"))
+			_ = c.Error(app_errors.UnauthorizedError("MISSING_USER_AUTHOR"))
 			c.Abort()
 			return
 		}
 
-		result, err := query.DispatchTyped[users.Ownership](c.Request.Context(), queryBus,
-			userCheckOwnership.NewQuery(userId.String()),
-		)
-		if err != nil {
-			_ = c.Error(err)
-			c.Abort()
-			return
-		}
-
-		c.Request = c.Request.WithContext(vo2.WithOwnership(c.Request.Context(), result))
+		ownership := users.NewOwnership(author.Id)
+		c.Request = c.Request.WithContext(vo2.WithOwnership(c.Request.Context(), ownership))
 		c.Next()
 	}
 }

@@ -34,20 +34,20 @@ func TestCreateUserHandler(t *testing.T) {
 		},
 		{
 			name:     "missing_user_id_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:     handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
 			userIdFn: handlerstest.MissingUserIdExtractor(),
 			wantErr:  true,
 		},
 		{
 			name:     "bus_error_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:     handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
 			userIdFn: handlerstest.ValidUserIdExtractor(),
 			busErr:   errors.New("bus error"),
 			wantErr:  true,
 		},
 		{
 			name:       "success_returns_201",
-			body:       handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:       handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusCreated,
@@ -57,7 +57,7 @@ func TestCreateUserHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandBus(tt.busErr)
-			h := users.NewCreateUserHandler(bus, tt.userIdFn)
+			h := users.NewCreateUserHandler(bus, tt.userIdFn, handlerstest.ValidUserIdExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -76,7 +76,7 @@ func TestCreateUserHandler(t *testing.T) {
 func TestCreateUserHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandBus(nil)
-	h := users.NewCreateUserHandler(bus, handlerstest.ValidUserIdExtractor())
+	h := users.NewCreateUserHandler(bus, handlerstest.ValidUserIdExtractor(), handlerstest.ValidUserIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

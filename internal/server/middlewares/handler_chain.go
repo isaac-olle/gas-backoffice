@@ -43,7 +43,7 @@ func (ch *HandlerChain) Execute(c *gin.Context) (any, error) {
 		}
 	}
 
-	if err := tx.Commit(c.Request.Context()); err != nil {
+	if err = tx.Commit(c.Request.Context()); err != nil {
 		_ = tx.Rollback(c.Request.Context())
 		return nil, app_errors.InternalError(errCommitTx).WithCause(err)
 	}

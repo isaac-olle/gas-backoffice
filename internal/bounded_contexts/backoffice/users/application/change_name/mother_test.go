@@ -38,7 +38,7 @@ func aCommand(t *testing.T, opts ...commandOpt) *change_name.Command {
 
 func aUser(t *testing.T, userId ids2.UserId, _ interface{}, name string) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, name, users.NewOwnership(userId))
+	user, err := users.NewUser(userId, name, "tenant", ids2.NewUserId())
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user

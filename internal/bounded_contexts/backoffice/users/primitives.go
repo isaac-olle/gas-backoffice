@@ -2,6 +2,7 @@ package users
 
 type UserPrimitives struct {
 	Id                   string
+	AdminId              string
 	Name                 string
 	Role                 string
 	ClientIds            []string
@@ -28,6 +29,7 @@ func (t *User) ToPrimitives() UserPrimitives {
 	}
 	return UserPrimitives{
 		Id:                   t.id.String(),
+		AdminId:              t.adminId.String(),
 		Name:                 t.name.String(),
 		Role:                 t.role.String(),
 		ClientIds:            clientIds,

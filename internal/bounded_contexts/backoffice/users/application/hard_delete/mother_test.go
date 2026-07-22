@@ -32,7 +32,7 @@ func aCommand(t *testing.T, opts ...commandOpt) *hard_delete.Command {
 func aUser(t *testing.T) *users.User {
 	t.Helper()
 	userId := ids2.NewUserId()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
+	user, err := users.NewUser(userId, "Test User", "tenant", ids2.NewUserId())
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user
@@ -40,7 +40,7 @@ func aUser(t *testing.T) *users.User {
 
 func aUserWithId(t *testing.T, userId ids2.UserId) *users.User {
 	t.Helper()
-	user, err := users.NewUser(userId, "Test User", users.NewOwnership(userId))
+	user, err := users.NewUser(userId, "Test User", "tenant", ids2.NewUserId())
 	require.NoError(t, err)
 	user.PullDomainEvents()
 	return user

@@ -5,6 +5,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
@@ -14,6 +15,7 @@ var userAggregateName aggregate.Name = aggregate.User
 type User struct {
 	*aggregate.Root
 	id                   ids.UserId
+	adminId              ids.UserId
 	name                 vos.UserName
 	role                 vo.Role
 	ownership            Ownership
@@ -22,18 +24,32 @@ type User struct {
 	isSystem             bool
 }
 
-func NewUser(userId ids.UserId, name string, ownership Ownership) (*User, error) {
+func NewUser(userId ids.UserId, name string, rawRole string, adminId ids.UserId) (*User, error) {
+	errArr := app_errors.NewEmptyErrorArray()
+
 	userName, err := vos.NewUserName(name)
 	if err != nil {
-		return nil, err
+		errArr.AddError(err)
+	}
+
+	role, err := vo.NewRole(rawRole)
+	if err != nil {
+		errArr.AddError(app_errors.BadRequestError(ErrInvalidRole).WithDescription("invalid role").WithCause(err))
+	} else if role.IsAdmin() {
+		errArr.AddError(app_errors.BadRequestError(ErrInvalidRole).WithDescription("cannot create a user with admin role"))
+	}
+
+	if errArr.HasErrors() {
+		return nil, errArr
 	}
 
 	t := &User{
 		Root:                 aggregate.NewRoot(userAggregateName),
 		id:                   userId,
+		adminId:              adminId,
 		name:                 userName,
-		role:                 vo.UserRole,
-		ownership:            ownership,
+		role:                 role,
+		ownership:            NewOwnership(userId),
 		clientIds:            vo.NewEmptySetVo[ids.ClientId](),
 		protectedResourceIds: vo.NewEmptySetVo[ids.ProtectedResourceId](),
 	}
@@ -76,6 +92,11 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 		}
 	}
 
+	adminId, err := ids.NewUserIdFromString(p.AdminId)
+	if err != nil {
+		errArr.AddError(err)
+	}
+
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
@@ -83,6 +104,7 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 	t := &User{
 		Root:                 aggregate.NewRoot(userAggregateName),
 		id:                   id,
+		adminId:              adminId,
 		name:                 name,
 		role:                 role,
 		ownership:            NewOwnership(id),
@@ -95,8 +117,12 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 
 func (t *User) IsSystemResource() bool { return t.isSystem }
 
-func (t *User) CheckOwnership(o Ownership) bool {
-	return t.ownership.Equals(o)
+func (t *User) IsSelf(author *authors.UserAuthor) bool {
+	return t.id == author.Id
+}
+
+func (t *User) IsOwnedByAdmin(author *authors.UserAuthor) bool {
+	return t.adminId == author.Id
 }
 
 func (t *User) ChangeName(newName vos.UserName) error {

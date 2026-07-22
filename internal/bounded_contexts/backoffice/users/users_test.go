@@ -1,10 +1,13 @@
 package users
 
 import (
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/vos"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +19,7 @@ func TestNewUser(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
 
-		user, err := NewUser(userId, "My User", NewOwnership(userId))
+		user, err := NewUser(userId, "My User", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
 		prims := user.ToPrimitives()
@@ -40,7 +43,7 @@ func TestNewUser(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			userId := ids2.NewUserId()
-			_, err := NewUser(userId, tc.name, NewOwnership(userId))
+			_, err := NewUser(userId, tc.name, "tenant", ids2.NewUserId())
 			assert.Error(t, err)
 		})
 	}
@@ -57,8 +60,9 @@ func TestFromPrimitives(t *testing.T) {
 
 		prims := UserPrimitives{
 			Id:                   userId.String(),
+			AdminId:              ids2.NewUserId().String(),
 			Name:                 "My User",
-			Role:                 "user",
+			Role:                 "tenant",
 			ClientIds:            []string{clientId.String()},
 			ProtectedResourceIds: []string{prId.String()},
 		}
@@ -80,7 +84,7 @@ func TestFromPrimitives(t *testing.T) {
 	}{
 		{
 			"rejects invalid user id",
-			UserPrimitives{Id: "bad-id", Name: "Test", Role: "user"},
+			UserPrimitives{Id: "bad-id", AdminId: ids2.NewUserId().String(), Name: "Test", Role: "tenant"},
 		},
 	}
 	for _, tc := range invalidCases {
@@ -93,25 +97,50 @@ func TestFromPrimitives(t *testing.T) {
 	}
 }
 
-func TestUser_CheckOwnership(t *testing.T) {
+func TestUser_IsSelf(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns true when userId matches", func(t *testing.T) {
+	t.Run("returns true when author id matches user id", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
-		assert.True(t, user.CheckOwnership(NewOwnership(userId)))
+		author := &authors.UserAuthor{Id: userId, Role: vo.TenantRole}
+		assert.True(t, user.IsSelf(author))
 	})
 
-	t.Run("returns false when userId does not match", func(t *testing.T) {
+	t.Run("returns false when author id does not match", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
-		assert.False(t, user.CheckOwnership(NewOwnership(ids2.NewUserId())))
+		author := &authors.UserAuthor{Id: ids2.NewUserId(), Role: vo.TenantRole}
+		assert.False(t, user.IsSelf(author))
+	})
+}
+
+func TestUser_IsOwnedByAdmin(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns true when admin id matches", func(t *testing.T) {
+		t.Parallel()
+		adminId := ids2.NewUserId()
+		user, err := NewUser(ids2.NewUserId(), "T", "tenant", adminId)
+		require.NoError(t, err)
+
+		admin := &authors.UserAuthor{Id: adminId, Role: vo.AdminRole}
+		assert.True(t, user.IsOwnedByAdmin(admin))
+	})
+
+	t.Run("returns false when admin id does not match", func(t *testing.T) {
+		t.Parallel()
+		user, err := NewUser(ids2.NewUserId(), "T", "tenant", ids2.NewUserId())
+		require.NoError(t, err)
+
+		admin := &authors.UserAuthor{Id: ids2.NewUserId(), Role: vo.AdminRole}
+		assert.False(t, user.IsOwnedByAdmin(admin))
 	})
 }
 
@@ -121,7 +150,7 @@ func TestUser_ChangeName(t *testing.T) {
 	t.Run("updates name and records domain event", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "Old Name", NewOwnership(userId))
+		user, err := NewUser(userId, "Old Name", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 		user.PullDomainEvents() // clear creation event
 
@@ -143,7 +172,7 @@ func TestUser_AddClientId(t *testing.T) {
 	t.Run("adds client id to user", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
 		user.AddClientId(ids2.NewClientId())
@@ -157,7 +186,7 @@ func TestUser_IsSystemResource(t *testing.T) {
 	t.Run("returns false by default", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 		assert.False(t, user.IsSystemResource())
 	})
@@ -166,8 +195,9 @@ func TestUser_IsSystemResource(t *testing.T) {
 		t.Parallel()
 		prims := UserPrimitives{
 			Id:       ids2.NewUserId().String(),
+			AdminId:  ids2.NewUserId().String(),
 			Name:     "T",
-			Role:     "user",
+			Role:     "tenant",
 			IsSystem: true,
 		}
 		user, err := FromPrimitives(prims)
@@ -182,7 +212,7 @@ func TestUser_RemoveClientId(t *testing.T) {
 	t.Run("removes an existing client id", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
 		clientId := ids2.NewClientId()
@@ -199,7 +229,7 @@ func TestUser_RemoveProtectedResourceId(t *testing.T) {
 	t.Run("removes an existing protected resource id", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
 		prId := ids2.NewProtectedResourceId()
@@ -216,7 +246,7 @@ func TestUser_Delete(t *testing.T) {
 	t.Run("records a deleted domain event", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 		user.PullDomainEvents()
 
@@ -242,7 +272,7 @@ func TestUser_AddProtectedResourceId(t *testing.T) {
 	t.Run("adds protected resource id to user", func(t *testing.T) {
 		t.Parallel()
 		userId := ids2.NewUserId()
-		user, err := NewUser(userId, "T", NewOwnership(userId))
+		user, err := NewUser(userId, "T", "tenant", ids2.NewUserId())
 		require.NoError(t, err)
 
 		user.AddProtectedResourceId(ids2.NewProtectedResourceId())

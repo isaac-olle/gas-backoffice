@@ -19,7 +19,7 @@ func (s stubAuthorVo) ToPrimitives() *AuthorPrimitives {
 
 func TestWithAuthorAndAuthorFromContext(t *testing.T) {
 	t.Parallel()
-	author := stubAuthorVo{id: "user-42", role: UserRole}
+	author := stubAuthorVo{id: "user-42", role: TenantRole}
 	ctx := context.Background()
 
 	ctxWithAuthor := WithAuthor(ctx, author)
@@ -27,7 +27,7 @@ func TestWithAuthorAndAuthorFromContext(t *testing.T) {
 
 	assert.True(t, ok)
 	assert.Equal(t, "user-42", got.ToPrimitives().Id)
-	assert.Equal(t, UserRole, got.role)
+	assert.Equal(t, TenantRole, got.role)
 }
 
 func TestAuthorFromContext_NotSet(t *testing.T) {
@@ -40,7 +40,7 @@ func TestAuthorFromContext_NotSet(t *testing.T) {
 func TestAuthorFromContext_OverwritesPrevious(t *testing.T) {
 	t.Parallel()
 	first := stubAuthorVo{id: "first", role: AdminRole}
-	second := stubAuthorVo{id: "second", role: ClientRole}
+	second := stubAuthorVo{id: "second", role: TenantRole}
 
 	ctx := WithAuthor(context.Background(), first)
 	ctx = WithAuthor(ctx, second)

@@ -2,7 +2,6 @@ package create
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
@@ -10,13 +9,14 @@ import (
 const CommandType command.Type = "command.backoffice.user.create"
 
 type Command struct {
-	id        ids.UserId
-	name      string
-	ownership users.Ownership
+	id      ids.UserId
+	adminId ids.UserId
+	name    string
+	role    string
 }
 
-func NewCommand(id ids.UserId, name string, ownership users.Ownership) *Command {
-	return &Command{id: id, name: name, ownership: ownership}
+func NewCommand(id ids.UserId, adminId ids.UserId, name string, role string) *Command {
+	return &Command{id: id, adminId: adminId, name: name, role: role}
 }
 
 func (c *Command) Type() command.Type { return CommandType }
