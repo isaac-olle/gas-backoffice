@@ -47,13 +47,13 @@ variable "image_tag" {
 
 # App environment
 variable "gas_seed_admin_name" {
-  type      = string
-  sensitive = false
+  type    = string
+  default = "Gas-Seed-Admin"
 }
 
 variable "gas_backoffice_pr_name" {
-  type      = string
-  sensitive = false
+  type    = string
+  default = "Gas-Backoffice"
 }
 
 # GitHub
