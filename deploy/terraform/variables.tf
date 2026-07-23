@@ -38,7 +38,8 @@ variable "http_port" {
 }
 
 variable "repository" {
-  type = string
+  type    = string
+  default = "backoffice"
 }
 
 variable "image_tag" {
