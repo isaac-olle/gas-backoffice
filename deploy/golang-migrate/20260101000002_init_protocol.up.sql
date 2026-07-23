@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS protocol;
 
-CREATE TABLE protocol.protocol_sessions (
+CREATE TABLE IF NOT EXISTS protocol.protocol_sessions (
     session_id     TEXT        NOT NULL PRIMARY KEY,
     client_id      TEXT        NOT NULL,
     redirect_uri   TEXT        NOT NULL,
@@ -17,10 +17,13 @@ CREATE TABLE protocol.protocol_sessions (
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at     TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol.protocol_sessions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'protocol.protocol_sessions'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol.protocol_sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE protocol.protocol_client_credentials_sessions (
+CREATE TABLE IF NOT EXISTS protocol.protocol_client_credentials_sessions (
     session_id TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     client_id  TEXT        NOT NULL,

@@ -8,7 +8,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE SCHEMA IF NOT EXISTS backoffice;
 
-CREATE TABLE backoffice.users (
+CREATE TABLE IF NOT EXISTS backoffice.users (
     id                     TEXT        NOT NULL PRIMARY KEY,
     admin_id               TEXT        NOT NULL,
     name                   TEXT        NOT NULL,
@@ -22,10 +22,13 @@ CREATE TABLE backoffice.users (
     updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at             TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'backoffice.users'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.users FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE backoffice.protected_resources (
+CREATE TABLE IF NOT EXISTS backoffice.protected_resources (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
     is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -37,10 +40,13 @@ CREATE TABLE backoffice.protected_resources (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.protected_resources
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'backoffice.protected_resources'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.protected_resources FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE backoffice.scopes (
+CREATE TABLE IF NOT EXISTS backoffice.scopes (
     id                    TEXT        NOT NULL PRIMARY KEY,
     name                  TEXT        NOT NULL,
     is_system             BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -53,13 +59,16 @@ CREATE TABLE backoffice.scopes (
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at            TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.scopes
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE UNIQUE INDEX scopes_name_protected_resource_id_unique
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'backoffice.scopes'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.scopes FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS scopes_name_protected_resource_id_unique
     ON backoffice.scopes (protected_resource_id, name)
     WHERE deleted_at IS NULL;
 
-CREATE TABLE backoffice.clients (
+CREATE TABLE IF NOT EXISTS backoffice.clients (
     id             TEXT        NOT NULL PRIMARY KEY,
     name           TEXT        NOT NULL,
     user_id        TEXT        NOT NULL,
@@ -74,5 +83,8 @@ CREATE TABLE backoffice.clients (
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at     TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.clients
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'backoffice.clients'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON backoffice.clients FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;

@@ -121,6 +121,11 @@ func main() {
 		fatalf("commit transaction: %v", err)
 	}
 
+	backofficePRName := config.EnvOr("GAS_BACKOFFICE_PR_NAME", "Gas-Backoffice")
+	if err = runSetup(ctx, pool, adminID, backofficePRName); err != nil {
+		fatalf("run setup: %v", err)
+	}
+
 	adminPrivKeyB64 := base64.StdEncoding.EncodeToString([]byte(adminPrivKeyPEM))
 
 	outputs := map[string]string{

@@ -13,6 +13,47 @@ resource "postgresql_schema" "public" {
   }
 }
 
+resource "postgresql_grant" "gas_backoffice_admin_events_schema_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_admin.name
+  schema      = "events"
+  object_type = "schema"
+  privileges  = ["ALL"]
+}
+
+resource "postgresql_grant" "gas_backoffice_admin_events_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_admin.name
+  schema      = "events"
+  object_type = "table"
+  privileges  = ["ALL"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_events_schema_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_service.name
+  schema      = "events"
+  object_type = "schema"
+  privileges  = ["USAGE"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_events_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_service.name
+  schema      = "events"
+  object_type = "table"
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
+resource "postgresql_default_privileges" "gas_backoffice_service_events_future_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_service.name
+  schema      = "events"
+  object_type = "table"
+  owner       = digitalocean_database_user.gas_backoffice_admin.name
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
 
 resource "digitalocean_database_user" "gas_backoffice_admin" {
   cluster_id = data.digitalocean_database_cluster.postgres.id
@@ -85,6 +126,15 @@ resource "postgresql_grant" "gas_backoffice_service_sequences_privileges" {
   schema      = "public"
   object_type = "sequence"
   privileges  = ["USAGE", "SELECT"]
+}
+
+resource "postgresql_default_privileges" "gas_backoffice_service_public_future_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = digitalocean_database_user.gas_backoffice_service.name
+  schema      = "public"
+  object_type = "table"
+  owner       = "doadmin"
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
 }
 
 resource "postgresql_default_privileges" "gas_backoffice_admin_future_tables_privileges" {

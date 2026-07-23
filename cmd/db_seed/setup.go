@@ -1,11 +1,7 @@
-package bootstrap
+package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -40,27 +36,14 @@ var systemScopes = []string{
 	"openid",
 }
 
-type SystemSetup struct {
-	SeedAdminName    string
-	BackofficePRName string
-}
-
-func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
-	var adminID string
-	if err := pool.QueryRow(ctx,
-		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
-		s.SeedAdminName,
-	).Scan(&adminID); err != nil {
-		return fmt.Errorf("system admin %q not found — run db_seed first: %w", s.SeedAdminName, err)
-	}
-
+func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, backofficePRName string) error {
 	prID := uuid.New().String()
 	userID := uuid.New().String()
 	keyPairID := uuid.New().String()
 
 	_ = pool.QueryRow(ctx,
 		`SELECT id FROM backoffice.protected_resources WHERE name = $1 AND is_system = TRUE AND deleted_at IS NULL LIMIT 1`,
-		s.BackofficePRName,
+		backofficePRName,
 	).Scan(&prID)
 
 	_ = pool.QueryRow(ctx,
@@ -117,7 +100,7 @@ func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
 		INSERT INTO backoffice.protected_resources (id, name, user_id, scope_ids, is_system, author_id, author_role)
 		VALUES ($1, $2, $3, $4, TRUE, '', '')
 		ON CONFLICT (id) DO UPDATE SET scope_ids = EXCLUDED.scope_ids`,
-		prID, s.BackofficePRName, userID, allScopeIDs); err != nil {
+		prID, backofficePRName, userID, allScopeIDs); err != nil {
 		return fmt.Errorf("insert system protected resource: %w", err)
 	}
 
@@ -139,24 +122,4 @@ func (s SystemSetup) Setup(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	return tx.Commit(ctx)
-}
-
-func generateRSAKeyPair() (*rsa.PrivateKey, string, error) {
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, "", err
-	}
-	pubDER, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
-	if err != nil {
-		return nil, "", fmt.Errorf("marshal public key: %w", err)
-	}
-	return priv, string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})), nil
-}
-
-func marshalPrivateKey(priv *rsa.PrivateKey) (string, error) {
-	privDER, err := x509.MarshalPKCS8PrivateKey(priv)
-	if err != nil {
-		return "", fmt.Errorf("marshal private key: %w", err)
-	}
-	return string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privDER})), nil
 }
