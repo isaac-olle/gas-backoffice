@@ -81,6 +81,7 @@ jobs:
           context: .
           file: build/Dockerfile
           push: true
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/backoffice:sha-${{ github.sha }}
             ${{ env.REGISTRY }}/backoffice:${{ inputs.environment }}
@@ -103,6 +104,16 @@ jobs:
           doctl apps spec get $DO_APP_ID | \
             sed "s/tag:.*/tag: sha-${{ github.sha }}/" | \
             doctl apps update $DO_APP_ID --spec - --wait
+
+      - name: Delete old tagged images
+        run: |
+          ENV_TAG="${{ inputs.environment }}"
+          KEEP_SHA="sha-${{ github.sha }}"
+          doctl registry repository list-tags backoffice --no-header \
+            | awk '{print $1}' \
+            | grep -v "^${ENV_TAG}$" \
+            | grep -v "^${KEEP_SHA}$" \
+            | xargs -r -I {} doctl registry repository delete-tag backoffice {} --force
 
       - name: Garbage collect registry
         run: doctl registry garbage-collection start --include-untagged-manifests --force
