@@ -42,7 +42,8 @@ variable "repository" {
 }
 
 variable "image_tag" {
-  type = string
+  type    = string
+  default = "dev"
 }
 
 # App environment
