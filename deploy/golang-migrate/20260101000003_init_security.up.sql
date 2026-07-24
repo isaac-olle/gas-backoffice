@@ -75,3 +75,6 @@ DO $$ BEGIN
     CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at();
   END IF;
 END $$;
+
+GRANT USAGE ON SCHEMA security TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA security TO gas_backoffice_service;

@@ -75,6 +75,11 @@ jobs:
           username: ${{ secrets.DO_TOKEN }}
           password: ${{ secrets.DO_TOKEN }}
 
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -104,6 +109,17 @@ jobs:
           doctl apps spec get $DO_APP_ID | \
             sed "s/tag:.*/tag: sha-${{ github.sha }}/" | \
             doctl apps update $DO_APP_ID --spec - --wait
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy]
+
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
 
       - name: Delete old tagged images
         run: |

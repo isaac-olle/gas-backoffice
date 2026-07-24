@@ -15,3 +15,6 @@ CREATE TABLE events.audit_events (
 CREATE INDEX idx__audit_events__aggregate_id ON events.audit_events(aggregate_id);
 CREATE INDEX idx__audit_events__event_type   ON events.audit_events(event_type);
 CREATE INDEX idx__audit_events__occurred_at  ON events.audit_events(occurred_at);
+
+GRANT USAGE ON SCHEMA events TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA events TO gas_backoffice_service;

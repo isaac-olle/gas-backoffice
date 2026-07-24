@@ -33,3 +33,6 @@ CREATE TABLE IF NOT EXISTS protocol.protocol_client_credentials_sessions (
     issued_at  TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+GRANT USAGE ON SCHEMA protocol TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA protocol TO gas_backoffice_service;
