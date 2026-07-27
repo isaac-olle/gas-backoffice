@@ -109,7 +109,7 @@ func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, backofficePRName
 
 	if _, err = tx.Exec(ctx, `
 		INSERT INTO backoffice.users (id, admin_id, name, role, is_system, protected_resource_ids, author_id, author_role)
-		VALUES ($1, $1, 'Gas Seed Admin', 'admin', TRUE, $2, $1, 'admin')
+		VALUES ($1, NULL, 'Gas Seed Admin', 'admin', TRUE, $2, $1, 'admin')
 		ON CONFLICT (id) DO UPDATE SET protected_resource_ids = EXCLUDED.protected_resource_ids, author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		adminID, []string{prID}); err != nil {
 		return fmt.Errorf("upsert admin user: %w", err)
