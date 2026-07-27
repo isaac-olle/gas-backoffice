@@ -36,12 +36,12 @@ resource "digitalocean_app" "backoffice" {
 
       env {
         key   = "GAS_SEED_ADMIN_NAME"
-        value = var.gas_seed_admin_name
+        value = "Gas Seed Admin"
       }
 
       env {
         key   = "GAS_BACKOFFICE_PR_NAME"
-        value = var.gas_backoffice_pr_name
+        value = "Gas Backoffice"
       }
 
       env {
