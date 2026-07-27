@@ -97,7 +97,7 @@ func TestNewProtectedResource(t *testing.T) {
 		name string
 	}{
 		{"empty name returns error", ""},
-		{"reserved name returns error", "Gas-Backoffice"},
+		{"reserved name returns error", "Gas Backoffice"},
 	}
 	for _, tc := range errCases {
 		tc := tc

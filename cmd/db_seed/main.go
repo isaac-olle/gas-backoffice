@@ -4,7 +4,7 @@ package main
 // Genera secrets (claus RSA) i els persiste — es pot tornar a córrer per recuperar-los.
 //
 // Crea:
-//   - Un admin "Gas-Seed-Admin" amb la seva clau d'assertion RSA
+//   - Un admin "Gas Seed Admin" amb la seva clau d'assertion RSA
 //
 // Imprimeix els outputs per stdout com a KEY=VALUE.
 // Amb --env-file escriu també els outputs al fitxer .env indicat (ús local).
@@ -75,7 +75,7 @@ func main() {
 	var existingAdminID string
 	if err = pool.QueryRow(ctx,
 		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
-		"Gas-Seed-Admin",
+		"Gas Seed Admin",
 	).Scan(&existingAdminID); err == nil {
 		alreadyApplied = true
 		adminID = existingAdminID
@@ -118,7 +118,7 @@ func main() {
 		fatalf("commit transaction: %v", err)
 	}
 
-	backofficePRName := config.EnvOr("GAS_BACKOFFICE_PR_NAME", "Gas-Backoffice")
+	backofficePRName := config.EnvOr("GAS_BACKOFFICE_PR_NAME", "Gas Backoffice")
 	if err = runSetup(ctx, pool, adminID, backofficePRName); err != nil {
 		fatalf("run setup: %v", err)
 	}

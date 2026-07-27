@@ -50,12 +50,12 @@ variable "image_tag" {
 # App environment
 variable "gas_seed_admin_name" {
   type    = string
-  default = "Gas-Seed-Admin"
+  default = "Gas Seed Admin"
 }
 
 variable "gas_backoffice_pr_name" {
   type    = string
-  default = "Gas-Backoffice"
+  default = "Gas Backoffice"
 }
 
 # GitHub

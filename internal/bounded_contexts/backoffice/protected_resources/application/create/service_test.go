@@ -57,7 +57,7 @@ func TestCreate(t *testing.T) {
 		},
 		{
 			desc:     "returns bad request error for reserved name",
-			cmd:      func(t *testing.T) *create.Command { return aCommand(t, withCmdName("Gas-Backoffice")) },
+			cmd:      func(t *testing.T) *create.Command { return aCommand(t, withCmdName("Gas Backoffice")) },
 			wantCode: protected_resources.ErrProtectedResourceNotCreated,
 		},
 		{
