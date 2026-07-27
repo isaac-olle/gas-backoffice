@@ -5,7 +5,7 @@ import "fmt"
 type ProtectedResourceName string
 
 var forbiddenProtectedResourceNames = map[string]struct{}{
-	"Gas-Backoffice": {},
+	"Gas Backoffice": {},
 }
 
 func NewProtectedResourceName(raw string) (ProtectedResourceName, error) {

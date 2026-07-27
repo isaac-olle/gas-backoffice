@@ -46,13 +46,7 @@ func Run() error {
 	}
 	defer postgresPool.Close()
 
-	if err = (SystemSetup{
-		SeedAdminName:    cfg.Application.SeedAdminName,
-		BackofficePRName: cfg.Application.BackofficePRName,
-	}).Setup(context.Background(), postgresPool); err != nil {
-		return fmt.Errorf("failed to run app setup: %w", err)
-	}
-
+	log.Info(fmt.Sprintf("resolving application IDs: backoffice_pr_name=%q seed_admin_name=%q", cfg.Application.BackofficePRName, cfg.Application.SeedAdminName))
 	backofficePrId, openIDScopeId, err := resolveApplicationIDs(context.Background(), postgresPool, cfg.Application.BackofficePRName)
 	if err != nil {
 		return fmt.Errorf("failed to resolve application IDs: %w", err)

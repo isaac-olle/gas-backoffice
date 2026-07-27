@@ -1,4 +1,4 @@
-CREATE TABLE public.outbox_event_bus (
+CREATE TABLE events.outbox_event_bus (
     event_id     UUID        NOT NULL PRIMARY KEY,
     event_name   TEXT        NOT NULL,
     aggregate_id TEXT        NOT NULL,
@@ -9,6 +9,4 @@ CREATE TABLE public.outbox_event_bus (
     inserted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx__outbox_event_bus__inserted_at ON public.outbox_event_bus(inserted_at);
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.outbox_event_bus TO gas_backoffice_service;
+CREATE INDEX idx__outbox_event_bus__inserted_at ON events.outbox_event_bus(inserted_at);

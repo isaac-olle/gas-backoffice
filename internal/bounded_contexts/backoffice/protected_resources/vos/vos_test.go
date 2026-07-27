@@ -22,7 +22,7 @@ func TestNewProtectedResourceName_Empty_ReturnsError(t *testing.T) {
 
 func TestNewProtectedResourceName_Reserved_GasBackoffice_ReturnsError(t *testing.T) {
 	t.Parallel()
-	_, err := NewProtectedResourceName("Gas-Backoffice")
+	_, err := NewProtectedResourceName("Gas Backoffice")
 	assert.Error(t, err)
 }
 
@@ -39,8 +39,8 @@ func TestCheckForbiddenName(t *testing.T) {
 		assert.NoError(t, n.CheckForbiddenName())
 	})
 
-	t.Run("returns error for forbidden name Gas-Backoffice", func(t *testing.T) {
-		n := ProtectedResourceName("Gas-Backoffice")
+	t.Run("returns error for forbidden name Gas Backoffice", func(t *testing.T) {
+		n := ProtectedResourceName("Gas Backoffice")
 		assert.Error(t, n.CheckForbiddenName())
 	})
 }

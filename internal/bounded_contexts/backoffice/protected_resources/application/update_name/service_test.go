@@ -69,7 +69,7 @@ func TestUpdateName(t *testing.T) {
 		},
 		{
 			desc:     "returns bad request error for reserved name",
-			newName:  "Gas-Backoffice",
+			newName:  "Gas Backoffice",
 			wantCode: protected_resources.ErrProtectedResourceNotUpdated,
 		},
 		{

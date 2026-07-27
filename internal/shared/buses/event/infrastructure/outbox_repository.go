@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Repository persists domain events into the outbox_event_bus table and
+// Repository persists domain events into the events.outbox_event_bus table and
 // exposes them for the poller to consume.
 type Repository struct {
 	postgres *persistance.PostgresRepository[event2.Event]
@@ -42,7 +42,7 @@ func (r *Repository) Save(ctx context.Context, events []event2.Event) error {
 			return fmt.Errorf("marshal event payload: %w", err)
 		}
 		if err = r.postgres.Save(ctx,
-			`INSERT INTO outbox_event_bus (event_id, event_name, aggregate_id, payload, occurred_at, author_id, author_role)
+			`INSERT INTO events.outbox_event_bus (event_id, event_name, aggregate_id, payload, occurred_at, author_id, author_role)
 			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 			p.ID, p.Type, p.AggregateID, payload, p.OccurredOn, authorId, authorRole,
 		); err != nil {
@@ -64,7 +64,7 @@ func (r *Repository) PullPending(ctx context.Context, limit int) ([]*event2.Prim
 
 	rows, err := tx.Query(ctx,
 		`SELECT event_id, payload
-		 FROM outbox_event_bus
+		 FROM events.outbox_event_bus
 		 ORDER BY inserted_at ASC
 		 LIMIT $1
 		 FOR UPDATE SKIP LOCKED`,
@@ -117,7 +117,7 @@ func (r *Repository) fromSqlToDomain(row pgx.Row) (*event2.Primitives, error) {
 
 func (r *Repository) delete(ctx context.Context, tx pgx.Tx, ids []string) error {
 	if _, err := tx.Exec(ctx,
-		`DELETE FROM outbox_event_bus WHERE event_id = ANY($1)`,
+		`DELETE FROM events.outbox_event_bus WHERE event_id = ANY($1)`,
 		ids,
 	); err != nil {
 		return fmt.Errorf("delete outbox events: %w", err)

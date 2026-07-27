@@ -1,6 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS security;
 
-CREATE TABLE security.key_pairs (
+CREATE TABLE IF NOT EXISTS security.key_pairs (
     id                    TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     protected_resource_id TEXT        NOT NULL,
@@ -14,10 +14,13 @@ CREATE TABLE security.key_pairs (
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at            TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.key_pairs
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'security.key_pairs'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.key_pairs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE security.user_assertion_keys (
+CREATE TABLE IF NOT EXISTS security.user_assertion_keys (
     id          TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     user_id     TEXT        NOT NULL,
@@ -30,10 +33,13 @@ CREATE TABLE security.user_assertion_keys (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at  TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.user_assertion_keys
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'security.user_assertion_keys'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.user_assertion_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE security.client_assertion_keys (
+CREATE TABLE IF NOT EXISTS security.client_assertion_keys (
     id          TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     client_id   TEXT        NOT NULL,
@@ -46,10 +52,13 @@ CREATE TABLE security.client_assertion_keys (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at  TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_assertion_keys
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'security.client_assertion_keys'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_assertion_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-CREATE TABLE security.client_secrets (
+CREATE TABLE IF NOT EXISTS security.client_secrets (
     id          TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     client_id   TEXT        NOT NULL,
@@ -61,10 +70,11 @@ CREATE TABLE security.client_secrets (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at  TIMESTAMPTZ
 );
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_secrets
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'security.client_secrets'::regclass) THEN
+    CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+  END IF;
+END $$;
 
-GRANT ALL ON SCHEMA security TO gas_backoffice_admin;
-GRANT ALL ON ALL TABLES IN SCHEMA security TO gas_backoffice_admin;
 GRANT USAGE ON SCHEMA security TO gas_backoffice_service;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA security TO gas_backoffice_service;

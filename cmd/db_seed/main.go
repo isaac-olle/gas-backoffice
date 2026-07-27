@@ -4,7 +4,7 @@ package main
 // Genera secrets (claus RSA) i els persiste — es pot tornar a córrer per recuperar-los.
 //
 // Crea:
-//   - Un admin "Gas-Seed-Admin" amb la seva clau d'assertion RSA
+//   - Un admin "Gas Seed Admin" amb la seva clau d'assertion RSA
 //
 // Imprimeix els outputs per stdout com a KEY=VALUE.
 // Amb --env-file escriu també els outputs al fitxer .env indicat (ús local).
@@ -75,13 +75,13 @@ func main() {
 	var existingAdminID string
 	if err = pool.QueryRow(ctx,
 		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
-		"Gas-Seed-Admin",
+		"Gas Seed Admin",
 	).Scan(&existingAdminID); err == nil {
 		alreadyApplied = true
 		adminID = existingAdminID
 		fmt.Fprintf(os.Stderr, "⚠ Seed already applied, recovering existing IDs\n")
 		_ = pool.QueryRow(ctx,
-			`SELECT id FROM security.admin_assertion_keys WHERE admin_id = $1 LIMIT 1`,
+			`SELECT id FROM security.user_assertion_keys WHERE user_id = $1 LIMIT 1`,
 			adminID,
 		).Scan(&adminAssertionKeyID)
 
@@ -109,16 +109,18 @@ func main() {
 		}
 	}
 
-	exec_(`INSERT INTO backoffice.users (id, admin_id, name, role, is_system) VALUES ($1, $1, $2, 'admin', TRUE)
-		ON CONFLICT (id) DO NOTHING`,
-		adminID, "Gas-Seed-Admin")
-
-	exec_(`INSERT INTO security.admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
-		VALUES ($1, $2, $3, $4, '', '') ON CONFLICT (id) DO NOTHING`,
+	exec_(`INSERT INTO security.user_assertion_keys (id, user_id, algorithm, public_key, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $2, 'admin')
+		ON CONFLICT (id) DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
 	if err = tx.Commit(ctx); err != nil {
 		fatalf("commit transaction: %v", err)
+	}
+
+	backofficePRName := config.EnvOr("GAS_BACKOFFICE_PR_NAME", "Gas Backoffice")
+	if err = runSetup(ctx, pool, adminID, backofficePRName); err != nil {
+		fatalf("run setup: %v", err)
 	}
 
 	adminPrivKeyB64 := base64.StdEncoding.EncodeToString([]byte(adminPrivKeyPEM))

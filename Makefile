@@ -1,10 +1,16 @@
-.PHONY: up down seed local-token dev-token run build test lint
+.PHONY: up down migrate-local migrate-dev seed local-token dev-token run build test lint
 
 up:
 	docker compose -f deploy/docker-compose.yml up -d
 
 down:
 	docker compose -f deploy/docker-compose.yml down
+
+migrate-local:
+	go run ./cmd/migrate --env-file .env.local
+
+migrate-dev:
+	go run ./cmd/migrate --env-file .env.dev
 
 seed:
 	go run ./cmd/db_seed --env-file .env.dev

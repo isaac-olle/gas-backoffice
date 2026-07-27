@@ -1,4 +1,6 @@
-CREATE TABLE public.audit_events (
+CREATE SCHEMA IF NOT EXISTS events;
+
+CREATE TABLE IF NOT EXISTS events.audit_events (
     event_id       UUID        NOT NULL PRIMARY KEY,
     event_type     TEXT        NOT NULL,
     aggregate_id   TEXT        NOT NULL,
@@ -10,8 +12,9 @@ CREATE TABLE public.audit_events (
     recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx__audit_events__aggregate_id ON public.audit_events(aggregate_id);
-CREATE INDEX idx__audit_events__event_type   ON public.audit_events(event_type);
-CREATE INDEX idx__audit_events__occurred_at  ON public.audit_events(occurred_at);
+CREATE INDEX IF NOT EXISTS idx__audit_events__aggregate_id ON events.audit_events(aggregate_id);
+CREATE INDEX IF NOT EXISTS idx__audit_events__event_type   ON events.audit_events(event_type);
+CREATE INDEX IF NOT EXISTS idx__audit_events__occurred_at  ON events.audit_events(occurred_at);
 
-GRANT SELECT, INSERT ON TABLE public.audit_events TO gas_backoffice_service;
+GRANT USAGE ON SCHEMA events TO gas_backoffice_service;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA events TO gas_backoffice_service;
