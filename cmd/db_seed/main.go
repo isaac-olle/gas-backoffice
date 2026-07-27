@@ -81,7 +81,7 @@ func main() {
 		adminID = existingAdminID
 		fmt.Fprintf(os.Stderr, "⚠ Seed already applied, recovering existing IDs\n")
 		_ = pool.QueryRow(ctx,
-			`SELECT id FROM security.admin_assertion_keys WHERE admin_id = $1 LIMIT 1`,
+			`SELECT id FROM security.user_assertion_keys WHERE user_id = $1 LIMIT 1`,
 			adminID,
 		).Scan(&adminAssertionKeyID)
 
@@ -109,12 +109,9 @@ func main() {
 		}
 	}
 
-	exec_(`INSERT INTO backoffice.users (id, admin_id, name, role, is_system) VALUES ($1, $1, $2, 'admin', TRUE)
-		ON CONFLICT (id) DO NOTHING`,
-		adminID, "Gas-Seed-Admin")
-
-	exec_(`INSERT INTO security.admin_assertion_keys (id, admin_id, algorithm, public_key, author_id, author_role)
-		VALUES ($1, $2, $3, $4, '', '') ON CONFLICT (id) DO NOTHING`,
+	exec_(`INSERT INTO security.user_assertion_keys (id, user_id, algorithm, public_key, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $2, 'admin')
+		ON CONFLICT (id) DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
 	if err = tx.Commit(ctx); err != nil {
