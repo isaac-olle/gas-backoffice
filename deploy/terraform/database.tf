@@ -30,16 +30,42 @@ resource "digitalocean_database_db" "gas_backoffice" {
   name       = "gas_backoffice"
 }
 
+resource "postgresql_schema" "public" {
+  name               = "public"
+  database           = digitalocean_database_db.gas_backoffice.name
+  drop_cascade       = true
+
+  lifecycle {
+    ignore_changes = [owner]
+  }
+}
+
 resource "postgresql_grant" "gas_backoffice_admin_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
-  role        = digitalocean_database_user.gas_backoffice_admin.name
+  role        = postgresql_role.gas_backoffice_admin.name
   object_type = "database"
   privileges  = ["ALL"]
 }
 
 resource "postgresql_grant" "gas_backoffice_service_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
-  role        = digitalocean_database_user.gas_backoffice_service.name
+  role        = postgresql_role.gas_backoffice_service.name
   object_type = "database"
   privileges  = ["CONNECT"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = postgresql_role.gas_backoffice_service.name
+  schema      = "public"
+  object_type = "table"
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_sequences_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = postgresql_role.gas_backoffice_service.name
+  schema      = "public"
+  object_type = "sequence"
+  privileges  = ["USAGE"]
 }
