@@ -38,7 +38,7 @@ resource "postgresql_schema" "public" {
 
   lifecycle {
     ignore_changes = [owner]
-    prevent_destroy = true
+    # prevent_destroy = true
   }
 }
 

@@ -12,6 +12,7 @@ import (
 	queryInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -25,6 +26,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func maskDSN(dsn string) string {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return "(unparseable)"
+	}
+	u.User = url.User(u.User.Username())
+	return u.String()
+}
+
 func Run() error {
 	cfg, err := config.Load()
 	if err != nil {
@@ -36,6 +46,7 @@ func Run() error {
 		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
+	log.Info(fmt.Sprintf("migrations DSN host: %s", maskDSN(cfg.Databases.MigrationsDSN)))
 	if err = applyMigrations(log, cfg.Databases.MigrationsPath, cfg.Databases.MigrationsDSN); err != nil {
 		return err
 	}
