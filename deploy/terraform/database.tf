@@ -1,3 +1,19 @@
+data "digitalocean_database_user" "gas_backoffice_service" {
+  cluster_id = data.digitalocean_database_cluster.postgres.id
+  name       = "gas_backoffice_service"
+}
+
+data "digitalocean_database_user" "gas_backoffice_admin" {
+  cluster_id = data.digitalocean_database_cluster.postgres.id
+  name       = "gas_backoffice_admin"
+}
+
+locals {
+  postgres_dsn   = "postgresql://${data.digitalocean_database_user.gas_backoffice_service.name}:${data.digitalocean_database_user.gas_backoffice_service.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+  migrations_dsn = "postgresql://${data.digitalocean_database_user.gas_backoffice_admin.name}:${data.digitalocean_database_user.gas_backoffice_admin.password}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+
+}
+
 resource "digitalocean_database_db" "gas_backoffice" {
   cluster_id = data.digitalocean_database_cluster.postgres.id
   name       = "gas_backoffice"
