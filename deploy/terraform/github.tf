@@ -4,7 +4,7 @@ resource "github_branch" "environment" {
   source_branch = var.source_branch
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true
   }
 }
 
@@ -15,7 +15,7 @@ resource "github_repository_file" "pipeline_trigger" {
   overwrite_on_create = true
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true
   }
 
   content = <<-YAML
