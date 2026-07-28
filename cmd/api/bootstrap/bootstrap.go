@@ -36,6 +36,9 @@ func Run() error {
 		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
+	log.Info(fmt.Sprintf("config: migrations_dsn=%q postgres_dsn=%q migrations_path=%q backoffice_pr_name=%q seed_admin_name=%q",
+		cfg.Databases.MigrationsDSN, cfg.Databases.Postgres, cfg.Databases.MigrationsPath,
+		cfg.Application.BackofficePRName, cfg.Application.SeedAdminName))
 	if err = applyMigrations(log, cfg.Databases.MigrationsPath, cfg.Databases.MigrationsDSN); err != nil {
 		return err
 	}
