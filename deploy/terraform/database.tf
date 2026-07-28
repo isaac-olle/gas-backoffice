@@ -21,8 +21,8 @@ resource "postgresql_role" "gas_backoffice_service" {
 }
 
 locals {
-  postgres_dsn   = "postgresql://gas_backoffice_service:${random_password.gas_backoffice_service.result}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
-  migrations_dsn = "postgresql://gas_backoffice_admin:${random_password.gas_backoffice_admin.result}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+  postgres_dsn   = "postgresql://gas_backoffice_service:${urlencode(random_password.gas_backoffice_service.result)}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
+  migrations_dsn = "postgresql://gas_backoffice_admin:${urlencode(random_password.gas_backoffice_admin.result)}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/${digitalocean_database_db.gas_backoffice.name}?sslmode=require"
 }
 
 resource "digitalocean_database_db" "gas_backoffice" {
