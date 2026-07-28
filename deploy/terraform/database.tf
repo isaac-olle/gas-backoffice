@@ -1,11 +1,13 @@
 resource "random_password" "gas_backoffice_admin" {
-  length  = 32
-  special = true
+  length            = 32
+  special           = true
+  override_special  = "!#$%&*()-_=+"
 }
 
 resource "random_password" "gas_backoffice_service" {
-  length  = 32
-  special = true
+  length            = 32
+  special           = true
+  override_special  = "!#$%&*()-_=+"
 }
 
 resource "postgresql_role" "gas_backoffice_admin" {
@@ -30,16 +32,33 @@ resource "digitalocean_database_db" "gas_backoffice" {
   name       = "gas_backoffice"
 }
 
+
 resource "postgresql_grant" "gas_backoffice_admin_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
-  role        = "gas_backoffice_admin"
+  role        = postgresql_role.gas_backoffice_admin.name
   object_type = "database"
   privileges  = ["ALL"]
 }
 
 resource "postgresql_grant" "gas_backoffice_service_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
-  role        = "gas_backoffice_service"
+  role        = postgresql_role.gas_backoffice_service.name
   object_type = "database"
   privileges  = ["CONNECT"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_tables_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = postgresql_role.gas_backoffice_service.name
+  schema      = "public"
+  object_type = "table"
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
+resource "postgresql_grant" "gas_backoffice_service_sequences_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = postgresql_role.gas_backoffice_service.name
+  schema      = "public"
+  object_type = "sequence"
+  privileges  = ["USAGE"]
 }
