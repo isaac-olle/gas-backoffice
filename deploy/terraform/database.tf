@@ -1,11 +1,13 @@
 resource "random_password" "gas_backoffice_admin" {
-  length  = 32
-  special = true
+  length            = 32
+  special           = true
+  override_special  = "!#$%&*()-_=+"
 }
 
 resource "random_password" "gas_backoffice_service" {
-  length  = 32
-  special = true
+  length            = 32
+  special           = true
+  override_special  = "!#$%&*()-_=+"
 }
 
 resource "postgresql_role" "gas_backoffice_admin" {
@@ -31,12 +33,12 @@ resource "digitalocean_database_db" "gas_backoffice" {
 }
 
 resource "postgresql_schema" "public" {
-  name               = "public"
-  database           = digitalocean_database_db.gas_backoffice.name
-  drop_cascade       = true
+  name     = "public"
+  database = digitalocean_database_db.gas_backoffice.name
 
   lifecycle {
     ignore_changes = [owner]
+    prevent_destroy = true
   }
 }
 
