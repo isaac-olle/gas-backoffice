@@ -67,6 +67,41 @@ resource "digitalocean_app" "backoffice" {
         }
       }
     }
+
+    job {
+      name               = "db-seed"
+      instance_count     = 1
+      instance_size_slug = "apps-s-1vcpu-0.5gb"
+      kind               = "PRE_DEPLOY"
+      run_command        = "/db-seed"
+
+      env {
+        key   = "POSTGRES_DSN"
+        value = local.migrations_dsn
+        type  = "SECRET"
+      }
+
+      env {
+        key   = "GAS_SEED_ADMIN_NAME"
+        value = var.gas_seed_admin_name
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_PR_NAME"
+        value = var.gas_backoffice_pr_name
+      }
+
+      image {
+        registry_type = "DOCR"
+        registry      = data.digitalocean_container_registry.gas.name
+        repository    = var.repository
+        tag           = var.image_tag
+
+        deploy_on_push {
+          enabled = false
+        }
+      }
+    }
   }
 
   lifecycle {
