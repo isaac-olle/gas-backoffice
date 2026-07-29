@@ -87,3 +87,7 @@ resource "digitalocean_project_resources" "backoffice" {
   project   = data.digitalocean_project.main.id
   resources = [digitalocean_app.backoffice.urn]
 }
+
+output "app_id" {
+  value = digitalocean_app.backoffice.id
+}

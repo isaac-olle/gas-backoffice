@@ -40,6 +40,14 @@ resource "postgresql_grant" "gas_backoffice_admin_database_privileges" {
   privileges  = ["ALL"]
 }
 
+resource "postgresql_grant" "gas_backoffice_admin_schema_privileges" {
+  database    = digitalocean_database_db.gas_backoffice.name
+  role        = postgresql_role.gas_backoffice_admin.name
+  schema      = "public"
+  object_type = "schema"
+  privileges  = ["ALL"]
+}
+
 resource "postgresql_grant" "gas_backoffice_service_database_privileges" {
   database    = digitalocean_database_db.gas_backoffice.name
   role        = postgresql_role.gas_backoffice_service.name
