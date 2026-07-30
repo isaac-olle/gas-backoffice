@@ -67,7 +67,7 @@ resource "digitalocean_app" "backoffice" {
       instance_count     = 1
       instance_size_slug = "apps-s-1vcpu-0.5gb"
       kind               = "PRE_DEPLOY"
-      run_command        = "/migrate && /db-seed"
+      run_command        = "/migrate"
 
       env {
         key   = "MIGRATIONS_DSN"
