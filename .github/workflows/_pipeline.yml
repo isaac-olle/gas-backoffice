@@ -118,7 +118,7 @@ jobs:
             if echo "$CHANGED" | grep -q "^cmd/db_seed/"; then
               echo "run_seed=true" >> $GITHUB_OUTPUT
             else
-              echo "run_seed=false" >> $GITHUB_OUTPUT
+              echo "run_seed=true" >> $GITHUB_OUTPUT
             fi
           fi
 
