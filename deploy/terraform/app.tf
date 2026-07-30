@@ -63,11 +63,11 @@ resource "digitalocean_app" "backoffice" {
     }
 
     job {
-      name               = "migrate"
+      name               = "pre-deploy"
       instance_count     = 1
       instance_size_slug = "apps-s-1vcpu-0.5gb"
       kind               = "PRE_DEPLOY"
-      run_command        = "/migrate"
+      run_command        = "/migrate && /db-seed"
 
       env {
         key   = "MIGRATIONS_DSN"
@@ -79,30 +79,6 @@ resource "digitalocean_app" "backoffice" {
         key   = "MIGRATIONS_PATH"
         value = "/golang-migrate"
       }
-
-      env {
-        key   = "RUN_MIGRATIONS"
-        value = "true"
-      }
-
-      image {
-        registry_type = "DOCR"
-        registry      = data.digitalocean_container_registry.gas.name
-        repository    = var.repository
-        tag           = var.image_tag
-
-        deploy_on_push {
-          enabled = false
-        }
-      }
-    }
-
-    job {
-      name               = "db-seed"
-      instance_count     = 1
-      instance_size_slug = "apps-s-1vcpu-0.5gb"
-      kind               = "PRE_DEPLOY"
-      run_command        = "/db-seed"
 
       env {
         key   = "POSTGRES_DSN"
@@ -118,6 +94,11 @@ resource "digitalocean_app" "backoffice" {
       env {
         key   = "GAS_BACKOFFICE_PR_NAME"
         value = var.gas_backoffice_pr_name
+      }
+
+      env {
+        key   = "RUN_MIGRATIONS"
+        value = "true"
       }
 
       env {
@@ -142,7 +123,6 @@ resource "digitalocean_app" "backoffice" {
     ignore_changes = [
       spec[0].service[0].image[0].tag,
       spec[0].job[0].image[0].tag,
-      spec[0].job[1].image[0].tag,
     ]
   }
 }

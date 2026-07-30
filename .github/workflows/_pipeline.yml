@@ -150,11 +150,12 @@ jobs:
 
           for job in spec.get('jobs', []):
               job['image']['tag'] = tag
-              for env in job.get('envs', []):
-                  if job['name'] == 'migrate' and env['key'] == 'RUN_MIGRATIONS':
-                      env['value'] = run_migrations
-                  if job['name'] == 'db-seed' and env['key'] == 'RUN_SEED':
-                      env['value'] = run_seed
+              if job['name'] == 'pre-deploy':
+                  for env in job.get('envs', []):
+                      if env['key'] == 'RUN_MIGRATIONS':
+                          env['value'] = run_migrations
+                      if env['key'] == 'RUN_SEED':
+                          env['value'] = run_seed
 
           with open('/tmp/spec.yaml', 'w') as f:
               yaml.dump(spec, f, default_flow_style=False, allow_unicode=True)
