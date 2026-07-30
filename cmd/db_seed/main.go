@@ -45,6 +45,11 @@ func main() {
 		}
 	}
 
+	if os.Getenv("RUN_SEED") == "false" {
+		fmt.Println("db-seed: skipped")
+		return
+	}
+
 	ctx := context.Background()
 	dsn := config.EnvOr("POSTGRES_DSN", "postgres://gas_admin:gas_admin@localhost:5432/gas?sslmode=disable")
 

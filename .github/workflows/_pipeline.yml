@@ -97,18 +97,69 @@ jobs:
     needs: [docker]
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect pre-deploy job changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_migrations=true" >> $GITHUB_OUTPUT
+            echo "run_seed=true" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+            echo "Changed files: $CHANGED"
+            if echo "$CHANGED" | grep -q "^deploy/golang-migrate/"; then
+              echo "run_migrations=true" >> $GITHUB_OUTPUT
+            else
+              echo "run_migrations=false" >> $GITHUB_OUTPUT
+            fi
+            if echo "$CHANGED" | grep -q "^cmd/db_seed/"; then
+              echo "run_seed=true" >> $GITHUB_OUTPUT
+            else
+              echo "run_seed=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_TOKEN }}
 
-      - name: Pin image to sha-${{ github.sha }}
+      - name: Update app spec
         env:
           DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', inputs.environment)] }}
+          RUN_MIGRATIONS: ${{ steps.changes.outputs.run_migrations }}
+          RUN_SEED: ${{ steps.changes.outputs.run_seed }}
+          IMAGE_TAG: sha-${{ github.sha }}
         run: |
-          doctl apps spec get $DO_APP_ID | \
-            sed "s/tag:.*/tag: sha-${{ github.sha }}/" | \
-            doctl apps update $DO_APP_ID --spec - --wait
+          doctl apps spec get $DO_APP_ID > /tmp/spec.yaml
+          python3 << 'PYEOF'
+          import yaml, os
+
+          with open('/tmp/spec.yaml') as f:
+              spec = yaml.safe_load(f)
+
+          tag = os.environ['IMAGE_TAG']
+          run_migrations = os.environ['RUN_MIGRATIONS']
+          run_seed = os.environ['RUN_SEED']
+
+          for svc in spec.get('services', []):
+              svc['image']['tag'] = tag
+
+          for job in spec.get('jobs', []):
+              job['image']['tag'] = tag
+              for env in job.get('envs', []):
+                  if job['name'] == 'migrate' and env['key'] == 'RUN_MIGRATIONS':
+                      env['value'] = run_migrations
+                  if job['name'] == 'db-seed' and env['key'] == 'RUN_SEED':
+                      env['value'] = run_seed
+
+          with open('/tmp/spec.yaml', 'w') as f:
+              yaml.dump(spec, f, default_flow_style=False, allow_unicode=True)
+          PYEOF
+          doctl apps update $DO_APP_ID --spec /tmp/spec.yaml --wait
 
   cleanup:
     name: Cleanup

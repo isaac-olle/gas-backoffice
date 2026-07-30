@@ -32,6 +32,11 @@ func main() {
 		log.Fatal("MIGRATIONS_DSN env var is required")
 	}
 
+	if os.Getenv("RUN_MIGRATIONS") == "false" {
+		fmt.Println("migrations: skipped")
+		return
+	}
+
 	m, err := migrate.New("file://"+migrationsPath, "pgx5://"+migrationsDSN[len("postgresql://"):])
 	if err != nil {
 		log.Fatalf("init migrations: %v", err)

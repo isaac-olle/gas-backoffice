@@ -50,10 +50,39 @@ resource "digitalocean_app" "backoffice" {
         type  = "SECRET"
       }
 
+      image {
+        registry_type = "DOCR"
+        registry      = data.digitalocean_container_registry.gas.name
+        repository    = var.repository
+        tag           = var.image_tag
+
+        deploy_on_push {
+          enabled = false
+        }
+      }
+    }
+
+    job {
+      name               = "migrate"
+      instance_count     = 1
+      instance_size_slug = "apps-s-1vcpu-0.5gb"
+      kind               = "PRE_DEPLOY"
+      run_command        = "/migrate"
+
       env {
         key   = "MIGRATIONS_DSN"
         value = local.migrations_dsn
         type  = "SECRET"
+      }
+
+      env {
+        key   = "MIGRATIONS_PATH"
+        value = "/golang-migrate"
+      }
+
+      env {
+        key   = "RUN_MIGRATIONS"
+        value = "true"
       }
 
       image {
@@ -91,6 +120,11 @@ resource "digitalocean_app" "backoffice" {
         value = var.gas_backoffice_pr_name
       }
 
+      env {
+        key   = "RUN_SEED"
+        value = "true"
+      }
+
       image {
         registry_type = "DOCR"
         registry      = data.digitalocean_container_registry.gas.name
@@ -105,7 +139,11 @@ resource "digitalocean_app" "backoffice" {
   }
 
   lifecycle {
-    ignore_changes = [spec[0].service[0].image[0].tag]
+    ignore_changes = [
+      spec[0].service[0].image[0].tag,
+      spec[0].job[0].image[0].tag,
+      spec[0].job[1].image[0].tag,
+    ]
   }
 }
 

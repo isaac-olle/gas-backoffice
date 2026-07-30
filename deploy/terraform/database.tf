@@ -1,19 +1,20 @@
 resource "random_password" "gas_backoffice_admin" {
-  length            = 32
-  special           = true
-  override_special  = "!#$%&*()-_=+"
+  length           = 32
+  special          = true
+  override_special = "!#$%&*()-_=+"
 }
 
 resource "random_password" "gas_backoffice_service" {
-  length            = 32
-  special           = true
-  override_special  = "!#$%&*()-_=+"
+  length           = 32
+  special          = true
+  override_special = "!#$%&*()-_=+"
 }
 
 resource "postgresql_role" "gas_backoffice_admin" {
-  name     = "gas_backoffice_admin"
-  login    = true
-  password = random_password.gas_backoffice_admin.result
+  name           = "gas_backoffice_admin"
+  login          = true
+  password       = random_password.gas_backoffice_admin.result
+  skip_drop_role = true
 }
 
 resource "postgresql_role" "gas_backoffice_service" {
