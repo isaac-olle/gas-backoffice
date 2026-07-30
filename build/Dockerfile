@@ -13,7 +13,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /gas ./cmd/api/main.go && \
 
 # ---
 
-FROM scratch
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /gas /gas
 COPY --from=builder /db-seed /db-seed
