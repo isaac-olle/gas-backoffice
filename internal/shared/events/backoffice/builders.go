@@ -35,6 +35,18 @@ func (b *userNameChangedBuilder) Build(p *event2.Primitives) (event2.Event, erro
 	}, nil
 }
 
+// ── Session ───────────────────────────────────────────────────────────────────
+
+type sessionCreatedBuilder struct{}
+
+func NewSessionCreatedBuilder() event2.PrimitiveEventBuilder { return &sessionCreatedBuilder{} }
+func (b *sessionCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return SessionCreated{
+		UserId:    str(p.Data, "user_id"),
+		BaseEvent: event2.FromPrimitivesBase(p),
+	}, nil
+}
+
 // ── Client ────────────────────────────────────────────────────────────────────
 
 type clientCreatedBuilder struct{}

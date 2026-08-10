@@ -13,20 +13,20 @@ import (
 )
 
 type CreateClientAssertionKeyHandler struct {
-	commandBus     command.Bus
-	clientId       func(context.Context) (ids.ClientId, bool)
-	assertionKeyId func(context.Context) (ids.ClientAssertionKeyId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
+	assertionKeyId  func(context.Context) (ids.ClientAssertionKeyId, bool)
 }
 
 func NewCreateClientAssertionKeyHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 	assertionKeyId func(context.Context) (ids.ClientAssertionKeyId, bool),
 ) *CreateClientAssertionKeyHandler {
 	return &CreateClientAssertionKeyHandler{
-		commandBus:     commandBus,
-		clientId:       clientId,
-		assertionKeyId: assertionKeyId,
+		commandExecutor: commandExecutor,
+		clientId:        clientId,
+		assertionKeyId:  assertionKeyId,
 	}
 }
 
@@ -50,7 +50,7 @@ func (h *CreateClientAssertionKeyHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_ASSERTION_KEY_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(
+	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
 		clientAssertionKeyCreate.NewCommand(keyId, clientId, "RS256", req.PublicKey),
 	)

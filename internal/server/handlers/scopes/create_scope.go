@@ -14,19 +14,19 @@ import (
 )
 
 type CreateScopeHandler struct {
-	commandBus  command.Bus
-	prOwnership func(context.Context) (protected_resources.Ownership, bool)
-	prId        func(context.Context) (ids2.ProtectedResourceId, bool)
-	scopeId     func(context.Context) (ids2.ScopeId, bool)
+	commandExecutor command.CommandExecutor
+	prOwnership     func(context.Context) (protected_resources.Ownership, bool)
+	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
+	scopeId         func(context.Context) (ids2.ScopeId, bool)
 }
 
 func NewCreateScopeHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	prOwnership func(context.Context) (protected_resources.Ownership, bool),
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 ) *CreateScopeHandler {
-	return &CreateScopeHandler{commandBus: commandBus, prOwnership: prOwnership, prId: prId, scopeId: scopeId}
+	return &CreateScopeHandler{commandExecutor: commandExecutor, prOwnership: prOwnership, prId: prId, scopeId: scopeId}
 }
 
 type createScopeRequest struct {
@@ -55,7 +55,7 @@ func (h *CreateScopeHandler) Execute(c *gin.Context) (any, error) {
 	}
 
 	ownership := scopes.NewOwnershipFromVos(prId, prOwnership.UserId)
-	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeCreate.NewCommand(scopeId, req.Name, ownership))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), scopeCreate.NewCommand(scopeId, req.Name, ownership))
 }
 
 func (h *CreateScopeHandler) Success(c *gin.Context, _ any) error {

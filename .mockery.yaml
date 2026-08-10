@@ -12,6 +12,12 @@ packages:
           filename: mock_command_bus.go
           pkgname: commandmocks
           structname: MockCommandBus
+      CommandExecutor:
+        config:
+          dir: internal/shared/buses/command/mocks
+          filename: mock_command_executor.go
+          pkgname: commandmocks
+          structname: MockCommandExecutor
 
   github.com/isaac-olle/gas/internal/shared/buses/query:
     interfaces:
@@ -38,6 +44,24 @@ packages:
           dir: internal/bounded_contexts/backoffice/admins/mocks
           filename: repository.go
           pkgname: adminmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/auth:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/auth/mocks
+          filename: repository.go
+          pkgname: authmocks
+          structname: MockRepository
+
+  github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/identity_providers:
+    interfaces:
+      Repository:
+        config:
+          dir: internal/bounded_contexts/backoffice/identity_providers/mocks
+          filename: repository.go
+          pkgname: idpmocks
           structname: MockRepository
 
   github.com/isaac-olle/gas/internal/bounded_contexts/backoffice/clients:

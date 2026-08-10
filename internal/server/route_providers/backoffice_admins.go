@@ -24,7 +24,7 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 
 	a.PUT("",
 		p.executor.Run(userHandlers.NewCreateUserHandler(
-			p.commandBus,
+			p.commandExecutor,
 			ids.UserIdFromContext,
 			helpers.UserIdFromAuthor,
 		)),
@@ -36,11 +36,11 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	a.DELETE("",
 		ownership.Tenant(p.queryBus),
 		system_resource.User(p.queryBus),
-		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandBus, ids.UserIdFromContext)),
+		p.executor.Run(userHandlers.NewSoftDeleteUserHandler(p.commandExecutor, ids.UserIdFromContext)),
 	)
 	a.PATCH("/name",
 		ownership.Tenant(p.queryBus),
 		system_resource.User(p.queryBus),
-		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandBus, ids.UserIdFromContext)),
+		p.executor.Run(userHandlers.NewChangeUserNameHandler(p.commandExecutor, ids.UserIdFromContext)),
 	)
 }

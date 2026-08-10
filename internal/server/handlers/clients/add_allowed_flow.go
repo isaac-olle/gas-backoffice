@@ -12,15 +12,15 @@ import (
 )
 
 type AddAllowedFlowHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
 }
 
 func NewAddAllowedFlowHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 ) *AddAllowedFlowHandler {
-	return &AddAllowedFlowHandler{commandBus: commandBus, clientId: clientId}
+	return &AddAllowedFlowHandler{commandExecutor: commandExecutor, clientId: clientId}
 }
 
 type addAllowedFlowRequest struct {
@@ -38,7 +38,7 @@ func (h *AddAllowedFlowHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), clientAddFlow.NewCommand(clientId, req.Flow))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), clientAddFlow.NewCommand(clientId, req.Flow))
 }
 
 func (h *AddAllowedFlowHandler) Success(c *gin.Context, _ any) error {

@@ -18,10 +18,6 @@ import (
 	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 	keyPairDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/domain_services"
 	keyPairInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure"
-	userAssertionKeyCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/user_assertion_keys/application/create"
-	verifyAssertion "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/user_assertion_keys/application/verify_assertion"
-	userAssertionKeyDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/user_assertion_keys/domain_services"
-	userAssertionKeyInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/user_assertion_keys/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
@@ -34,7 +30,6 @@ func RegisterSecurity(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, 
 	keyPairRepo := keyPairInfra.NewPostgresKeyPairRepository(pool)
 	clientAssertionKeyRepo := clientAssertionKeyInfra.NewPostgresClientAssertionKeyRepository(pool)
 	clientAssertionKeyFinder := clientAssertionKeyDomainServices.NewClientAssertionKeyFinder(clientAssertionKeyRepo)
-	userAssertionKeyRepo := userAssertionKeyInfra.NewPostgresUserAssertionKeyRepository(pool)
 	clientSecretRepo := clientSecretInfra.NewPostgresClientSecretRepository(pool)
 
 	jwtService := sharedJwt.NewJwtService(jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512, jwt.SigningMethodES256, jwt.SigningMethodES384, jwt.SigningMethodES512)
@@ -44,18 +39,12 @@ func RegisterSecurity(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, 
 	cmdBus.Register(keyPairCreate.CommandType, keyPairCreate.NewCommandHandler(createKeyPairService))
 	cmdBus.Register(clientAssertionKeyCreate.CommandType, clientAssertionKeyCreate.NewCommandHandler(clientAssertionKeyCreate.NewService(clientAssertionKeyRepo, evtBus)))
 	cmdBus.Register(clientAssertionKeyHardDelete.CommandType, clientAssertionKeyHardDelete.NewCommandHandler(clientAssertionKeyHardDelete.NewService(clientAssertionKeyRepo)))
-	cmdBus.Register(userAssertionKeyCreate.CommandType, userAssertionKeyCreate.NewCommandHandler(userAssertionKeyCreate.NewService(userAssertionKeyRepo, evtBus)))
 	clientSecretHasher := clientSecretInfra.NewArgon2SecretHasher()
 	cmdBus.Register(clientSecretCreate.CommandType, clientSecretCreate.NewCommandHandler(clientSecretCreate.NewService(clientSecretRepo, clientSecretHasher, evtBus)))
 	cmdBus.Register(clientSecretHardDelete.CommandType, clientSecretHardDelete.NewCommandHandler(clientSecretHardDelete.NewService(clientSecretRepo)))
 
 	clientSecretVerifier := clientSecretInfra.NewArgon2SecretVerifier(clientSecretRepo)
 	qryBus.Register(clientSecretVerify.QueryType, clientSecretVerify.NewQueryHandler(clientSecretVerify.NewService(clientSecretVerifier)))
-
-	userAssertionKeyFinder := userAssertionKeyDomainServices.NewUserAssertionKeyFinder(userAssertionKeyRepo)
-	userAssertionVerifier := userAssertionKeyInfra.NewJwtAssertionVerifier(jwtService)
-	userJwtDecoder := userAssertionKeyInfra.NewJwtDecoder()
-	qryBus.Register(verifyAssertion.QueryType, verifyAssertion.NewQueryHandler(verifyAssertion.NewService(userAssertionKeyFinder, userAssertionVerifier, userJwtDecoder, appName)))
 
 	clientAssertionVerifier := clientAssertionKeyInfra.NewJwtAssertionVerifier(clientAssertionKeyFinder, jwtService)
 	qryBus.Register(clientVerifyAssertion.QueryType, clientVerifyAssertion.NewQueryHandler(clientVerifyAssertion.NewService(clientAssertionVerifier)))

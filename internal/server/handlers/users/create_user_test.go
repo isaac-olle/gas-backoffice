@@ -56,7 +56,7 @@ func TestCreateUserHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := users.NewCreateUserHandler(bus, tt.userIdFn, handlerstest.ValidUserIdExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
@@ -75,7 +75,7 @@ func TestCreateUserHandler(t *testing.T) {
 
 func TestCreateUserHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := users.NewCreateUserHandler(bus, handlerstest.ValidUserIdExtractor(), handlerstest.ValidUserIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)

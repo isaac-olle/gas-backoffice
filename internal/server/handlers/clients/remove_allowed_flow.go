@@ -12,15 +12,15 @@ import (
 )
 
 type RemoveAllowedFlowHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
 }
 
 func NewRemoveAllowedFlowHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 ) *RemoveAllowedFlowHandler {
-	return &RemoveAllowedFlowHandler{commandBus: commandBus, clientId: clientId}
+	return &RemoveAllowedFlowHandler{commandExecutor: commandExecutor, clientId: clientId}
 }
 
 type removeAllowedFlowRequest struct {
@@ -38,7 +38,7 @@ func (h *RemoveAllowedFlowHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), remove_allowed_flow.NewCommand(clientId, req.Flow))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), remove_allowed_flow.NewCommand(clientId, req.Flow))
 }
 
 func (h *RemoveAllowedFlowHandler) Success(c *gin.Context, _ any) error {

@@ -56,7 +56,7 @@ func TestAddAllowedFlowHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := clients.NewAddAllowedFlowHandler(bus, tt.clientIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
@@ -75,7 +75,7 @@ func TestAddAllowedFlowHandler(t *testing.T) {
 
 func TestAddAllowedFlowHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := clients.NewAddAllowedFlowHandler(bus, handlerstest.ValidClientIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)

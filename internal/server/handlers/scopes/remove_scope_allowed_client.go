@@ -12,17 +12,17 @@ import (
 )
 
 type RemoveScopeAllowedClientHandler struct {
-	commandBus command.Bus
-	scopeId    func(context.Context) (ids2.ScopeId, bool)
-	clientId   func(context.Context) (ids2.ClientId, bool)
+	commandExecutor command.CommandExecutor
+	scopeId         func(context.Context) (ids2.ScopeId, bool)
+	clientId        func(context.Context) (ids2.ClientId, bool)
 }
 
 func NewRemoveScopeAllowedClientHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 	clientId func(context.Context) (ids2.ClientId, bool),
 ) *RemoveScopeAllowedClientHandler {
-	return &RemoveScopeAllowedClientHandler{commandBus: commandBus, scopeId: scopeId, clientId: clientId}
+	return &RemoveScopeAllowedClientHandler{commandExecutor: commandExecutor, scopeId: scopeId, clientId: clientId}
 }
 
 func (h *RemoveScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
@@ -36,7 +36,7 @@ func (h *RemoveScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(
+	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(), scopeRemoveClient.NewCommand(scopeId.String(), clientId.String()),
 	)
 }

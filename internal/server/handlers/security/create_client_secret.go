@@ -13,20 +13,20 @@ import (
 )
 
 type CreateClientSecretHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
-	secretId   func(context.Context) (ids.ClientSecretId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
+	secretId        func(context.Context) (ids.ClientSecretId, bool)
 }
 
 func NewCreateClientSecretHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 	secretId func(context.Context) (ids.ClientSecretId, bool),
 ) *CreateClientSecretHandler {
 	return &CreateClientSecretHandler{
-		commandBus: commandBus,
-		clientId:   clientId,
-		secretId:   secretId,
+		commandExecutor: commandExecutor,
+		clientId:        clientId,
+		secretId:        secretId,
 	}
 }
 
@@ -50,7 +50,7 @@ func (h *CreateClientSecretHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_SECRET_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(
+	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
 		clientSecretCreate.NewCommand(secretId.String(), clientId.String(), req.PlaintextSecret),
 	)

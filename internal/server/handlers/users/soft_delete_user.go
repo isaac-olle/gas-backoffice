@@ -12,15 +12,15 @@ import (
 )
 
 type SoftDeleteUserHandler struct {
-	commandBus command.Bus
-	userId     func(context.Context) (ids.UserId, bool)
+	commandExecutor command.CommandExecutor
+	userId          func(context.Context) (ids.UserId, bool)
 }
 
 func NewSoftDeleteUserHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	userId func(context.Context) (ids.UserId, bool),
 ) *SoftDeleteUserHandler {
-	return &SoftDeleteUserHandler{commandBus: commandBus, userId: userId}
+	return &SoftDeleteUserHandler{commandExecutor: commandExecutor, userId: userId}
 }
 
 func (h *SoftDeleteUserHandler) Execute(c *gin.Context) (any, error) {
@@ -28,7 +28,7 @@ func (h *SoftDeleteUserHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
-	return nil, h.commandBus.Dispatch(c.Request.Context(), userSoftDelete.NewCommand(userId))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), userSoftDelete.NewCommand(userId))
 }
 
 func (h *SoftDeleteUserHandler) Success(c *gin.Context, _ any) error {

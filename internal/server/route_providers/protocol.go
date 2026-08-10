@@ -13,31 +13,34 @@ import (
 )
 
 type Protocol struct {
-	executor   *middlewares.HandlerMiddleware
-	commandBus command.Bus
-	queryBus   query.Bus
-	managers   []app_errors.ErrorManager
+	executor        *middlewares.HandlerMiddleware
+	commandExecutor command.CommandExecutor
+	queryBus        query.Bus
+	managers        []app_errors.ErrorManager
 }
 
-func NewProtocol(hm *middlewares.HandlerMiddleware, cmdBus command.Bus, qryBus query.Bus, managers ...app_errors.ErrorManager) *Protocol {
+func NewProtocol(hm *middlewares.HandlerMiddleware, commandExecutor command.CommandExecutor, qryBus query.Bus, managers ...app_errors.ErrorManager) *Protocol {
 	return &Protocol{
-		executor:   hm,
-		commandBus: cmdBus,
-		queryBus:   qryBus,
-		managers:   managers,
+		executor:        hm,
+		commandExecutor: commandExecutor,
+		queryBus:        qryBus,
+		managers:        managers,
 	}
 }
 
-func (p *Protocol) Register(group *gin.RouterGroup) {
+func (p *Protocol) Register(root *gin.RouterGroup) {
 	authorizePresenter := error_presenters.NewOpenIDAuthorizeErrorPresenter(
 		session.ErrInvalidRedirectURI,
 		session.ErrClientNotFound,
 	)
 	tokenPresenter := error_presenters.NewOAuth2TokenErrorPresenter()
 
+	// OIDC provider surface — unversioned protocol endpoints at /oidc/*
+	group := root.Group("/oidc")
+
 	group.GET("/authorize",
 		middlewares.HttpError(authorizePresenter, p.managers...),
-		p.executor.Run(protocolHandler.NewAuthorizeHandler(p.commandBus, p.queryBus)),
+		p.executor.Run(protocolHandler.NewAuthorizeHandler(p.commandExecutor, p.queryBus)),
 	)
 	group.POST("/token",
 		middlewares.HttpError(tokenPresenter, p.managers...),

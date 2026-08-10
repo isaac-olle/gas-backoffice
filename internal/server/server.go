@@ -62,11 +62,14 @@ func (s *Server) registerRoutes(
 	errorManagers []app_errors.ErrorManager,
 	providers ...RouteProvider,
 ) {
-	v1 := s.engine.Group("/v1")
-	v1.Use(middlewares.RequestID(), middlewares.HttpError(presenter, errorManagers...))
+	root := s.engine.Group("")
+	root.Use(middlewares.RequestID(), middlewares.HttpError(presenter, errorManagers...))
 
+	// Each provider owns its own base path: the data API groups under /v1
+	// (versioned), while the OIDC provider surface lives at /oidc (unversioned
+	// protocol endpoints).
 	for _, p := range providers {
-		p.Register(v1)
+		p.Register(root)
 	}
 }
 

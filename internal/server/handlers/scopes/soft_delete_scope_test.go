@@ -44,7 +44,7 @@ func TestSoftDeleteScopeHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := scopeHandlers.NewSoftDeleteScopeHandler(bus, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodDelete, nil)
@@ -63,7 +63,7 @@ func TestSoftDeleteScopeHandler(t *testing.T) {
 
 func TestSoftDeleteScopeHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := scopeHandlers.NewSoftDeleteScopeHandler(bus, handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 	h.Default(c)

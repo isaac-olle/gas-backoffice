@@ -25,6 +25,8 @@ var systemScopes = []string{
 	vo.ScopeScopesDelete,
 	vo.ScopeScopesAddAllowedClient,
 	vo.ScopeScopesRemoveAllowedClient,
+	vo.ScopeSessionsCreate,
+	vo.ScopeSessionsRead,
 	vo.ScopeClientsCreate,
 	vo.ScopeClientsRead,
 	vo.ScopeClientsDelete,

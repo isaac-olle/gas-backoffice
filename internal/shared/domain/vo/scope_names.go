@@ -21,6 +21,10 @@ const (
 	ScopeScopesAddAllowedClient    = "scopes:add_allowed_client"
 	ScopeScopesRemoveAllowedClient = "scopes:remove_allowed_client"
 
+	// sessions
+	ScopeSessionsCreate = "sessions:create"
+	ScopeSessionsRead   = "sessions:read"
+
 	// clients
 	ScopeClientsCreate         = "clients:create"
 	ScopeClientsRead           = "clients:read"

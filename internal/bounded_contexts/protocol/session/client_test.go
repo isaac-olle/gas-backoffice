@@ -272,7 +272,7 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 
 func TestClientCredentialsFlowConstant(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "client_credentials", sessionvos.ClientCredentialsFlow)
+	assert.Equal(t, "client_credentials", sessionvos.ClientCredentialsFlow.String())
 }
 
 func TestNewScope(t *testing.T) {

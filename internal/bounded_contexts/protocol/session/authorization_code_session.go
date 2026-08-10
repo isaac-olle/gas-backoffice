@@ -21,6 +21,40 @@ type AuthorizationCodeSession struct {
 	consumed     sessionvos.Consumed
 }
 
+// newAuthorizationCodeSession assembles the aggregate from already-built value
+// objects and records the creation event. Both the string-based public
+// constructor and CreateSessionForLogin funnel through here, so a caller that
+// already holds value objects never has to round-trip them back to strings.
+func newAuthorizationCodeSession(
+	sessionID ids.SessionId,
+	clientID ids.ClientId,
+	redirectURI sessionvos.RedirectURI,
+	scope sessionvos.Scope,
+	state sessionvos.State,
+	responseType responsetypes.ResponseType,
+	flow sessionvos.Flow,
+	pkce *sessionvos.Pkce,
+) *AuthorizationCodeSession {
+	sess := &AuthorizationCodeSession{
+		BaseSession:  newBaseSession(clientID, scope, flow, aggregate.AuthCodeSession),
+		sessionID:    sessionID,
+		redirectURI:  redirectURI,
+		state:        state,
+		responseType: responseType,
+		pkce:         pkce,
+		sessionState: sessionvos.Authorizing,
+		consumed:     false,
+	}
+	sess.Record(protocolEvents.NewSessionCreated(
+		sessionID.String(),
+		clientID.String(),
+		redirectURI.String(),
+		scope.String(),
+		flow.String(),
+	))
+	return sess
+}
+
 func NewAuthorizationCodeSession(
 	sessionID ids.SessionId,
 	clientIDString string,
@@ -59,11 +93,6 @@ func NewAuthorizationCodeSession(
 		errorArray.AddError(err)
 	}
 
-	flow, err := sessionvos.DetermineFlow(responseTypeString)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
 	pkce, err := sessionvos.NewPkce(pkceChallenge, pkceMethod)
 	if err != nil {
 		errorArray.AddError(err)
@@ -75,24 +104,55 @@ func NewAuthorizationCodeSession(
 			WithCause(errorArray)
 	}
 
-	sess := &AuthorizationCodeSession{
-		BaseSession:  newBaseSession(clientID, scope, flow, aggregate.AuthCodeSession),
-		sessionID:    sessionID,
-		redirectURI:  redirectURI,
-		state:        state,
-		responseType: responseType,
-		pkce:         pkce,
-		sessionState: sessionvos.Authorizing,
-		consumed:     false,
+	return newAuthorizationCodeSession(sessionID, clientID, redirectURI, scope, state, responseType, sessionvos.AuthorizationCodeFlow, pkce), nil
+}
+
+// CreateSessionForLogin builds an AuthorizationCodeSession for a federated
+// login. The client id, redirect uri and scope are injected (they identify the
+// backoffice frontend as a gas OAuth client); the response type is fixed to
+// "code", the state is generated here as a value object, and there is no PKCE.
+func CreateSessionForLogin(
+	sessionID ids.SessionId,
+	backofficeClientID string,
+	redirectURI string,
+	scope string,
+	codeGenerator responsetypes.CodeGenerator,
+) (*AuthorizationCodeSession, error) {
+	const responseTypeCode = "code"
+	errorArray := app_errors.NewEmptyErrorArray()
+
+	clientID, err := ids.NewClientIdFromString(backofficeClientID)
+	if err != nil {
+		errorArray.AddError(err)
 	}
-	sess.Record(protocolEvents.NewSessionCreated(
-		sessionID.String(),
-		clientIDString,
-		redirectURIString,
-		scopeString,
-		flow.String(),
-	))
-	return sess, nil
+
+	redirectURIVO, err := sessionvos.NewRedirectURI(redirectURI)
+	if err != nil {
+		errorArray.AddError(err)
+	}
+
+	scopeVO, err := sessionvos.NewScope(scope)
+	if err != nil {
+		errorArray.AddError(err)
+	}
+
+	state, err := sessionvos.GenerateState()
+	if err != nil {
+		errorArray.AddError(err)
+	}
+
+	responseType, err := responsetypes.New(responseTypeCode, codeGenerator)
+	if err != nil {
+		errorArray.AddError(err)
+	}
+
+	if errorArray.HasErrors() {
+		return nil, app_errors.BadRequestError(ErrInvalidSessionParameters).
+			WithDescription("several errors building login session").
+			WithCause(errorArray)
+	}
+
+	return newAuthorizationCodeSession(sessionID, clientID, redirectURIVO, scopeVO, state, responseType, sessionvos.AuthorizationCodeFlow, nil), nil
 }
 
 func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitives) (*AuthorizationCodeSession, error) {

@@ -17,6 +17,17 @@ type ClientFinderRepository interface {
 	FindById(ctx context.Context, clientID string) (*Client, error)
 }
 
+type IdentityProviderFinderRepository interface {
+	FindById(ctx context.Context, idpID string) (*IdentityProvider, error)
+}
+
+// IdentityProviderClient is the infrastructure adapter that talks to an external
+// identity provider (only Google for now). BuildAuthorizationURL produces the
+// front-channel URL the browser must be redirected to in order to authenticate.
+type IdentityProviderClient interface {
+	BuildAuthorizationURL(idp *IdentityProvider, sess *AuthorizationCodeSession) (string, error)
+}
+
 type TokenDecoder interface {
 	DecodeKid(token string) (string, error)
 }

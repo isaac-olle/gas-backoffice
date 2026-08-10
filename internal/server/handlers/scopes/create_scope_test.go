@@ -83,7 +83,7 @@ func TestCreateScopeHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := scopeHandlers.NewCreateScopeHandler(bus, tt.ownershipFn, tt.prIdFn, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
@@ -102,7 +102,7 @@ func TestCreateScopeHandler(t *testing.T) {
 
 func TestCreateScopeHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := scopeHandlers.NewCreateScopeHandler(bus, handlerstest.ValidPrOwnershipExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)

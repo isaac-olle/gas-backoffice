@@ -9,32 +9,12 @@ import (
 	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 )
 
-func TestDetermineFlow_Code(t *testing.T) {
-	t.Parallel()
-	f, err := sessionvos.DetermineFlow("code")
-	require.NoError(t, err)
-	assert.Equal(t, sessionvos.AuthorizationCodeFlow, f.String())
-}
-
-func TestDetermineFlow_Token(t *testing.T) {
-	t.Parallel()
-	f, err := sessionvos.DetermineFlow("token")
-	require.NoError(t, err)
-	assert.Equal(t, sessionvos.ClientCredentialsFlow, f.String())
-}
-
-func TestDetermineFlow_Unknown(t *testing.T) {
-	t.Parallel()
-	_, err := sessionvos.DetermineFlow("unknown_type")
-	assert.Error(t, err)
-}
-
 func TestNewFlowFromString_Valid(t *testing.T) {
 	t.Parallel()
-	for _, v := range []string{sessionvos.AuthorizationCodeFlow, sessionvos.ClientCredentialsFlow} {
-		f, err := sessionvos.NewFlowFromString(v)
+	for _, v := range []sessionvos.Flow{sessionvos.AuthorizationCodeFlow, sessionvos.ClientCredentialsFlow} {
+		f, err := sessionvos.NewFlowFromString(v.String())
 		require.NoError(t, err)
-		assert.Equal(t, v, f.String())
+		assert.Equal(t, v, f)
 	}
 }
 

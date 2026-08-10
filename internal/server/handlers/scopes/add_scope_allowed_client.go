@@ -12,17 +12,17 @@ import (
 )
 
 type AddScopeAllowedClientHandler struct {
-	commandBus command.Bus
-	scopeId    func(context.Context) (ids.ScopeId, bool)
-	clientId   func(context.Context) (ids.ClientId, bool)
+	commandExecutor command.CommandExecutor
+	scopeId         func(context.Context) (ids.ScopeId, bool)
+	clientId        func(context.Context) (ids.ClientId, bool)
 }
 
 func NewAddScopeAllowedClientHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	scopeId func(context.Context) (ids.ScopeId, bool),
 	clientId func(context.Context) (ids.ClientId, bool),
 ) *AddScopeAllowedClientHandler {
-	return &AddScopeAllowedClientHandler{commandBus: commandBus, scopeId: scopeId, clientId: clientId}
+	return &AddScopeAllowedClientHandler{commandExecutor: commandExecutor, scopeId: scopeId, clientId: clientId}
 }
 
 func (h *AddScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
@@ -36,7 +36,7 @@ func (h *AddScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeAddClient.NewCommand(scopeId.String(), clientId.String()))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), scopeAddClient.NewCommand(scopeId.String(), clientId.String()))
 }
 
 func (h *AddScopeAllowedClientHandler) Success(c *gin.Context, _ any) error {

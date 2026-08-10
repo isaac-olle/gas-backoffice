@@ -63,7 +63,7 @@ func TestAuthorizeHandler(t *testing.T) {
 			t.Parallel()
 
 			h := protocol.NewAuthorizeHandler(
-				handlerstest.NewCommandBus(tt.cmdErr),
+				handlerstest.NewCommandExecutor(tt.cmdErr),
 				handlerstest.NewQueryBus(tt.qryResult, tt.qryErr),
 			)
 
@@ -88,7 +88,7 @@ func TestAuthorizeHandler_Default(t *testing.T) {
 	t.Parallel()
 
 	h := protocol.NewAuthorizeHandler(
-		handlerstest.NewCommandBus(nil),
+		handlerstest.NewCommandExecutor(nil),
 		handlerstest.NewQueryBus(nil, nil),
 	)
 	w := httptest.NewRecorder()

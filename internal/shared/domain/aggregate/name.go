@@ -12,9 +12,9 @@ const (
 	ProtectedResource = sharedtypes.AggregateProtectedResource
 	Scope             = sharedtypes.AggregateScope
 	Client            = sharedtypes.AggregateClient
+	Session           = sharedtypes.AggregateSession
 
 	ClientAssertionKey = sharedtypes.AggregateClientAssertionKey
-	UserAssertionKey   = sharedtypes.AggregateUserAssertionKey
 	KeyPair            = sharedtypes.AggregateKeyPair
 	ClientSecret       = sharedtypes.AggregateClientSecret
 

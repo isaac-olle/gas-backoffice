@@ -140,7 +140,7 @@ server/
 │   ├── backoffice_admins.go   — admin endpoints (/v1/backoffice/admins/...)
 │   ├── backoffice_users.go    — tenant endpoints (/v1/backoffice/users/...)
 │   ├── backoffice_clients.go  — client endpoints (/v1/backoffice/clients/...)
-│   └── protocol.go            — OAuth2 endpoints (/v1/authorize, /v1/token)
+│   └── protocol.go            — OAuth2 endpoints (/oidc/authorize, /oidc/token)
 ├── handlers/
 │   ├── admins/             — token handler
 │   ├── users/              — get, change_name, soft_delete

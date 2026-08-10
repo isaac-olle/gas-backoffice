@@ -71,14 +71,13 @@ func (c *Client) HasScope(scopeName string) bool {
 }
 
 func (c *Client) CheckAuthorizationRequest(responseType, redirectURI, scope string) (string, error) {
-	flow, err := sessionvos.DetermineFlow(responseType)
-	if err != nil {
+	if responseType != "code" {
 		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
 			WithDescription("unsupported response_type: " + responseType)
 	}
-	if !c.HasFlow(flow.String()) {
+	if !c.HasFlow(sessionvos.AuthorizationCodeFlow.String()) {
 		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
-			WithDescription("flow not allowed for this client: " + flow.String())
+			WithDescription("authorization_code flow not allowed for this client")
 	}
 	if !c.HasRedirectURI(redirectURI) {
 		return "", app_errors.BadRequestError(ErrInvalidRedirectURI).
@@ -95,7 +94,7 @@ func (c *Client) CheckAuthorizationRequest(responseType, redirectURI, scope stri
 }
 
 func (c *Client) CheckClientCredentials(scope string) (string, error) {
-	if !c.HasFlow(sessionvos.ClientCredentialsFlow) {
+	if !c.HasFlow(sessionvos.ClientCredentialsFlow.String()) {
 		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
 			WithDescription("client_credentials flow is not allowed for this client")
 	}

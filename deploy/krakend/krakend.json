@@ -7,17 +7,17 @@
   "endpoints": [
 
     {
-      "endpoint": "/v1/authorize",
+      "endpoint": "/oidc/authorize",
       "method": "GET",
       "input_query_strings": ["*"],
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/authorize", "host": ["http://gas:8080"], "method": "GET" }]
+      "backend": [{ "url_pattern": "/oidc/authorize", "host": ["http://gas:8080"], "method": "GET" }]
     },
     {
-      "endpoint": "/v1/token",
+      "endpoint": "/oidc/token",
       "method": "POST",
       "input_headers": ["*"],
-      "backend": [{ "url_pattern": "/v1/token", "host": ["http://gas:8080"], "method": "POST" }]
+      "backend": [{ "url_pattern": "/oidc/token", "host": ["http://gas:8080"], "method": "POST" }]
     },
 
     {

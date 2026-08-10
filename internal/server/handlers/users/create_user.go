@@ -12,17 +12,17 @@ import (
 )
 
 type CreateUserHandler struct {
-	commandBus command.Bus
-	tenantId   func(context.Context) (ids2.UserId, bool)
-	adminId    func(context.Context) (ids2.UserId, bool)
+	commandExecutor command.CommandExecutor
+	tenantId        func(context.Context) (ids2.UserId, bool)
+	adminId         func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateUserHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	tenantId func(context.Context) (ids2.UserId, bool),
 	adminId func(context.Context) (ids2.UserId, bool),
 ) *CreateUserHandler {
-	return &CreateUserHandler{commandBus: commandBus, tenantId: tenantId, adminId: adminId}
+	return &CreateUserHandler{commandExecutor: commandExecutor, tenantId: tenantId, adminId: adminId}
 }
 
 type createUserRequest struct {
@@ -46,7 +46,7 @@ func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_ADMIN_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(
+	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
 		userCreate.NewCommand(tenantId, adminId, req.Name, req.Role),
 	)

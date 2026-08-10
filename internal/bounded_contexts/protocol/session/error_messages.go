@@ -22,4 +22,7 @@ var (
 	ErrCannotSignToken             app_errors.ErrorCode = "CANNOT_SIGN_TOKEN"
 	ErrAmbiguousScope              app_errors.ErrorCode = "AMBIGUOUS_SCOPE"
 	ErrScopesFromMultipleResources app_errors.ErrorCode = "SCOPES_FROM_MULTIPLE_RESOURCES"
+	ErrCannotGetIdentityProvider   app_errors.ErrorCode = "ERROR_CANNOT_GET_IDENTITY_PROVIDER"
+	ErrIdentityProviderNotFound    app_errors.ErrorCode = "IDENTITY_PROVIDER_NOT_FOUND"
+	ErrCannotAuthenticateWithIdp   app_errors.ErrorCode = "CANNOT_AUTHENTICATE_WITH_IDP"
 )

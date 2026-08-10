@@ -14,20 +14,20 @@ import (
 )
 
 type CreateProtectedResourceHandler struct {
-	commandBus command.Bus
-	prId       func(context.Context) (ids2.ProtectedResourceId, bool)
-	userId     func(context.Context) (ids2.UserId, bool)
+	commandExecutor command.CommandExecutor
+	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId          func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateProtectedResourceHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 	userId func(context.Context) (ids2.UserId, bool),
 ) *CreateProtectedResourceHandler {
 	return &CreateProtectedResourceHandler{
-		commandBus: commandBus,
-		prId:       prId,
-		userId:     userId,
+		commandExecutor: commandExecutor,
+		prId:            prId,
+		userId:          userId,
 	}
 }
 
@@ -52,7 +52,7 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 	}
 
 	prOwnership := protected_resources.NewOwnership(userId)
-	return nil, h.commandBus.Dispatch(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership))
 }
 
 func (h *CreateProtectedResourceHandler) Success(c *gin.Context, _ any) error {

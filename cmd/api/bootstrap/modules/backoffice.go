@@ -1,6 +1,10 @@
 package modules
 
 import (
+	sessionCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/create"
+	sessionGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/get"
+	authDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/domain_services"
+	authInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure"
 	clientEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
 	clientAddAllowedFlow "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_allowed_flow"
 	clientAddRedirectUri "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_redirect_uri"
@@ -12,6 +16,9 @@ import (
 	clientSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/soft_delete"
 	clientDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 	clientInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/infrastructure"
+	idpGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/application/get"
+	idpDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/domain_services"
+	idpInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/infrastructure"
 	prEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/_event_handlers"
 	prCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/check_ownership"
 	prCheckSystem "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/check_system_resource"
@@ -57,11 +64,15 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	prRepo := persistanceInfra.NewInMemoryContextDecorator(prInfra.NewPostgresProtectedResourceRepository(pool))
 	clientRepo := persistanceInfra.NewInMemoryContextDecorator(clientInfra.NewPostgresClientRepository(pool))
 	scopeRepo := persistanceInfra.NewInMemoryContextDecorator(scopeInfra.NewPostgresScopeRepository(pool))
+	sessionRepo := persistanceInfra.NewInMemoryContextDecorator(authInfra.NewPostgresSessionRepository(pool))
+	idpRepo := idpInfra.NewPostgresIdentityProviderRepository(pool)
 
 	userFinder := userDomainServices.NewUserFinder(userRepo)
 	prFinder := prDomainServices.NewProtectedResourceFinder(prRepo)
 	scopeFinder := scopeDomainServices.NewScopeFinder(scopeRepo)
 	clientFinder := clientDomainServices.NewClientFinder(clientRepo)
+	sessionFinder := authDomainServices.NewSessionFinder(sessionRepo)
+	idpFinder := idpDomainServices.NewIdentityProviderFinder(idpRepo)
 
 	// clients
 	cmdBus.Register(clientCreate.CommandType, clientCreate.NewCommandHandler(clientCreate.NewService(clientRepo, evtBus)))
@@ -90,6 +101,9 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	cmdBus.Register(userSoftDelete.CommandType, userSoftDelete.NewCommandHandler(userSoftDelete.NewService(userFinder, userRepo, evtBus)))
 	cmdBus.Register(userHardDelete.CommandType, userHardDelete.NewCommandHandler(userHardDelete.NewService(userFinder, userRepo, evtBus)))
 
+	// sessions
+	cmdBus.Register(sessionCreate.CommandType, sessionCreate.NewCommandHandler(sessionCreate.NewService(sessionRepo, evtBus)))
+
 	// check_ownership queries
 	qryBus.Register(userCheckTenantAccess.QueryType, userCheckTenantAccess.NewQueryHandler(userCheckTenantAccess.NewService(userFinder)))
 	qryBus.Register(prCheckOwnership.QueryType, prCheckOwnership.NewQueryHandler(prCheckOwnership.NewService(prRepo)))
@@ -106,6 +120,8 @@ func RegisterBackoffice(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus
 	qryBus.Register(prGet.QueryType, prGet.NewQueryHandler(prGet.NewService(prFinder)))
 	qryBus.Register(scopeGet.QueryType, scopeGet.NewQueryHandler(scopeGet.NewService(scopeFinder)))
 	qryBus.Register(clientGet.QueryType, clientGet.NewQueryHandler(clientGet.NewService(clientFinder)))
+	qryBus.Register(sessionGet.QueryType, sessionGet.NewQueryHandler(sessionGet.NewService(sessionFinder)))
+	qryBus.Register(idpGet.QueryType, idpGet.NewQueryHandler(idpGet.NewService(idpFinder)))
 
 	// event handlers
 	addClientHandler := userEventHandlers.NewAddClientOnClientCreatedEventHandler(userRepo, evtBus)

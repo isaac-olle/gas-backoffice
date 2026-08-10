@@ -8,9 +8,9 @@ const (
 	AggregateProtectedResource AggregateName = "protected-resource"
 	AggregateScope             AggregateName = "scope"
 	AggregateClient            AggregateName = "client"
+	AggregateSession           AggregateName = "session"
 
 	AggregateClientAssertionKey AggregateName = "client-assertion-key"
-	AggregateUserAssertionKey   AggregateName = "user-assertion-key"
 	AggregateKeyPair            AggregateName = "key-pair"
 	AggregateClientSecret       AggregateName = "client-secret"
 

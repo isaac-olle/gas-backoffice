@@ -87,7 +87,7 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, tt.prIdFn, tt.userIdFn, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, handlerstest.JsonBody(tt.body))
@@ -100,14 +100,14 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, h.Success(c, result))
 			assert.Equal(t, tt.wantStatus, c.Writer.Status())
-			bus.AssertNumberOfCalls(t, "Dispatch", tt.wantDispatches)
+			bus.AssertNumberOfCalls(t, "SingleExecution", tt.wantDispatches)
 		})
 	}
 }
 
 func TestCreateScopesFromBodyHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
@@ -116,7 +116,7 @@ func TestCreateScopesFromBodyHandler_Default(t *testing.T) {
 
 func TestCreateScopesFromBodyHandler_InvalidBody(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := scopeHandlers.NewCreateScopesFromBodyHandler(
 		bus,
 		handlerstest.ValidPrIdExtractor(),

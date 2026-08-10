@@ -19,6 +19,9 @@ type ServerConfig struct {
 	Host                   string `yaml:"host"`
 	Port                   string `yaml:"port"`
 	ShutdownTimeoutSeconds int    `yaml:"shutdown_timeout"`
+	// PublicBaseURL is the externally reachable origin (through the gateway),
+	// e.g. https://api.example.com. Used to build absolute OIDC redirect URIs.
+	PublicBaseURL string `yaml:"public_base_url"`
 }
 
 func (s ServerConfig) ShutdownTimeout() time.Duration {
@@ -29,6 +32,10 @@ type ApplicationConfig struct {
 	Name             string `yaml:"name"`
 	SeedAdminName    string `yaml:"seed_admin_name"`
 	BackofficePRName string `yaml:"backoffice_pr_name"`
+	// Backoffice frontend acting as a gas OAuth client for federated login.
+	BackofficeClientId    string `yaml:"backoffice_client_id"`
+	BackofficeRedirectUri string `yaml:"backoffice_redirect_uri"`
+	BackofficeLoginScope  string `yaml:"backoffice_login_scope"`
 }
 
 type DatabasesConfig struct {

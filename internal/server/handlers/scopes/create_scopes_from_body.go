@@ -13,23 +13,23 @@ import (
 )
 
 type CreateScopesFromBodyHandler struct {
-	commandBus command.Bus
-	prId       func(context.Context) (ids2.ProtectedResourceId, bool)
-	userId     func(context.Context) (ids2.UserId, bool)
-	scopeId    func(context.Context) (ids2.ScopeId, bool)
+	commandExecutor command.CommandExecutor
+	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
+	userId          func(context.Context) (ids2.UserId, bool)
+	scopeId         func(context.Context) (ids2.ScopeId, bool)
 }
 
 func NewCreateScopesFromBodyHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 	userId func(context.Context) (ids2.UserId, bool),
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 ) *CreateScopesFromBodyHandler {
 	return &CreateScopesFromBodyHandler{
-		commandBus: commandBus,
-		prId:       prId,
-		userId:     userId,
-		scopeId:    scopeId,
+		commandExecutor: commandExecutor,
+		prId:            prId,
+		userId:          userId,
+		scopeId:         scopeId,
 	}
 }
 
@@ -60,7 +60,7 @@ func (h *CreateScopesFromBodyHandler) Execute(c *gin.Context) (any, error) {
 	for _, scopeName := range req.Scopes {
 		scopeId, _ := h.scopeId(c.Request.Context())
 		ownership := scopes.NewOwnershipFromVos(prId, userId)
-		if err := h.commandBus.Dispatch(
+		if err := h.commandExecutor.SingleExecution(
 			c.Request.Context(), scopeCreate.NewCommand(scopeId, scopeName, ownership),
 		); err != nil {
 			return nil, err

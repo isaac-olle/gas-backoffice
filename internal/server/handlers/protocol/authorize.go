@@ -22,12 +22,12 @@ type authorizeRequest struct {
 }
 
 type AuthorizeHandler struct {
-	commandBus command.Bus
-	queryBus   query.Bus
+	commandExecutor command.CommandExecutor
+	queryBus        query.Bus
 }
 
-func NewAuthorizeHandler(cmdBus command.Bus, qryBus query.Bus) *AuthorizeHandler {
-	return &AuthorizeHandler{commandBus: cmdBus, queryBus: qryBus}
+func NewAuthorizeHandler(commandExecutor command.CommandExecutor, qryBus query.Bus) *AuthorizeHandler {
+	return &AuthorizeHandler{commandExecutor: commandExecutor, queryBus: qryBus}
 }
 
 func (h *AuthorizeHandler) Execute(c *gin.Context) (any, error) {
@@ -47,7 +47,7 @@ func (h *AuthorizeHandler) Execute(c *gin.Context) (any, error) {
 		req.CodeChallenge,
 		req.CodeChallengeMethod,
 	)
-	if err := h.commandBus.Dispatch(c.Request.Context(), cmd); err != nil {
+	if err := h.commandExecutor.SingleExecution(c.Request.Context(), cmd); err != nil {
 		return nil, err
 	}
 

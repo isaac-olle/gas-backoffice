@@ -44,7 +44,7 @@ func TestHardDeleteClientHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := clients.NewHardDeleteClientHandler(bus, tt.clientIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodDelete, nil)
@@ -63,7 +63,7 @@ func TestHardDeleteClientHandler(t *testing.T) {
 
 func TestHardDeleteClientHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := clients.NewHardDeleteClientHandler(bus, handlerstest.ValidClientIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 	h.Default(c)

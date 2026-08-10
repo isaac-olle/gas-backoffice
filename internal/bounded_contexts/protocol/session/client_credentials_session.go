@@ -41,7 +41,7 @@ func NewClientCredentialsSession(clientID, rawUserId, scope string) (*ClientCred
 	}
 
 	sess := &ClientCredentialsSession{
-		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
+		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsFlow, aggregate2.ClientCredentialsSession),
 		id:          ids2.NewClientCredentialsSessionId(),
 		userId:      userId,
 		issuedAt:    time.Now().UTC(),
@@ -82,7 +82,7 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 	}
 
 	return &ClientCredentialsSession{
-		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.NewClientCredentialsFlow(), aggregate2.ClientCredentialsSession),
+		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsFlow, aggregate2.ClientCredentialsSession),
 		id:          id,
 		userId:      userId,
 		issuedAt:    issuedAt,

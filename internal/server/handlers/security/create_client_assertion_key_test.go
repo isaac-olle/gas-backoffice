@@ -79,7 +79,7 @@ func TestCreateClientAssertionKeyHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := security.NewCreateClientAssertionKeyHandler(bus, tt.clientIdFn, tt.assertionKeyFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPut, tt.body)
@@ -98,7 +98,7 @@ func TestCreateClientAssertionKeyHandler(t *testing.T) {
 
 func TestCreateClientAssertionKeyHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := security.NewCreateClientAssertionKeyHandler(bus, handlerstest.ValidClientIdExtractor(), validAssertionKeyIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPut, nil)
 	h.Default(c)

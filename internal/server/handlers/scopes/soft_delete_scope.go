@@ -12,15 +12,15 @@ import (
 )
 
 type SoftDeleteScopeHandler struct {
-	commandBus command.Bus
-	scopeId    func(context.Context) (ids.ScopeId, bool)
+	commandExecutor command.CommandExecutor
+	scopeId         func(context.Context) (ids.ScopeId, bool)
 }
 
 func NewSoftDeleteScopeHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	scopeId func(context.Context) (ids.ScopeId, bool),
 ) *SoftDeleteScopeHandler {
-	return &SoftDeleteScopeHandler{commandBus: commandBus, scopeId: scopeId}
+	return &SoftDeleteScopeHandler{commandExecutor: commandExecutor, scopeId: scopeId}
 }
 
 func (h *SoftDeleteScopeHandler) Execute(c *gin.Context) (any, error) {
@@ -28,7 +28,7 @@ func (h *SoftDeleteScopeHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_SCOPE_ID")
 	}
-	return nil, h.commandBus.Dispatch(c.Request.Context(), scopeSoftDelete.NewCommand(scopeId.String()))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), scopeSoftDelete.NewCommand(scopeId.String()))
 }
 
 func (h *SoftDeleteScopeHandler) Success(c *gin.Context, _ any) error {

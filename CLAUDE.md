@@ -75,7 +75,7 @@ KrakenD actua com a gateway davant del servidor Gin. El flux d'autorització és
 3. KrakenD injecta els claims com a headers HTTP a les requests downstream (ex: `X-Client-Id`, `X-User-Id`, `X-Admin-Id`).
 4. El backend confia cegament en aquests headers (KrakenD ja ha fet la validació).
 
-El endpoint `POST /v1/token` s'implementarà quan s'abordi el BC `protocol` (route provider de `clients`). Quan estigui llest, cal afegir a cada endpoint protegit del `krakend.json` el bloc `extra_config["auth/validator"]` amb la URL del JWKS i el mapeig de claims a headers. Els handlers llegiran la identitat dels headers injectats per KrakenD via un middleware Gin que la posi al `context.Context`.
+El endpoint `POST /oidc/token` s'implementarà quan s'abordi el BC `protocol` (route provider de `clients`). Quan estigui llest, cal afegir a cada endpoint protegit del `krakend.json` el bloc `extra_config["auth/validator"]` amb la URL del JWKS i el mapeig de claims a headers. Els handlers llegiran la identitat dels headers injectats per KrakenD via un middleware Gin que la posi al `context.Context`.
 
 ### 2026-05-14 — PublicKey VO a assertion keys
 `ClientAssertionKey` i `AdminAssertionKey` tenen un camp `publicKey vos.PublicKey`. El VO valida que sigui un bloc PEM vàlid (`pem.Decode`). La clau pública arriba des de fora (el client la genera i la passa al flow `create_client`).

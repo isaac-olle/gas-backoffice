@@ -9,12 +9,26 @@ import (
 )
 
 const (
-	AdminID  = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
-	UserId   = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-	ClientID = "c1b2c3d4-e5f6-7890-abcd-ef1234567890"
-	PrID     = "d1b2c3d4-e5f6-7890-abcd-ef1234567890"
-	ScopeID  = "e1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	AdminID   = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	UserId    = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	ClientID  = "c1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	PrID      = "d1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	ScopeID   = "e1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	SessionID = "f1b2c3d4-e5f6-7890-abcd-ef1234567890"
 )
+
+func ValidSessionIdExtractor() func(context.Context) (ids.SessionId, bool) {
+	return func(_ context.Context) (ids.SessionId, bool) {
+		id, _ := ids.NewSessionIdFromString(SessionID)
+		return id, true
+	}
+}
+
+func MissingSessionIdExtractor() func(context.Context) (ids.SessionId, bool) {
+	return func(_ context.Context) (ids.SessionId, bool) {
+		return ids.SessionId{}, false
+	}
+}
 
 func ValidUserIdExtractor() func(context.Context) (ids.UserId, bool) {
 	return func(_ context.Context) (ids.UserId, bool) {

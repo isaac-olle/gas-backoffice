@@ -12,15 +12,15 @@ import (
 )
 
 type HardDeleteUserHandler struct {
-	commandBus command.Bus
-	userId     func(context.Context) (ids.UserId, bool)
+	commandExecutor command.CommandExecutor
+	userId          func(context.Context) (ids.UserId, bool)
 }
 
 func NewHardDeleteUserHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	userId func(context.Context) (ids.UserId, bool),
 ) *HardDeleteUserHandler {
-	return &HardDeleteUserHandler{commandBus: commandBus, userId: userId}
+	return &HardDeleteUserHandler{commandExecutor: commandExecutor, userId: userId}
 }
 
 func (h *HardDeleteUserHandler) Execute(c *gin.Context) (any, error) {
@@ -28,7 +28,7 @@ func (h *HardDeleteUserHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
-	return nil, h.commandBus.Dispatch(c.Request.Context(), userHardDelete.NewCommand(userId.String()))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), userHardDelete.NewCommand(userId.String()))
 }
 
 func (h *HardDeleteUserHandler) Success(c *gin.Context, _ any) error {

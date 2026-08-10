@@ -4,11 +4,15 @@ server:
   host: ${API_HOST}
   port: ${API_PORT}
   shutdown_timeout: 30
+  public_base_url: ${API_PUBLIC_BASE_URL}
 
 application:
   name: gas
   seed_admin_name: ${GAS_SEED_ADMIN_NAME}
   backoffice_pr_name: ${GAS_BACKOFFICE_PR_NAME}
+  backoffice_client_id: ${GAS_BACKOFFICE_CLIENT_ID}
+  backoffice_redirect_uri: ${GAS_BACKOFFICE_REDIRECT_URI}
+  backoffice_login_scope: ${GAS_BACKOFFICE_LOGIN_SCOPE}
 
 databases:
   postgres: ${POSTGRES_DSN}

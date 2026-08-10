@@ -4,18 +4,6 @@ import (
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 )
 
-type userAssertionKeyCreatedBuilder struct{}
-
-func NewUserAssertionKeyCreatedBuilder() event2.PrimitiveEventBuilder {
-	return &userAssertionKeyCreatedBuilder{}
-}
-func (b *userAssertionKeyCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return UserAssertionKeyCreated{
-		UserId:    str(p.Data, "user_id"),
-		BaseEvent: event2.FromPrimitivesBase(p),
-	}, nil
-}
-
 type clientAssertionKeyCreatedBuilder struct{}
 
 func NewClientAssertionKeyCreatedBuilder() event2.PrimitiveEventBuilder {

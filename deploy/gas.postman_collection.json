@@ -1557,6 +1557,103 @@
           ]
         },
         {
+          "name": "Sessions",
+          "item": [
+            {
+              "name": "Create Session",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/sessions/:session_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "sessions",
+                    ":session_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "session_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 201\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([201]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Session",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/sessions/:session_id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "sessions",
+                    ":session_id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "session_id",
+                      "value": "",
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", function() {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "Protected Resources",
           "item": [
             {
@@ -2695,12 +2792,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v1/authorize",
+              "raw": "{{base_url}}/oidc/authorize",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "v1",
+                "oidc",
                 "authorize"
               ],
               "query": [
@@ -2762,12 +2859,12 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/token",
+              "raw": "{{base_url}}/oidc/token",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "v1",
+                "oidc",
                 "token"
               ],
               "variable": []

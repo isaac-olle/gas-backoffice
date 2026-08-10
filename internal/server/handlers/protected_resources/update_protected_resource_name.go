@@ -12,15 +12,15 @@ import (
 )
 
 type UpdateProtectedResourceNameHandler struct {
-	commandBus command.Bus
-	prId       func(context.Context) (ids.ProtectedResourceId, bool)
+	commandExecutor command.CommandExecutor
+	prId            func(context.Context) (ids.ProtectedResourceId, bool)
 }
 
 func NewUpdateProtectedResourceNameHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	prId func(context.Context) (ids.ProtectedResourceId, bool),
 ) *UpdateProtectedResourceNameHandler {
-	return &UpdateProtectedResourceNameHandler{commandBus: commandBus, prId: prId}
+	return &UpdateProtectedResourceNameHandler{commandExecutor: commandExecutor, prId: prId}
 }
 
 type updateProtectedResourceNameRequest struct {
@@ -38,7 +38,7 @@ func (h *UpdateProtectedResourceNameHandler) Execute(c *gin.Context) (any, error
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), prUpdateName.NewCommand(prId, req.Name))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prUpdateName.NewCommand(prId, req.Name))
 }
 
 func (h *UpdateProtectedResourceNameHandler) Success(c *gin.Context, _ any) error {

@@ -20,25 +20,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
-CREATE TABLE IF NOT EXISTS security.user_assertion_keys (
-    id          TEXT        NOT NULL PRIMARY KEY,
-    -- ownership
-    user_id     TEXT        NOT NULL,
-    -- data
-    algorithm   TEXT        NOT NULL,
-    public_key  BYTEA       NOT NULL,
-    author_id   TEXT        NOT NULL DEFAULT '',
-    author_role TEXT        NOT NULL DEFAULT '',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at  TIMESTAMPTZ
-);
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'security.user_assertion_keys'::regclass) THEN
-    CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.user_assertion_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-  END IF;
-END $$;
-
 CREATE TABLE IF NOT EXISTS security.client_assertion_keys (
     id          TEXT        NOT NULL PRIMARY KEY,
     -- ownership

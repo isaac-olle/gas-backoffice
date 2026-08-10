@@ -79,7 +79,7 @@ func TestCreateClientSecretHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := security.NewCreateClientSecretHandler(bus, tt.clientIdFn, tt.secretIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPut, tt.body)
@@ -98,7 +98,7 @@ func TestCreateClientSecretHandler(t *testing.T) {
 
 func TestCreateClientSecretHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := security.NewCreateClientSecretHandler(bus, handlerstest.ValidClientIdExtractor(), validSecretIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPut, nil)
 	h.Default(c)

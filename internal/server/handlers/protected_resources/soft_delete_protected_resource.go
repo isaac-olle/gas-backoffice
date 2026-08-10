@@ -12,15 +12,15 @@ import (
 )
 
 type SoftDeleteProtectedResourceHandler struct {
-	commandBus command.Bus
-	prId       func(context.Context) (ids.ProtectedResourceId, bool)
+	commandExecutor command.CommandExecutor
+	prId            func(context.Context) (ids.ProtectedResourceId, bool)
 }
 
 func NewSoftDeleteProtectedResourceHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	prId func(context.Context) (ids.ProtectedResourceId, bool),
 ) *SoftDeleteProtectedResourceHandler {
-	return &SoftDeleteProtectedResourceHandler{commandBus: commandBus, prId: prId}
+	return &SoftDeleteProtectedResourceHandler{commandExecutor: commandExecutor, prId: prId}
 }
 
 func (h *SoftDeleteProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
@@ -28,7 +28,7 @@ func (h *SoftDeleteProtectedResourceHandler) Execute(c *gin.Context) (any, error
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
-	return nil, h.commandBus.Dispatch(c.Request.Context(), prSoftDelete.NewCommand(prId))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prSoftDelete.NewCommand(prId))
 }
 
 func (h *SoftDeleteProtectedResourceHandler) Success(c *gin.Context, _ any) error {

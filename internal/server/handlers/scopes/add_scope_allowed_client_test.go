@@ -55,7 +55,7 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := handlerstest.NewCommandBus(tt.busErr)
+			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, tt.scopeIdFn, tt.clientIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, nil)
@@ -74,7 +74,7 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 
 func TestAddScopeAllowedClientHandler_Default(t *testing.T) {
 	t.Parallel()
-	bus := handlerstest.NewCommandBus(nil)
+	bus := handlerstest.NewCommandExecutor(nil)
 	h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidClientIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)

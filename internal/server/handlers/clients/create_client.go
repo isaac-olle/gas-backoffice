@@ -14,20 +14,20 @@ import (
 )
 
 type CreateClientHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
-	userId     func(context.Context) (ids.UserId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
+	userId          func(context.Context) (ids.UserId, bool)
 }
 
 func NewCreateClientHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 	userId func(context.Context) (ids.UserId, bool),
 ) *CreateClientHandler {
 	return &CreateClientHandler{
-		commandBus: commandBus,
-		clientId:   clientId,
-		userId:     userId,
+		commandExecutor: commandExecutor,
+		clientId:        clientId,
+		userId:          userId,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), clientCreate.NewCommand(
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), clientCreate.NewCommand(
 		clientId, req.Name, clients.NewOwnership(userId), req.AllowedFlows, req.RedirectUris,
 	))
 }

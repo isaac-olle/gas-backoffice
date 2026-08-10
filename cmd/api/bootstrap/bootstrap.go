@@ -11,6 +11,7 @@ import (
 	outboxapp "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/application/outbox"
 	queryInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
+	persistanceInfra "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
 	"strconv"
 	"time"
@@ -52,7 +53,12 @@ func Run() error {
 	outboxRepo := eventinfra.NewOutboxRepository(postgresPool)
 	outboxEventBus := outboxapp.NewEventBus(outboxRepo, log)
 	subsManager := modules.NewSubscriptionManager()
-	cmdBus := commandInfra.NewCommandBus()
+	// Every command runs inside a unit of work so the aggregate write and the
+	// outbox event insert commit atomically (or roll back together). The unit of
+	// work owns the transaction protocol; the bus decorator just delegates to it.
+	uow := persistanceInfra.NewPostgresUnitOfWork(postgresPool)
+	cmdBus := commandInfra.NewTransactionalCommandBus(commandInfra.NewCommandBus(), uow)
+	commandExecutor := commandInfra.NewCommandExecutor(cmdBus, uow)
 	qryBus := queryInfra.NewQueryBus()
 
 	auditRepo := eventinfra.NewPostgresAuditRepository(postgresPool)
@@ -60,7 +66,12 @@ func Run() error {
 
 	modules.RegisterBackoffice(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, openIDScopeId)
 	modules.RegisterSecurity(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
-	modules.RegisterProtocol(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name)
+	modules.RegisterProtocol(postgresPool, cmdBus, qryBus, outboxEventBus, subsManager, cfg.Application.Name, modules.BackofficeLoginConfig{
+		ClientId:            cfg.Application.BackofficeClientId,
+		RedirectUri:         cfg.Application.BackofficeRedirectUri,
+		Scope:               cfg.Application.BackofficeLoginScope,
+		ProtectedResourceId: backofficePrId,
+	}, cfg.Server.PublicBaseURL)
 
 	eventBus := subsManager.Build(log, workerPool)
 
@@ -86,8 +97,8 @@ func Run() error {
 		log,
 		presenter,
 		managers,
-		route_providers.NewBackoffice(hm, qryBus, cmdBus, postgresPool, backofficePrId, cfg.Application.Name),
-		route_providers.NewProtocol(hm, cmdBus, qryBus, managers...),
+		route_providers.NewBackoffice(hm, qryBus, commandExecutor, postgresPool, backofficePrId, cfg.Application.Name, cfg.Server.PublicBaseURL),
+		route_providers.NewProtocol(hm, commandExecutor, qryBus, managers...),
 	)
 
 	consumer := eventinfra.NewOutboxConsumer(outboxRepo, eventBus, registry, 500*time.Millisecond, log)

@@ -12,15 +12,15 @@ import (
 )
 
 type AddRedirectUriHandler struct {
-	commandBus command.Bus
-	clientId   func(context.Context) (ids.ClientId, bool)
+	commandExecutor command.CommandExecutor
+	clientId        func(context.Context) (ids.ClientId, bool)
 }
 
 func NewAddRedirectUriHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
 ) *AddRedirectUriHandler {
-	return &AddRedirectUriHandler{commandBus: commandBus, clientId: clientId}
+	return &AddRedirectUriHandler{commandExecutor: commandExecutor, clientId: clientId}
 }
 
 type addRedirectUriRequest struct {
@@ -38,7 +38,7 @@ func (h *AddRedirectUriHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), clientAddRedirectUri.NewCommand(clientId, req.RedirectUri))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), clientAddRedirectUri.NewCommand(clientId, req.RedirectUri))
 }
 
 func (h *AddRedirectUriHandler) Success(c *gin.Context, _ any) error {

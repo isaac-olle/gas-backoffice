@@ -13,6 +13,12 @@ func NewCommandBus(err error) *commandmocks.MockCommandBus {
 	return b
 }
 
+func NewCommandExecutor(err error) *commandmocks.MockCommandExecutor {
+	e := &commandmocks.MockCommandExecutor{}
+	e.On("SingleExecution", mock.Anything, mock.Anything).Return(err)
+	return e
+}
+
 func NewQueryBus(result any, err error) *querymocks.MockQueryBus {
 	b := &querymocks.MockQueryBus{}
 	b.On("Dispatch", mock.Anything, mock.Anything).Return(result, err)

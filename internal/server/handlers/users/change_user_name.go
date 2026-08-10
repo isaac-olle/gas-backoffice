@@ -12,15 +12,15 @@ import (
 )
 
 type ChangeUserNameHandler struct {
-	commandBus command.Bus
-	userId     func(context.Context) (ids.UserId, bool)
+	commandExecutor command.CommandExecutor
+	userId          func(context.Context) (ids.UserId, bool)
 }
 
 func NewChangeUserNameHandler(
-	commandBus command.Bus,
+	commandExecutor command.CommandExecutor,
 	userId func(context.Context) (ids.UserId, bool),
 ) *ChangeUserNameHandler {
-	return &ChangeUserNameHandler{commandBus: commandBus, userId: userId}
+	return &ChangeUserNameHandler{commandExecutor: commandExecutor, userId: userId}
 }
 
 type changeUserNameRequest struct {
@@ -38,7 +38,7 @@ func (h *ChangeUserNameHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	return nil, h.commandBus.Dispatch(c.Request.Context(), userChangeName.NewCommand(userId, req.Name))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), userChangeName.NewCommand(userId, req.Name))
 }
 
 func (h *ChangeUserNameHandler) Success(c *gin.Context, _ any) error {
