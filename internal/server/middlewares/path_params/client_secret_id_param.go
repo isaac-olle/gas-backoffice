@@ -12,7 +12,7 @@ func ClientSecretIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		secretId, err := ids.NewClientSecretIdFromString(c.Param(clientSecretIdParam))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_CLIENT_SECRET_ID").WithDescription("invalid client secret id").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_CLIENT_SECRET_ID").WithDescription("invalid client secret id").WithCause(err, false))
 			c.Abort()
 			return
 		}

@@ -63,7 +63,7 @@ func (r *Repository) PullPending(ctx context.Context, limit int) ([]*event2.Prim
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	rows, err := tx.Query(ctx,
-		`SELECT event_id, payload
+		`SELECT event_id, payload, author_id, author_role
 		 FROM events.outbox_event_bus
 		 ORDER BY inserted_at ASC
 		 LIMIT $1
@@ -105,12 +105,19 @@ func (r *Repository) PullPending(ctx context.Context, limit int) ([]*event2.Prim
 func (r *Repository) fromSqlToDomain(row pgx.Row) (*event2.Primitives, error) {
 	var id string
 	var payload []byte
-	if err := row.Scan(&id, &payload); err != nil {
+	var authorId, authorRole *string
+	if err := row.Scan(&id, &payload, &authorId, &authorRole); err != nil {
 		return nil, fmt.Errorf("scan outbox event: %w", err)
 	}
 	var p event2.Primitives
 	if err := json.Unmarshal(payload, &p); err != nil {
 		return nil, fmt.Errorf("unmarshal outbox event: %w", err)
+	}
+	if authorId != nil {
+		p.AuthorId = *authorId
+	}
+	if authorRole != nil {
+		p.AuthorRole = *authorRole
 	}
 	return &p, nil
 }

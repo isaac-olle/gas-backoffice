@@ -30,7 +30,6 @@ func TestGenerateJWTByPrId_HappyPath(t *testing.T) {
 
 	kp := newKeyPairMother(t)
 	prId := kp.ToPrimitives().ProtectedResourceId
-	claims := map[string]any{"sub": "user1"}
 
 	repo := kpmocks.NewMockRepository(t)
 	repo.EXPECT().SearchByProtectedResourceId(mock.Anything, mock.Anything).Return(kp, nil)
@@ -38,13 +37,22 @@ func TestGenerateJWTByPrId_HappyPath(t *testing.T) {
 	finder := domain_services.NewKeyPairFinder(repo)
 	svc := generate_jwt_by_pr_id.NewService(finder, gen)
 
-	qry := generate_jwt_by_pr_id.NewQuery(prId, claims, time.Hour)
+	qry := generate_jwt_by_pr_id.NewQuery(prId, "user1", time.Hour).
+		WithAudience("client1").
+		WithJTI("jti1").
+		WithExtraClaim("scope", "openid")
 	result, err := svc.GenerateJWT(context.Background(), qry)
 
 	require.NoError(t, err)
 	assert.Equal(t, "signed.jwt.token", result)
 	assert.Equal(t, kp, gen.gotKeyPair)
-	assert.Equal(t, claims, gen.gotClaims)
+	assert.Equal(t, prId, gen.gotIss)
+	assert.Equal(t, key_pairs.TokenSpec{
+		Sub:         "user1",
+		Aud:         "client1",
+		JTI:         "jti1",
+		ExtraClaims: map[string]any{"scope": "openid"},
+	}, gen.gotSpec)
 }
 
 func TestGenerateJWTByPrId_ErrorCases(t *testing.T) {
@@ -76,7 +84,7 @@ func TestGenerateJWTByPrId_ErrorCases(t *testing.T) {
 			protectedResoureId: prId,
 			repoResult:         kp,
 			generatorErr:       errors.New("sign failed"),
-			wantErrCode:        key_pairs.ErrKeyPairNotFound,
+			wantErrCode:        key_pairs.ErrInvalidToken,
 		},
 	}
 
@@ -93,7 +101,7 @@ func TestGenerateJWTByPrId_ErrorCases(t *testing.T) {
 			finder := domain_services.NewKeyPairFinder(repo)
 			svc := generate_jwt_by_pr_id.NewService(finder, gen)
 
-			qry := generate_jwt_by_pr_id.NewQuery(tc.protectedResoureId, map[string]any{"sub": "user1"}, time.Hour)
+			qry := generate_jwt_by_pr_id.NewQuery(tc.protectedResoureId, "user1", time.Hour)
 			_, err := svc.GenerateJWT(context.Background(), qry)
 
 			assertErrCode(t, err, tc.wantErrCode)

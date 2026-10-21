@@ -24,28 +24,38 @@ func NewScope(scopeID, scopeName, protectedResourceID, protectedResourceName str
 }
 
 type Client struct {
-	ClientID     string   `bson:"client_id"`
-	Name         string   `bson:"name"`
-	UserId       string   `bson:"user_id"`
-	AllowedFlows []string `bson:"allowed_flows"`
-	RedirectURIs []string `bson:"redirect_uris"`
-	Scopes       []*Scope `bson:"scopes"`
+	ClientID          string   `bson:"client_id"`
+	Name              string   `bson:"name"`
+	UserId            string   `bson:"user_id"`
+	AllowedGrantTypes []string `bson:"allowed_grant_types"`
+	RedirectURIs      []string `bson:"redirect_uris"`
+	Scopes            []*Scope `bson:"scopes"`
+	Public            bool     `bson:"public"`
 }
 
-func NewClient(clientID, name, userId string, allowedFlows, redirectURIs []string, scopes []*Scope) *Client {
+func NewClient(clientID, name, userId string, allowedGrantTypes, redirectURIs []string, scopes []*Scope, public bool) *Client {
 	return &Client{
-		ClientID:     clientID,
-		Name:         name,
-		UserId:       userId,
-		AllowedFlows: allowedFlows,
-		RedirectURIs: redirectURIs,
-		Scopes:       scopes,
+		ClientID:          clientID,
+		Name:              name,
+		UserId:            userId,
+		AllowedGrantTypes: allowedGrantTypes,
+		RedirectURIs:      redirectURIs,
+		Scopes:            scopes,
+		Public:            public,
 	}
 }
 
-func (c *Client) HasFlow(flow string) bool {
-	for _, f := range c.AllowedFlows {
-		if f == flow {
+func (c *Client) AssertPublic(publicOnly bool) error {
+	if publicOnly && !c.Public {
+		return app_errors.ForbiddenError(ErrClientNotPublic).
+			WithDescription("this operation only accepts public clients")
+	}
+	return nil
+}
+
+func (c *Client) HasGrantType(grantType string) bool {
+	for _, g := range c.AllowedGrantTypes {
+		if g == grantType {
 			return true
 		}
 	}
@@ -70,33 +80,10 @@ func (c *Client) HasScope(scopeName string) bool {
 	return false
 }
 
-func (c *Client) CheckAuthorizationRequest(responseType, redirectURI, scope string) (string, error) {
-	if responseType != "code" {
-		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
-			WithDescription("unsupported response_type: " + responseType)
-	}
-	if !c.HasFlow(sessionvos.AuthorizationCodeFlow.String()) {
-		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
-			WithDescription("authorization_code flow not allowed for this client")
-	}
-	if !c.HasRedirectURI(redirectURI) {
-		return "", app_errors.BadRequestError(ErrInvalidRedirectURI).
-			WithDescription("redirect_uri not registered for this client")
-	}
-	requestedScopes := strings.Fields(scope)
-	for _, scopeName := range requestedScopes {
-		if !c.HasScope(scopeName) {
-			return "", app_errors.BadRequestError(ErrInvalidScope).
-				WithDescription("scope not allowed for this client: " + scopeName)
-		}
-	}
-	return c.ResolveProtectedResourceId(requestedScopes)
-}
-
 func (c *Client) CheckClientCredentials(scope string) (string, error) {
-	if !c.HasFlow(sessionvos.ClientCredentialsFlow.String()) {
-		return "", app_errors.BadRequestError(ErrFlowNotAllowed).
-			WithDescription("client_credentials flow is not allowed for this client")
+	if !c.HasGrantType(sessionvos.ClientCredentialsGrantType.String()) {
+		return "", app_errors.BadRequestError(ErrGrantTypeNotAllowed).
+			WithDescription("client_credentials grant type is not allowed for this client")
 	}
 	requestedScopes := strings.Fields(scope)
 	for _, scopeName := range requestedScopes {

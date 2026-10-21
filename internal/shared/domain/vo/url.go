@@ -14,6 +14,18 @@ func NewUrl(raw string, opts ...UrlOption) (Url, error) {
 		return "", fmt.Errorf("invalid url: %w", err)
 	}
 
+	// A percent-encoded URL (e.g. arriving as a query param value that was
+	// encoded twice) parses without error but with no recognizable scheme,
+	// since url.Parse never decodes the scheme prefix. Fall back to decoding
+	// once and re-parsing before rejecting it.
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		if unescaped, uErr := url.QueryUnescape(raw); uErr == nil && unescaped != raw {
+			if reparsed, rErr := url.Parse(unescaped); rErr == nil {
+				raw, parsed = unescaped, reparsed
+			}
+		}
+	}
+
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return "", fmt.Errorf("invalid url, scheme must be http or https")
 	}

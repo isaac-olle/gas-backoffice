@@ -19,6 +19,8 @@ func aClientAssertionKey(t *testing.T) *client_assertion_keys.ClientAssertionKey
 	cak, err := client_assertion_keys.FromPrimitives(client_assertion_keys.ClientAssertionKeyPrimitives{
 		Id:        ids.NewClientAssertionKeyId().String(),
 		ClientId:  ids.NewClientId().String(),
+		UserId:    ids.NewUserId().String(),
+		AdminId:   ids.NewUserId().String(),
 		Algorithm: "RS256",
 		PublicKey: []byte("stub-public-key"),
 	})

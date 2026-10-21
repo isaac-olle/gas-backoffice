@@ -12,7 +12,7 @@ func ClientIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		clientId, err := ids2.NewClientIdFromString(c.Param(clientIdParam))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_CLIENT_ID").WithDescription("invalid client id").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_CLIENT_ID").WithDescription("invalid client id").WithCause(err, false))
 			c.Abort()
 			return
 		}

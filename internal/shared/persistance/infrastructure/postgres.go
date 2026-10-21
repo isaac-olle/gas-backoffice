@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,6 +29,14 @@ func (r *PostgresRepository[T]) DB() *pgxpool.Pool { return r.db }
 func (r *PostgresRepository[T]) Save(ctx context.Context, query string, args ...any) error {
 	_, err := r.querier(ctx).Exec(ctx, query, args...)
 	return err
+}
+
+// SaveWithResult behaves like Save but also returns the driver's CommandTag,
+// so callers that need to inspect RowsAffected() (e.g. optimistic-concurrency
+// upserts) can do so without the generic Save/Delete helpers having to change
+// shape for every other repository.
+func (r *PostgresRepository[T]) SaveWithResult(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
+	return r.querier(ctx).Exec(ctx, query, args...)
 }
 
 func (r *PostgresRepository[T]) Delete(ctx context.Context, query string, args ...any) error {

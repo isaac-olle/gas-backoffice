@@ -12,7 +12,7 @@ func ScopeIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		scopeId, err := ids2.NewScopeIdFromString(c.Param(scopeIdParam))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_SCOPE_ID").WithDescription("invalid scope id").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_SCOPE_ID").WithDescription("invalid scope id").WithCause(err, false))
 			c.Abort()
 			return
 		}

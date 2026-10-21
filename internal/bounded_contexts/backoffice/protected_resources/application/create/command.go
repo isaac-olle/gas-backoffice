@@ -13,14 +13,16 @@ type Command struct {
 	id        ids.ProtectedResourceId
 	name      string
 	ownership protected_resources.Ownership
+	isSystem  bool
 }
 
 func NewCommand(
 	id ids.ProtectedResourceId,
 	name string,
 	ownership protected_resources.Ownership,
+	isSystem bool,
 ) *Command {
-	return &Command{id: id, name: name, ownership: ownership}
+	return &Command{id: id, name: name, ownership: ownership, isSystem: isSystem}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

@@ -1,6 +1,13 @@
 package session
 
+import "time"
+
+const AccessTokenTTL = time.Hour
+
 type TokenResponse struct {
-	Token string
-	Scope string
+	AccessToken string
+	IDToken     string
+	TokenType   string
+	ExpiresIn   int
+	Scope       string
 }

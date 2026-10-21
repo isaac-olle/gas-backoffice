@@ -20,8 +20,10 @@ func (f *ClientFinder) Find(ctx context.Context, id ids.ClientId) (*clients.Clie
 	client, err := f.repository.SearchById(ctx, id)
 	if err != nil {
 		return nil, app_errors.InternalError(clients.ErrClientNotFound).
-			WithDescription("failed to search client").
-			WithCause(err)
+			WithDescription("failed to search client").WithCause(
+
+			err, false)
+
 	}
 	if client == nil {
 		return nil, app_errors.NotFoundError(clients.ErrClientNotFound).

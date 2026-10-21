@@ -7,33 +7,27 @@ import (
 
 type Ownership struct {
 	ProtectedResourceId ids2.ProtectedResourceId
-	UserId              ids2.UserId
-}
-
-func newOwnership(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId) Ownership {
-	return Ownership{ProtectedResourceId: protectedResourceId, UserId: userId}
+	SubscriptionId      ids2.SubscriptionId
 }
 
 func (o Ownership) Equals(other Ownership) bool {
 	return o == other
 }
 
-func NewOwnershipFromVos(protectedResourceId ids2.ProtectedResourceId, userId ids2.UserId) Ownership {
-	return newOwnership(protectedResourceId, userId)
+func NewOwnershipFromVos(protectedResourceId ids2.ProtectedResourceId, subscriptionId ids2.SubscriptionId) Ownership {
+	return Ownership{ProtectedResourceId: protectedResourceId, SubscriptionId: subscriptionId}
 }
 
-func NewOwnership(protectedResourceId, userId string) (Ownership, error) {
+func NewOwnership(protectedResourceId, subscriptionId string) (Ownership, error) {
 	prId, err := ids2.NewProtectedResourceIdFromString(protectedResourceId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid protected resource id").
-			WithCause(err)
+			WithDescription("invalid protected resource id").WithCause(err, false)
 	}
-	tId, err := ids2.NewUserIdFromString(userId)
+	sId, err := ids2.NewSubscriptionIdFromString(subscriptionId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid user id").
-			WithCause(err)
+			WithDescription("invalid subscription id").WithCause(err, false)
 	}
-	return newOwnership(prId, tId), nil
+	return NewOwnershipFromVos(prId, sId), nil
 }

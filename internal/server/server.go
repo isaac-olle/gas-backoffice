@@ -28,7 +28,6 @@ type Server struct {
 
 func New(
 	ctx context.Context,
-	host string,
 	port int,
 	shutdownTimeout time.Duration,
 	commandBus command.Bus,
@@ -36,16 +35,19 @@ func New(
 	logger shared_logger.Logger,
 	presenter app_errors.ErrorPresenter,
 	errorManagers []app_errors.ErrorManager,
+	allowedOrigins []string,
 	providers ...RouteProvider,
 ) (context.Context, Server) {
 	router := gin.New()
 	router.Use(gin.RecoveryWithWriter(os.Stderr))
+	router.Use(middlewares.CORS(allowedOrigins))
 	router.Use(middlewares.NewGinLogger())
+	router.Use(middlewares.BodyLogger())
 	router.GET("/health", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	srv := Server{
 		engine:     router,
-		httpAddr:   fmt.Sprintf("%s:%d", host, port),
+		httpAddr:   fmt.Sprintf("0.0.0.0:%d", port),
 		logger:     logger,
 		shutdown:   shutdownTimeout,
 		commandBus: commandBus,

@@ -12,28 +12,46 @@ import (
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
-	scopeId ids2.ScopeId
+	scopeId             ids2.ScopeId
+	protectedResourceId ids2.ProtectedResourceId
+	userId              ids2.UserId
 }
 
 func withScopeId(scopeId ids2.ScopeId) commandOpt {
 	return func(b *commandBuilder) { b.scopeId = scopeId }
 }
 
+func withProtectedResourceId(prId ids2.ProtectedResourceId) commandOpt {
+	return func(b *commandBuilder) { b.protectedResourceId = prId }
+}
+
+func withUserId(userId ids2.UserId) commandOpt {
+	return func(b *commandBuilder) { b.userId = userId }
+}
+
 func aCommand(t *testing.T, opts ...commandOpt) *hard_delete.Command {
 	t.Helper()
-	b := &commandBuilder{scopeId: ids2.NewScopeId()}
+	b := &commandBuilder{
+		scopeId:             ids2.NewScopeId(),
+		protectedResourceId: ids2.NewProtectedResourceId(),
+		userId:              ids2.NewUserId(),
+	}
 	for _, o := range opts {
 		o(b)
 	}
-	return hard_delete.NewCommand(b.scopeId)
+	return hard_delete.NewCommand(b.scopeId, b.protectedResourceId, ids2.NewUserId(), b.userId)
 }
 
-func aScope(t *testing.T) (*scopes.Scope, ids2.ScopeId) {
+// aScope builds a scope owned by a random protected resource/user, returning
+// its id alongside the ownership ids so a matching Command can be built.
+func aScope(t *testing.T) (*scopes.Scope, ids2.ScopeId, ids2.ProtectedResourceId, ids2.UserId) {
 	t.Helper()
 	scopeId := ids2.NewScopeId()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
-	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
+	prId := ids2.NewProtectedResourceId()
+	userId := ids2.NewUserId()
+	ownership := scopes.NewOwnershipFromVos(prId, ids2.NewUserId(), userId)
+	scope, err := scopes.NewScope(scopeId, "read:users", ownership, false)
 	require.NoError(t, err)
 	scope.PullDomainEvents()
-	return scope, scopeId
+	return scope, scopeId, prId, userId
 }

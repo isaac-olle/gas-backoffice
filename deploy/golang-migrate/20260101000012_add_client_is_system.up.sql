@@ -1,0 +1,2 @@
+ALTER TABLE backoffice.clients
+    ADD COLUMN IF NOT EXISTS is_system BOOLEAN NOT NULL DEFAULT FALSE;

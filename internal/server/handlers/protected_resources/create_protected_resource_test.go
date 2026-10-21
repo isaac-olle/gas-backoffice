@@ -69,7 +69,7 @@ func TestCreateProtectedResourceHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := prHandlers.NewCreateProtectedResourceHandler(bus, tt.prIdFn, tt.userIdFn)
+			h := prHandlers.NewCreateProtectedResourceHandler(bus, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -88,7 +88,7 @@ func TestCreateProtectedResourceHandler(t *testing.T) {
 func TestCreateProtectedResourceHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := prHandlers.NewCreateProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor())
+	h := prHandlers.NewCreateProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

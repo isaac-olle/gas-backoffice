@@ -8,11 +8,12 @@ import (
 const CommandType command.Type = "command.security.client_assertion_key.hard_delete"
 
 type Command struct {
-	id string
+	id       string
+	clientId string
 }
 
-func NewCommand(id string) *Command {
-	return &Command{id: id}
+func NewCommand(id, clientId string) *Command {
+	return &Command{id: id, clientId: clientId}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

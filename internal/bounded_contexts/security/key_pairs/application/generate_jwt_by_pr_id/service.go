@@ -22,20 +22,24 @@ func (s *Service) GenerateJWT(ctx context.Context, qry *Query) (any, error) {
 	prId, err := ids.NewProtectedResourceIdFromString(qry.protectedResourceId)
 	if err != nil {
 		return nil, app_errors.BadRequestError(key_pairs.ErrKeyPairNotFound).
-			WithDescription("invalid protected resource id").
-			WithCause(err)
+			WithDescription("invalid protected resource id").WithCause(
+
+			err, false)
+
 	}
 
 	kp, err := s.finder.FindByProtectedResourceId(ctx, prId)
 	if err != nil {
-		return nil, err
+		return nil, app_errors.AddTrace(err)
 	}
 
-	tokenString, err := s.generator.Generate(ctx, qry.claims, kp, qry.expiresIn)
+	tokenString, err := s.generator.Generate(ctx, qry.protectedResourceId, qry.spec, kp, qry.expiresIn)
 	if err != nil {
-		return nil, app_errors.InternalError(key_pairs.ErrKeyPairNotFound).
-			WithDescription("failed to sign jwt").
-			WithCause(err)
+		return nil, app_errors.InternalError(key_pairs.ErrInvalidToken).
+			WithDescription("failed to sign jwt").WithCause(
+
+			err, false)
+
 	}
 
 	return tokenString, nil

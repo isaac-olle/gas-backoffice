@@ -12,6 +12,7 @@ func anIdentityProvider(t *testing.T, id ids2.IdentityProviderId, enabled bool) 
 	t.Helper()
 	idp, err := identity_providers.FromPrimitives(identity_providers.IdentityProviderPrimitives{
 		Id:                    id.String(),
+		ReferenceName:         "google",
 		Name:                  "google",
 		Issuer:                "https://accounts.google.com",
 		ClientId:              "client-123",
@@ -19,6 +20,7 @@ func anIdentityProvider(t *testing.T, id ids2.IdentityProviderId, enabled bool) 
 		TokenEndpoint:         "https://oauth2.googleapis.com/token",
 		JwksUri:               "https://www.googleapis.com/oauth2/v3/certs",
 		Scopes:                []string{"openid"},
+		BackofficeRedirectUri: "https://api.example.com/v1/auth/callback",
 		Enabled:               enabled,
 	})
 	require.NoError(t, err)

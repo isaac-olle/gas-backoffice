@@ -6,21 +6,20 @@ import (
 )
 
 type Ownership struct {
-	UserId ids2.UserId
+	SubscriptionId ids2.SubscriptionId
 }
 
-func NewOwnership(userId ids2.UserId) Ownership {
-	return Ownership{UserId: userId}
+func NewOwnership(subscriptionId ids2.SubscriptionId) Ownership {
+	return Ownership{SubscriptionId: subscriptionId}
 }
 
-func NewOwnershipFromStrings(userId string) (Ownership, error) {
-	tId, err := ids2.NewUserIdFromString(userId)
+func NewOwnershipFromStrings(subscriptionId string) (Ownership, error) {
+	sId, err := ids2.NewSubscriptionIdFromString(subscriptionId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid user id").
-			WithCause(err)
+			WithDescription("invalid subscription id").WithCause(err, false)
 	}
-	return NewOwnership(tId), nil
+	return NewOwnership(sId), nil
 }
 
 func (o Ownership) Equals(other Ownership) bool {

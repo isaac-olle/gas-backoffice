@@ -21,8 +21,10 @@ func NewOwnership(protectedResourceId string) (Ownership, error) {
 	prId, err := ids.NewProtectedResourceIdFromString(protectedResourceId)
 	if err != nil {
 		return Ownership{}, app_errors.BadRequestError(ErrInvalidOwnership).
-			WithDescription("invalid protected resource id").
-			WithCause(err)
+			WithDescription("invalid protected resource id").WithCause(
+
+			err, false)
+
 	}
 	return newOwnership(prId), nil
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	userCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create"
+	createTenant "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/create_tenant"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -27,7 +27,6 @@ func NewCreateUserHandler(
 
 type createUserRequest struct {
 	Name string `json:"name" binding:"required"`
-	Role string `json:"role" binding:"required"`
 }
 
 func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
@@ -48,7 +47,7 @@ func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
 
 	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
-		userCreate.NewCommand(tenantId, adminId, req.Name, req.Role),
+		createTenant.NewCommand(tenantId, adminId, req.Name, false),
 	)
 }
 

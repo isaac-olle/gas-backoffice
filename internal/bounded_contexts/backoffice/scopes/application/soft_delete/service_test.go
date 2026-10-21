@@ -13,8 +13,13 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/soft_delete"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
 	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
+
+func newService(repo *scopemocks.MockRepository) *soft_delete.Service {
+	return soft_delete.NewService(domain_services.NewScopeFinder(repo), repo)
+}
 
 func TestSoftDelete(t *testing.T) {
 	t.Parallel()
@@ -23,12 +28,21 @@ func TestSoftDelete(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids.NewScopeId()
+		prId := ids.NewProtectedResourceId()
+		userId := ids.NewUserId()
+		scope := aScope(t, scopeId, prId, userId)
 
+		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 		repo.EXPECT().SoftDelete(mock.Anything, scopeId).Return(nil)
 
-		svc := soft_delete.NewService(repo)
-		require.NoError(t, svc.SoftDelete(context.Background(), aCommand(t, withScopeId(scopeId.String()))))
+		svc := newService(repo)
+		require.NoError(t, svc.SoftDelete(context.Background(),
+			aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))))
 	})
+
+	scopeId := ids.NewScopeId()
+	prId := ids.NewProtectedResourceId()
+	userId := ids.NewUserId()
 
 	errCases := []struct {
 		desc      string
@@ -43,8 +57,14 @@ func TestSoftDelete(t *testing.T) {
 		},
 		{
 			desc: "returns ErrScopeNotSaved when repository fails",
-			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
+			cmd: func(t *testing.T) *soft_delete.Command {
+				return aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))
+			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
+				scope := aScope(t, scopeId, prId, userId)
+				repo.EXPECT().
+					SearchById(mock.Anything, mock.Anything).
+					Return(scope, nil)
 				repo.EXPECT().
 					SoftDelete(mock.Anything, mock.AnythingOfType("ids.ScopeId")).
 					Return(fmt.Errorf("db error"))
@@ -62,7 +82,7 @@ func TestSoftDelete(t *testing.T) {
 				tc.setupRepo(repo)
 			}
 
-			svc := soft_delete.NewService(repo)
+			svc := newService(repo)
 			err := svc.SoftDelete(context.Background(), tc.cmd(t))
 
 			assertErrCode(t, err, tc.wantCode)

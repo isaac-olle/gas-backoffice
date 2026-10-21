@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"testing"
 
@@ -15,6 +15,7 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 	clientmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/mocks"
 )
 
@@ -27,6 +28,7 @@ func TestCreate(t *testing.T) {
 		cmd := aCommand(t, withName("my-client"))
 
 		var saved *clients.Client
+		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
 		repo.EXPECT().
 			Save(mock.Anything, mock.MatchedBy(func(c *clients.Client) bool {
 				saved = c
@@ -38,7 +40,7 @@ func TestCreate(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientCreatedType
 			}))
 
-		require.NoError(t, create.NewService(repo, bus).Create(context.Background(), cmd))
+		require.NoError(t, newService(t, repo, bus).Create(context.Background(), cmd))
 
 		p := saved.ToPrimitives()
 		assert.Equal(t, "my-client", p.Name)
@@ -62,13 +64,29 @@ func TestCreate(t *testing.T) {
 		},
 		{
 			desc:     "rejects invalid flow",
-			cmd:      func(t *testing.T) *create.Command { return aCommand(t, withFlows("implicit")) },
+			cmd:      func(t *testing.T) *create.Command { return aCommand(t, withGrantTypes("implicit")) },
 			wantCode: clients.ErrClientNotCreated,
+		},
+		{
+			desc: "rejects public client with client_credentials",
+			cmd: func(t *testing.T) *create.Command {
+				return aCommand(t, withGrantTypes("client_credentials"), withPublic(true))
+			},
+			wantCode: clients.ErrClientNotCreated,
+		},
+		{
+			desc: "rejects duplicate name",
+			cmd:  func(t *testing.T) *create.Command { return aCommand(t) },
+			setupRepo: func(repo *clientmocks.MockRepository) {
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{{}}, nil)
+			},
+			wantCode: clients.ErrClientDuplicateName,
 		},
 		{
 			desc: "wraps repository save failure",
 			cmd:  func(t *testing.T) *create.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
 				repo.EXPECT().
 					Save(mock.Anything, mock.AnythingOfType("*clients.Client")).
 					Return(fmt.Errorf("db error"))
@@ -84,7 +102,7 @@ func TestCreate(t *testing.T) {
 			if tc.setupRepo != nil {
 				tc.setupRepo(repo)
 			}
-			assertErrCode(t, create.NewService(repo, bus).Create(context.Background(), tc.cmd(t)), tc.wantCode)
+			assertErrCode(t, newService(t, repo, bus).Create(context.Background(), tc.cmd(t)), tc.wantCode)
 		})
 	}
 }
@@ -94,6 +112,11 @@ func TestCreate(t *testing.T) {
 func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
 	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
+}
+
+func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *create.Service {
+	t.Helper()
+	return create.NewService(domain_services.NewDuplicateNameChecker(repo), repo, bus)
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

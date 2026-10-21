@@ -13,13 +13,17 @@ type Repository interface {
 }
 
 type TokenVerifier interface {
-	Verify(ctx context.Context, token string, kp *KeyPair) (*TokenClaims, error)
+	Verify(ctx context.Context, token string, kp *KeyPair, expectedClaims map[string]any, verifyExpiration bool) (map[string]any, error)
 }
 
 type TokenGenerator interface {
-	Generate(ctx context.Context, claims map[string]any, kp *KeyPair, expiresIn time.Duration) (string, error)
+	Generate(ctx context.Context, iss string, spec TokenSpec, kp *KeyPair, expiresIn time.Duration) (string, error)
 }
 
 type JwtDecoder interface {
 	ExtractKeyId(ctx context.Context, token string) (string, error)
+}
+
+type KeyGenerator interface {
+	Generate(algorithm string) (privateKeyPEM string, publicKeyPEM string, err error)
 }

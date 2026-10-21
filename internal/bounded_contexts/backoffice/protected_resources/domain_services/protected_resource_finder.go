@@ -20,8 +20,10 @@ func (f *ProtectedResourceFinder) Find(ctx context.Context, id ids.ProtectedReso
 	pr, err := f.repository.SearchById(ctx, id)
 	if err != nil {
 		return nil, app_errors.InternalError(protected_resources.ErrProtectedResourceNotFound).
-			WithDescription("error searching protected resource").
-			WithCause(err)
+			WithDescription("error searching protected resource").WithCause(
+
+			err, false)
+
 	}
 	if pr == nil {
 		return nil, app_errors.NotFoundError(protected_resources.ErrProtectedResourceNotFound).

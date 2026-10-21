@@ -1,56 +1,13 @@
 package _event_handlers_test
 
 import (
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
-	clientmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
-
-// ── Client Mothers ─────────────────────────────────────────────────────────────
-
-func aClient(t *testing.T) (*clients.Client, ids2.ClientId) {
-	t.Helper()
-	clientId := ids2.NewClientId()
-	c, err := clients.NewClient(
-		clientId,
-		"valid-client",
-		clients.NewOwnership(ids2.NewAdminId(), ids2.NewUserId()),
-		nil,
-		nil,
-	)
-	require.NoError(t, err)
-	c.PullDomainEvents() // clear creation event
-	return c, clientId
-}
-
-func aClientWithScope(t *testing.T, scopeId ids2.ScopeId) (*clients.Client, ids2.ClientId) {
-	t.Helper()
-	clientId := ids2.NewClientId()
-	prims := clients.ClientPrimitives{
-		Id:            clientId.String(),
-		Name:          "valid-client",
-		AdminId:       ids2.NewAdminId().String(),
-		UserId:        ids2.NewUserId().String(),
-		AllowedScopes: []string{scopeId.String()},
-	}
-	c, err := clients.FromPrimitives(prims)
-	require.NoError(t, err)
-	return c, clientId
-}
-
-// ── Mock Helpers ───────────────────────────────────────────────────────────────
-
-func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
-	t.Helper()
-	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
-}
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
 	t.Helper()

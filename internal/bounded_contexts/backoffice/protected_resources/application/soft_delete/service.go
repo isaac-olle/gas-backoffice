@@ -5,6 +5,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 )
@@ -25,11 +26,22 @@ func (s *Service) SoftDelete(ctx context.Context, cmd *Command) error {
 		return app_errors.AddTrace(err)
 	}
 
+	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if err = pr.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	if pr.IsSystemResource() {
+		return app_errors.ForbiddenError(protected_resources.ErrSystemResource).
+			WithDescription("protected resource is a system resource and cannot be deleted")
+	}
+
 	pr.Delete()
 
 	if err = s.repository.SoftDelete(ctx, cmd.protectedResourceId); err != nil {
-		return app_errors.InternalError(protected_resources.ErrProtectedResourceNotSaved).
-			WithCause(err)
+		return app_errors.InternalError(protected_resources.ErrProtectedResourceNotSaved).WithCause(
+			err, false)
+
 	}
 
 	s.eventBus.Publish(ctx, pr.PullDomainEvents())

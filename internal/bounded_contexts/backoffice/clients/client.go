@@ -13,17 +13,21 @@ var clientAggregateName aggregate.Name = aggregate.Client
 
 type Client struct {
 	*aggregate.Root
-	id            ids.ClientId
-	name          vos.ClientName
-	ownership     Ownership
-	allowedFlows  *vo.SetVo[vos.Flow]
-	allowedScopes *vo.SetVo[ids.ScopeId]
-	redirectUris  *vo.SetVo[vos.RedirectUri]
-	keyIds        *vo.SetVo[ids.ClientAssertionKeyId]
-	secretIds     *vo.SetVo[ids.ClientSecretId]
+	id                ids.ClientId
+	name              vos.ClientName
+	ownership         Ownership
+	allowedGrantTypes *vo.SetVo[vos.GrantType]
+	redirectUris      *vo.SetVo[vos.RedirectUri]
+	assertionKeyIds   *vo.SetVo[ids.ClientAssertionKeyId]
+	secretIds         *vo.SetVo[ids.ClientSecretId]
+	allowedScopes     *vo.SetVo[ids.ScopeId]
+	enabled           bool
+	public            bool
+	isSystem          bool
+	version           int
 }
 
-func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris []string, allowedFlows []string) (*Client, error) {
+func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris []string, allowedGrantTypes []string, public bool, isSystem bool) (*Client, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	clientName, err := vos.NewClientName(name)
@@ -41,13 +45,13 @@ func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris [
 		}
 	}
 
-	flows := vo.NewEmptySetVo[vos.Flow]()
-	for _, raw := range allowedFlows {
-		flow, fErr := vos.NewFlow(raw)
-		if fErr != nil {
-			errArr.AddError(fErr)
+	grantTypes := vo.NewEmptySetVo[vos.GrantType]()
+	for _, raw := range allowedGrantTypes {
+		grantType, gErr := vos.NewGrantType(raw)
+		if gErr != nil {
+			errArr.AddError(gErr)
 		} else {
-			flows.Add(flow)
+			grantTypes.Add(grantType)
 		}
 	}
 
@@ -56,17 +60,26 @@ func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris [
 	}
 
 	c := &Client{
-		Root:          aggregate.NewRoot(clientAggregateName),
-		id:            id,
-		name:          clientName,
-		ownership:     ownership,
-		allowedFlows:  flows,
-		allowedScopes: vo.NewEmptySetVo[ids.ScopeId](),
-		redirectUris:  uris,
-		keyIds:        vo.NewEmptySetVo[ids.ClientAssertionKeyId](),
-		secretIds:     vo.NewEmptySetVo[ids.ClientSecretId](),
+		Root:              aggregate.NewRoot(clientAggregateName),
+		id:                id,
+		name:              clientName,
+		ownership:         ownership,
+		allowedGrantTypes: grantTypes,
+		redirectUris:      uris,
+		assertionKeyIds:   vo.NewEmptySetVo[ids.ClientAssertionKeyId](),
+		secretIds:         vo.NewEmptySetVo[ids.ClientSecretId](),
+		allowedScopes:     vo.NewEmptySetVo[ids.ScopeId](),
+		enabled:           true,
+		public:            public,
+		isSystem:          isSystem,
+		version:           1,
 	}
-	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.UserId.String()))
+
+	if err = c.checkPublicGrantTypes(); err != nil {
+		return nil, err
+	}
+
+	c.Record(backoffice.NewClientCreated(c.id.String(), c.name.String(), c.ownership.SubscriptionId.String()))
 	return c, nil
 }
 
@@ -83,28 +96,21 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		errArr.AddError(err)
 	}
 
-	userId, err := ids.NewUserIdFromString(p.UserId)
+	var ownership Ownership
+	subscriptionId, err := ids.NewSubscriptionIdFromString(p.SubscriptionId)
 	if err != nil {
 		errArr.AddError(err)
+	} else {
+		ownership = NewOwnership(subscriptionId)
 	}
 
-	allowedFlows := vo.NewEmptySetVo[vos.Flow]()
-	for _, raw := range p.AllowedFlows {
-		flow, fErr := vos.NewFlow(raw)
-		if fErr != nil {
-			errArr.AddError(fErr)
+	allowedGrantTypes := vo.NewEmptySetVo[vos.GrantType]()
+	for _, raw := range p.AllowedGrantTypes {
+		grantType, gErr := vos.NewGrantType(raw)
+		if gErr != nil {
+			errArr.AddError(gErr)
 		} else {
-			allowedFlows.Add(flow)
-		}
-	}
-
-	allowedScopes := vo.NewEmptySetVo[ids.ScopeId]()
-	for _, rawId := range p.AllowedScopes {
-		scopeId, sErr := ids.NewScopeIdFromString(rawId)
-		if sErr != nil {
-			errArr.AddError(sErr)
-		} else {
-			allowedScopes.Add(scopeId)
+			allowedGrantTypes.Add(grantType)
 		}
 	}
 
@@ -118,13 +124,13 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		}
 	}
 
-	keyIds := vo.NewEmptySetVo[ids.ClientAssertionKeyId]()
-	for _, raw := range p.KeyIds {
+	assertionKeyIds := vo.NewEmptySetVo[ids.ClientAssertionKeyId]()
+	for _, raw := range p.AssertionKeyIds {
 		keyId, kErr := ids.NewClientAssertionKeyIdFromString(raw)
 		if kErr != nil {
 			errArr.AddError(kErr)
 		} else {
-			keyIds.Add(keyId)
+			assertionKeyIds.Add(keyId)
 		}
 	}
 
@@ -138,45 +144,118 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		}
 	}
 
+	allowedScopes := vo.NewEmptySetVo[ids.ScopeId]()
+	for _, raw := range p.AllowedScopes {
+		scopeId, scErr := ids.NewScopeIdFromString(raw)
+		if scErr != nil {
+			errArr.AddError(scErr)
+		} else {
+			allowedScopes.Add(scopeId)
+		}
+	}
+
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
 
-	c := &Client{
-		Root:          aggregate.NewRoot(clientAggregateName),
-		id:            id,
-		name:          name,
-		ownership:     NewOwnership(userId),
-		allowedFlows:  allowedFlows,
-		allowedScopes: allowedScopes,
-		redirectUris:  redirectUris,
-		keyIds:        keyIds,
-		secretIds:     secretIds,
+	// A persisted client always has version >= 1 (the table defaults new rows
+	// to 1, and Save always writes a positive version). A zero only ever comes
+	// from a hand-built ClientPrimitives{} in a test that didn't set it, so
+	// defaulting it to 1 here is safe and never masks a real version.
+	version := p.Version
+	if version == 0 {
+		version = 1
 	}
+
+	c := &Client{
+		Root:              aggregate.NewRoot(clientAggregateName),
+		id:                id,
+		name:              name,
+		ownership:         ownership,
+		allowedGrantTypes: allowedGrantTypes,
+		redirectUris:      redirectUris,
+		assertionKeyIds:   assertionKeyIds,
+		secretIds:         secretIds,
+		allowedScopes:     allowedScopes,
+		enabled:           p.Enabled,
+		public:            p.Public,
+		isSystem:          p.IsSystem,
+		version:           version,
+	}
+
 	return c, nil
 }
 
+// checkPublicGrantTypes enforces that a public client (one that can never
+// hold a client secret) is never granted client_credentials, since that
+// grant type requires authenticating to /token with a secret.
+func (c *Client) checkPublicGrantTypes() error {
+	if !c.public {
+		return nil
+	}
+	clientCredentials, err := vos.NewGrantType(vos.ClientCredentialsGrantType)
+	if err != nil {
+		return err
+	}
+	if c.allowedGrantTypes.Contains(clientCredentials) {
+		return app_errors.BadRequestError(ErrPublicClientCannotHaveClientCredentials).
+			WithDescription("a public client cannot be granted the client_credentials grant type")
+	}
+	return nil
+}
+
+func (c *Client) IsEnabled() bool        { return c.enabled }
+func (c *Client) IsPublic() bool         { return c.public }
+func (c *Client) IsSystemResource() bool { return c.isSystem }
+
+func (c *Client) Enable() {
+	c.enabled = true
+	c.Record(backoffice.NewClientEnabled(c.id.String()))
+}
+
+func (c *Client) Disable() {
+	c.enabled = false
+	c.Record(backoffice.NewClientDisabled(c.id.String()))
+}
+
 func (c *Client) Delete() {
-	c.Record(backoffice.NewClientDeleted(c.id.String(), c.ownership.UserId.String()))
+	c.Record(backoffice.NewClientDeleted(c.id.String(), c.ownership.SubscriptionId.String()))
 }
 
-func (c *Client) CheckOwnership(o Ownership) bool {
-	return c.ownership == o
+// EnsureOwnership allows the caller when the client belongs to the given
+// subscription. Membership of the caller in that subscription is validated
+// earlier, at the subscription path param middleware.
+func (c *Client) EnsureOwnership(subscriptionIds []ids.SubscriptionId) error {
+	for _, id := range subscriptionIds {
+		if id == c.ownership.SubscriptionId {
+			return nil
+		}
+	}
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("client does not belong to the provided subscription")
 }
 
-func (c *Client) AddAllowedFlow(flow vos.Flow) {
-	c.allowedFlows.Add(flow)
-	c.Record(backoffice.NewClientFlowAdded(c.id.String(), flow.String()))
+func (c *Client) AddAllowedGrantType(grantType vos.GrantType) {
+	c.allowedGrantTypes.Add(grantType)
+	c.Record(backoffice.NewClientGrantTypeAdded(c.id.String(), grantType.String()))
 }
 
-func (c *Client) RemoveAllowedFlow(flow vos.Flow) {
-	c.allowedFlows.Remove(flow)
-	c.Record(backoffice.NewClientFlowRemoved(c.id.String(), flow.String()))
+func (c *Client) RemoveAllowedGrantType(grantType vos.GrantType) {
+	c.allowedGrantTypes.Remove(grantType)
+	c.Record(backoffice.NewClientGrantTypeRemoved(c.id.String(), grantType.String()))
 }
 
 func (c *Client) AddRedirectUri(uri vos.RedirectUri) {
 	c.redirectUris.Add(uri)
 	c.Record(backoffice.NewClientRedirectUriAdded(c.id.String(), uri.String()))
+}
+
+func (c *Client) AddKeyId(keyId ids.ClientAssertionKeyId) {
+	c.assertionKeyIds.Add(keyId)
+}
+
+func (c *Client) AddSecretId(secretId ids.ClientSecretId) {
+	c.secretIds.Add(secretId)
 }
 
 func (c *Client) AddAllowedScope(scopeId ids.ScopeId) {
@@ -185,12 +264,4 @@ func (c *Client) AddAllowedScope(scopeId ids.ScopeId) {
 
 func (c *Client) RemoveAllowedScope(scopeId ids.ScopeId) {
 	c.allowedScopes.Remove(scopeId)
-}
-
-func (c *Client) AddKeyId(keyId ids.ClientAssertionKeyId) {
-	c.keyIds.Add(keyId)
-}
-
-func (c *Client) AddSecretId(secretId ids.ClientSecretId) {
-	c.secretIds.Add(secretId)
 }

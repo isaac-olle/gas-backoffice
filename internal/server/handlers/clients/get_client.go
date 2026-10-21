@@ -26,6 +26,7 @@ func (h *GetClientHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
+
 	client, err := query.DispatchTyped[*clients.Client](c.Request.Context(), h.queryBus, clientGet.NewQuery(clientId.String()))
 	if err != nil {
 		return nil, err

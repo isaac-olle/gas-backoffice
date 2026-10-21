@@ -144,7 +144,7 @@ server/
 ├── handlers/
 │   ├── admins/             — token handler
 │   ├── users/              — get, change_name, soft_delete
-│   ├── clients/            — create, get, soft_delete, add_flow, add_redirect_uri, ...
+│   ├── clients/            — create, get, soft_delete, add_allowed_grant_type, add_redirect_uri, ...
 │   ├── protected_resources/
 │   ├── scopes/
 │   ├── protocol/
@@ -152,7 +152,8 @@ server/
 │       └── extractors.go   — AdminIdFromAuthor, UserIdFromAuthor, ClientIdFromAuthor,
 │                             UserOwnershipFromAuthor, UserOwnershipFromContext
 └── middlewares/
-    ├── access_token.go     — verifies JWT, puts Author in context
+    ├── authentication.go   — picks cookie/bearer by Origin, verifies JWT, puts Author in context
+    ├── authenticators/     — CookieAuthenticator, BearerAuthenticator (token extraction)
     ├── role_middleware.go  — checks vo.Role
     ├── ownership/          — User, Client, ProtectedResource, Scope middlewares
     ├── path_params/        — extracts :user_id, :client_id, etc. into context

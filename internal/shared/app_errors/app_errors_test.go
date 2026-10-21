@@ -64,8 +64,36 @@ func TestWithDescription(t *testing.T) {
 func TestWithCause(t *testing.T) {
 	t.Parallel()
 	cause := fmt.Errorf("underlying error")
-	err := InternalError(testCode).WithCause(cause)
-	assert.Equal(t, cause, err.Cause)
+	err := InternalError(testCode).WithCause(cause, false)
+
+	assert.Len(t, err.Cause, 1)
+	assert.Equal(t, "underlying error", err.Cause[0].Error())
+	assert.False(t, err.Cause[0].IsPublic())
+}
+
+func TestWithCause_AppendsWithVisibility(t *testing.T) {
+	t.Parallel()
+	err := InternalError(testCode).
+		WithCause(fmt.Errorf("a"), true).
+		WithCause(fmt.Errorf("b"), false)
+
+	assert.Len(t, err.Cause, 2)
+	assert.True(t, err.Cause[0].IsPublic())
+	assert.False(t, err.Cause[1].IsPublic())
+}
+
+func TestWithCause_FlattensConcatenatedError(t *testing.T) {
+	t.Parallel()
+	ce := NewEmptyErrorArray()
+	ce.AddError(fmt.Errorf("first"))
+	ce.AddError(fmt.Errorf("second"))
+
+	err := InternalError(testCode).WithCause(ce, true)
+
+	// The concatenated error is flattened into its individual errors, each
+	// carrying the visibility passed to WithCause.
+	assert.Len(t, err.Cause, 2)
+	assert.Equal(t, []string{"first", "second"}, err.PublicCauses())
 }
 
 func TestWithDetails(t *testing.T) {
@@ -134,4 +162,42 @@ func TestErrorTrace_ToJSON_NonNil(t *testing.T) {
 	trace := &ErrorTrace{Origin: "file.go:fn", Line: 42}
 	j := trace.ToJSON()
 	assert.NotNil(t, j)
+}
+
+func TestAppError_ToPrimitives(t *testing.T) {
+	t.Parallel()
+
+	t.Run("flattens type, code, description, details, and stack trace", func(t *testing.T) {
+		t.Parallel()
+		err := BadRequestError(testCode).
+			WithDescription("bad input").
+			WithDetails(map[string]any{"field": "name"})
+
+		p := err.ToPrimitives()
+		assert.Equal(t, err.ErrorId, p.ErrorId)
+		assert.Equal(t, "BAD_REQUEST", p.Type)
+		assert.Equal(t, "TEST_CODE", p.Code)
+		assert.Equal(t, "bad input", p.Description)
+		assert.Equal(t, map[string]any{"field": "name"}, p.Details)
+		assert.NotNil(t, p.StackTrace)
+	})
+
+	t.Run("flattens every cause into its error message", func(t *testing.T) {
+		t.Parallel()
+		err := BadRequestError(testCode).
+			WithCause(fmt.Errorf("public cause"), true).
+			WithCause(fmt.Errorf("private cause"), false)
+
+		p := err.ToPrimitives()
+		assert.Equal(t, []string{"public cause", "private cause"}, p.Cause)
+	})
+
+	t.Run("returns empty cause slice and nil stack trace when absent", func(t *testing.T) {
+		t.Parallel()
+		err := &AppError{ErrorId: "id", Type: InternalErrorType, Code: testCode}
+
+		p := err.ToPrimitives()
+		assert.Empty(t, p.Cause)
+		assert.Nil(t, p.StackTrace)
+	})
 }

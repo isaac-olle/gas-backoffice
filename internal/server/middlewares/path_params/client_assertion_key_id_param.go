@@ -12,7 +12,7 @@ func ClientAssertionKeyIdParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		keyId, err := ids.NewClientAssertionKeyIdFromString(c.Param(clientAssertionKeyIdParam))
 		if err != nil {
-			_ = c.Error(app_errors.BadRequestError("INVALID_ASSERTION_KEY_ID").WithDescription("invalid assertion key id").WithCause(err))
+			_ = c.Error(app_errors.BadRequestError("INVALID_ASSERTION_KEY_ID").WithDescription("invalid assertion key id").WithCause(err, false))
 			c.Abort()
 			return
 		}

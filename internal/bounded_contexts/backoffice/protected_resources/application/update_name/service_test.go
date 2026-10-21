@@ -8,6 +8,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"testing"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
@@ -24,7 +25,8 @@ func newService(t *testing.T) (*update_name.Service, *prmocks.MockRepository, *e
 	repo := prmocks.NewMockRepository(t)
 	bus := eventmocks.NewMockBus(t)
 	finder := domain_services.NewProtectedResourceFinder(repo)
-	return update_name.NewService(finder, repo, bus), repo, bus
+	duplicateNameChecker := domain_services.NewDuplicateNameChecker(repo)
+	return update_name.NewService(finder, duplicateNameChecker, repo, bus), repo, bus
 }
 
 func TestUpdateName(t *testing.T) {
@@ -33,12 +35,14 @@ func TestUpdateName(t *testing.T) {
 	t.Run("saves PR with updated name and publishes ProtectedResourceNameUpdated event", func(t *testing.T) {
 		t.Parallel()
 		svc, repo, bus := newService(t)
-		pr := aPR(t)
+		userId := ids.NewUserId()
+		pr := aPR(t, userId)
 		prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 		require.NoError(t, err)
 
 		var saved *protected_resources.ProtectedResource
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
 		repo.EXPECT().
 			Save(mock.Anything, mock.MatchedBy(func(p *protected_resources.ProtectedResource) bool {
 				saved = p
@@ -51,15 +55,28 @@ func TestUpdateName(t *testing.T) {
 			})).
 			Return()
 
-		require.NoError(t, svc.UpdateName(context.Background(), update_name.NewCommand(prId, "New Name")))
+		require.NoError(t, svc.UpdateName(context.Background(), update_name.NewCommand(prId, "New Name", ids.NewUserId().String(), userId.String())))
 		require.NotNil(t, saved)
 		assert.Equal(t, "New Name", saved.ToPrimitives().Name)
+	})
+
+	t.Run("returns forbidden error when user is not the owner", func(t *testing.T) {
+		t.Parallel()
+		svc, repo, _ := newService(t)
+		pr := aPR(t, ids.NewUserId())
+		prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
+		require.NoError(t, err)
+
+		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+
+		err = svc.UpdateName(context.Background(), update_name.NewCommand(prId, "New Name", ids.NewUserId().String(), ids.NewUserId().String()))
+		assertErrCode(t, err, protected_resources.ErrInvalidOwnership)
 	})
 
 	errCases := []struct {
 		desc      string
 		newName   string
-		setupRepo func(repo *prmocks.MockRepository) ids.ProtectedResourceId
+		setupRepo func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, string)
 		wantCode  app_errors.ErrorCode
 	}{
 		{
@@ -68,32 +85,58 @@ func TestUpdateName(t *testing.T) {
 			wantCode: protected_resources.ErrProtectedResourceNotUpdated,
 		},
 		{
-			desc:     "returns bad request error for reserved name",
-			newName:  "Gas Backoffice",
-			wantCode: protected_resources.ErrProtectedResourceNotUpdated,
-		},
-		{
 			desc:    "returns not found error when resource is not in repo",
 			newName: "New Name",
-			setupRepo: func(repo *prmocks.MockRepository) ids.ProtectedResourceId {
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, string) {
 				prId := ids.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, fmt.Errorf("not found"))
-				return prId
+				return prId, ids.NewUserId().String()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
-			desc:    "returns internal error when save fails",
+			desc:    "returns conflict error when name already exists",
 			newName: "New Name",
-			setupRepo: func(repo *prmocks.MockRepository) ids.ProtectedResourceId {
-				pr := aPR(t)
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, string) {
+				userId := ids.NewUserId()
+				pr := aPR(t, userId)
 				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 				require.NoError(t, err)
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
+				return prId, userId.String()
+			},
+			wantCode: protected_resources.ErrProtectedResourceDuplicateName,
+		},
+		{
+			desc:    "returns internal error when save fails",
+			newName: "New Name",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, string) {
+				userId := ids.NewUserId()
+				pr := aPR(t, userId)
+				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
+				require.NoError(t, err)
+				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(fmt.Errorf("db error"))
-				return prId
+				return prId, userId.String()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotSaved,
+		},
+		{
+			desc:    "returns conflict when repository reports concurrent modification",
+			newName: "New Name",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, string) {
+				userId := ids.NewUserId()
+				pr := aPR(t, userId)
+				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
+				require.NoError(t, err)
+				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(persistance.ErrConcurrentModification)
+				return prId, userId.String()
+			},
+			wantCode: protected_resources.ErrProtectedResourceConcurrentModification,
 		},
 	}
 	for _, tc := range errCases {
@@ -103,13 +146,16 @@ func TestUpdateName(t *testing.T) {
 			repo := prmocks.NewMockRepository(t)
 			bus := eventmocks.NewMockBus(t)
 			finder := domain_services.NewProtectedResourceFinder(repo)
+			duplicateNameChecker := domain_services.NewDuplicateNameChecker(repo)
 			var prId ids.ProtectedResourceId
+			var userId string
 			if tc.setupRepo != nil {
-				prId = tc.setupRepo(repo)
+				prId, userId = tc.setupRepo(repo)
 			} else {
 				prId = ids.NewProtectedResourceId()
+				userId = ids.NewUserId().String()
 			}
-			err := update_name.NewService(finder, repo, bus).UpdateName(context.Background(), update_name.NewCommand(prId, tc.newName))
+			err := update_name.NewService(finder, duplicateNameChecker, repo, bus).UpdateName(context.Background(), update_name.NewCommand(prId, tc.newName, ids.NewUserId().String(), userId))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

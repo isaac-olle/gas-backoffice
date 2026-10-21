@@ -26,15 +26,16 @@ func newService(t *testing.T) (*get.Service, *prmocks.MockRepository) {
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns protected resource primitives with correct id, name and no scopes", func(t *testing.T) {
+	t.Run("returns protected resource primitives with correct id, name and user id", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		prId := ids2.NewProtectedResourceId()
-		pr := aPR(t, prId)
+		userId := ids2.NewUserId()
+		pr := aPR(t, prId, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		result, err := svc.Get(context.Background(), get.NewQuery(prId))
+		result, err := svc.Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), userId))
 		require.NoError(t, err)
 
 		pr, ok := result.(*protected_resources.ProtectedResource)
@@ -42,29 +43,19 @@ func TestGet(t *testing.T) {
 		prims := pr.ToPrimitives()
 		assert.Equal(t, prId.String(), prims.Id)
 		assert.Equal(t, "My Resource", prims.Name)
-		assert.Empty(t, prims.ScopeIds)
-		assert.NotEmpty(t, prims.UserId)
 		assert.NotEmpty(t, prims.UserId)
 	})
 
-	t.Run("includes scope ids in the returned primitives", func(t *testing.T) {
+	t.Run("returns forbidden error when user is not the owner", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		prId := ids2.NewProtectedResourceId()
-		pr := aPR(t, prId)
-		scopeId := ids2.NewScopeId()
-		pr.AddScopeId(scopeId)
+		pr := aPR(t, prId, ids2.NewUserId())
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		result, err := svc.Get(context.Background(), get.NewQuery(prId))
-		require.NoError(t, err)
-
-		pr, ok := result.(*protected_resources.ProtectedResource)
-		require.True(t, ok)
-		prims := pr.ToPrimitives()
-		assert.Equal(t, prId.String(), prims.Id)
-		assert.Contains(t, prims.ScopeIds, scopeId.String())
+		_, err := svc.Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), ids2.NewUserId()))
+		assertErrCode(t, err, protected_resources.ErrInvalidOwnership)
 	})
 
 	errCases := []struct {
@@ -98,7 +89,7 @@ func TestGet(t *testing.T) {
 			repo := prmocks.NewMockRepository(t)
 			finder := domain_services.NewProtectedResourceFinder(repo)
 			prId := tc.setupRepo(repo)
-			_, err := get.NewService(finder).Get(context.Background(), get.NewQuery(prId))
+			_, err := get.NewService(finder).Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), ids2.NewUserId()))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

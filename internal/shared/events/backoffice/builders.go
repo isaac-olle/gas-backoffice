@@ -4,6 +4,55 @@ import (
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 )
 
+type subscriptionCreatedBuilder struct{}
+
+func NewSubscriptionCreatedBuilder() event2.PrimitiveEventBuilder {
+	return &subscriptionCreatedBuilder{}
+}
+func (b *subscriptionCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return SubscriptionCreated{Name: str(p.Data, "name"), CreatedBy: str(p.Data, "created_by"), BaseEvent: event2.FromPrimitivesBase(p)}, nil
+}
+
+type subscriptionMemberAddedBuilder struct{}
+
+func NewSubscriptionMemberAddedBuilder() event2.PrimitiveEventBuilder {
+	return &subscriptionMemberAddedBuilder{}
+}
+func (b *subscriptionMemberAddedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return SubscriptionMemberAdded{UserId: str(p.Data, "user_id"), BaseEvent: event2.FromPrimitivesBase(p)}, nil
+}
+
+type subscriptionMemberRemovedBuilder struct{}
+
+func NewSubscriptionMemberRemovedBuilder() event2.PrimitiveEventBuilder {
+	return &subscriptionMemberRemovedBuilder{}
+}
+func (b *subscriptionMemberRemovedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return SubscriptionMemberRemoved{UserId: str(p.Data, "user_id"), BaseEvent: event2.FromPrimitivesBase(p)}, nil
+}
+
+// ── Admin ───────────────────────────────────────────────────────────────────
+
+type adminCreatedBuilder struct{}
+
+func NewAdminCreatedBuilder() event2.PrimitiveEventBuilder { return &adminCreatedBuilder{} }
+func (b *adminCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return AdminCreated{
+		Name:      str(p.Data, "name"),
+		BaseEvent: event2.FromPrimitivesBase(p),
+	}, nil
+}
+
+type adminNameChangedBuilder struct{}
+
+func NewAdminNameChangedBuilder() event2.PrimitiveEventBuilder { return &adminNameChangedBuilder{} }
+func (b *adminNameChangedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return AdminNameChanged{
+		Name:      str(p.Data, "name"),
+		BaseEvent: event2.FromPrimitivesBase(p),
+	}, nil
+}
+
 // ── User ────────────────────────────────────────────────────────────────────
 
 type userCreatedBuilder struct{}
@@ -42,7 +91,6 @@ type sessionCreatedBuilder struct{}
 func NewSessionCreatedBuilder() event2.PrimitiveEventBuilder { return &sessionCreatedBuilder{} }
 func (b *sessionCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return SessionCreated{
-		UserId:    str(p.Data, "user_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -54,9 +102,9 @@ type clientCreatedBuilder struct{}
 func NewClientCreatedBuilder() event2.PrimitiveEventBuilder { return &clientCreatedBuilder{} }
 func (b *clientCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ClientCreated{
-		Name:      str(p.Data, "name"),
-		UserId:    str(p.Data, "user_id"),
-		BaseEvent: event2.FromPrimitivesBase(p),
+		Name:           str(p.Data, "name"),
+		SubscriptionId: str(p.Data, "subscription_id"),
+		BaseEvent:      event2.FromPrimitivesBase(p),
 	}, nil
 }
 
@@ -65,17 +113,19 @@ type clientDeletedBuilder struct{}
 func NewClientDeletedBuilder() event2.PrimitiveEventBuilder { return &clientDeletedBuilder{} }
 func (b *clientDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ClientDeleted{
-		UserId:    str(p.Data, "user_id"),
-		BaseEvent: event2.FromPrimitivesBase(p),
+		SubscriptionId: str(p.Data, "subscription_id"),
+		BaseEvent:      event2.FromPrimitivesBase(p),
 	}, nil
 }
 
-type clientFlowAddedBuilder struct{}
+type clientGrantTypeAddedBuilder struct{}
 
-func NewClientFlowAddedBuilder() event2.PrimitiveEventBuilder { return &clientFlowAddedBuilder{} }
-func (b *clientFlowAddedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return ClientFlowAdded{
-		Flow:      str(p.Data, "flow"),
+func NewClientGrantTypeAddedBuilder() event2.PrimitiveEventBuilder {
+	return &clientGrantTypeAddedBuilder{}
+}
+func (b *clientGrantTypeAddedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return ClientGrantTypeAdded{
+		GrantType: str(p.Data, "grant_type"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -92,12 +142,14 @@ func (b *clientRedirectUriAddedBuilder) Build(p *event2.Primitives) (event2.Even
 	}, nil
 }
 
-type clientFlowRemovedBuilder struct{}
+type clientGrantTypeRemovedBuilder struct{}
 
-func NewClientFlowRemovedBuilder() event2.PrimitiveEventBuilder { return &clientFlowRemovedBuilder{} }
-func (b *clientFlowRemovedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return ClientFlowRemoved{
-		Flow:      str(p.Data, "flow"),
+func NewClientGrantTypeRemovedBuilder() event2.PrimitiveEventBuilder {
+	return &clientGrantTypeRemovedBuilder{}
+}
+func (b *clientGrantTypeRemovedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return ClientGrantTypeRemoved{
+		GrantType: str(p.Data, "grant_type"),
 		BaseEvent: event2.FromPrimitivesBase(p),
 	}, nil
 }
@@ -111,9 +163,9 @@ func NewProtectedResourceCreatedBuilder() event2.PrimitiveEventBuilder {
 }
 func (b *protectedResourceCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ProtectedResourceCreated{
-		Name:      str(p.Data, "name"),
-		UserId:    str(p.Data, "user_id"),
-		BaseEvent: event2.FromPrimitivesBase(p),
+		Name:           str(p.Data, "name"),
+		SubscriptionId: str(p.Data, "subscription_id"),
+		BaseEvent:      event2.FromPrimitivesBase(p),
 	}, nil
 }
 
@@ -124,8 +176,8 @@ func NewProtectedResourceDeletedBuilder() event2.PrimitiveEventBuilder {
 }
 func (b *protectedResourceDeletedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
 	return ProtectedResourceDeleted{
-		UserId:    str(p.Data, "user_id"),
-		BaseEvent: event2.FromPrimitivesBase(p),
+		SubscriptionId: str(p.Data, "subscription_id"),
+		BaseEvent:      event2.FromPrimitivesBase(p),
 	}, nil
 }
 
@@ -181,6 +233,21 @@ func (b *scopeClientRemovedBuilder) Build(p *event2.Primitives) (event2.Event, e
 	return ScopeClientRemoved{
 		ClientId:  str(p.Data, "client_id"),
 		BaseEvent: event2.FromPrimitivesBase(p),
+	}, nil
+}
+
+// ── IdentityProvider ──────────────────────────────────────────────────────────
+
+type identityProviderCreatedBuilder struct{}
+
+func NewIdentityProviderCreatedBuilder() event2.PrimitiveEventBuilder {
+	return &identityProviderCreatedBuilder{}
+}
+func (b *identityProviderCreatedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
+	return IdentityProviderCreated{
+		ReferenceName: str(p.Data, "reference_name"),
+		Name:          str(p.Data, "name"),
+		BaseEvent:     event2.FromPrimitivesBase(p),
 	}, nil
 }
 

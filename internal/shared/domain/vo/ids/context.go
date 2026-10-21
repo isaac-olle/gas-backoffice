@@ -10,6 +10,7 @@ type clientSecretIdContextKey struct{}
 type protectedResourceIdContextKey struct{}
 type scopeIdContextKey struct{}
 type sessionIdContextKey struct{}
+type subscriptionIdContextKey struct{}
 
 func WithUserAssertionKeyId(ctx context.Context, id UserAssertionKeyId) context.Context {
 	return context.WithValue(ctx, userAssertionKeyIdContextKey{}, id)
@@ -80,5 +81,14 @@ func WithSessionId(ctx context.Context, id SessionId) context.Context {
 
 func SessionIdFromContext(ctx context.Context) (SessionId, bool) {
 	id, ok := ctx.Value(sessionIdContextKey{}).(SessionId)
+	return id, ok
+}
+
+func WithSubscriptionId(ctx context.Context, id SubscriptionId) context.Context {
+	return context.WithValue(ctx, subscriptionIdContextKey{}, id)
+}
+
+func SubscriptionIdFromContext(ctx context.Context) (SubscriptionId, bool) {
+	id, ok := ctx.Value(subscriptionIdContextKey{}).(SubscriptionId)
 	return id, ok
 }

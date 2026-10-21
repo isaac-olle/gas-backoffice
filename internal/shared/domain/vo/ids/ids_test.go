@@ -172,26 +172,6 @@ func TestNewSessionIdFromString(t *testing.T) {
 	require.Error(t, err)
 }
 
-// ClientCredentialsSessionId
-
-func TestNewClientCredentialsSessionId(t *testing.T) {
-	t.Parallel()
-	id1 := NewClientCredentialsSessionId()
-	id2 := NewClientCredentialsSessionId()
-	assert.NotEmpty(t, id1.String())
-	assert.NotEqual(t, id1.String(), id2.String())
-}
-
-func TestNewClientCredentialsSessionIdFromString(t *testing.T) {
-	t.Parallel()
-	id, err := NewClientCredentialsSessionIdFromString(validUUID)
-	require.NoError(t, err)
-	assert.Equal(t, validUUID, id.String())
-
-	_, err = NewClientCredentialsSessionIdFromString(invalidUUID)
-	require.Error(t, err)
-}
-
 // Table-driven test for error codes on invalid input
 func TestIdFromString_ErrorCodes(t *testing.T) {
 	t.Parallel()
@@ -207,7 +187,6 @@ func TestIdFromString_ErrorCodes(t *testing.T) {
 		{"client_assertion_key", func(s string) error { _, err := NewClientAssertionKeyIdFromString(s); return err }},
 		{"client_secret", func(s string) error { _, err := NewClientSecretIdFromString(s); return err }},
 		{"session", func(s string) error { _, err := NewSessionIdFromString(s); return err }},
-		{"client_credentials_session", func(s string) error { _, err := NewClientCredentialsSessionIdFromString(s); return err }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

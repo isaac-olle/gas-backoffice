@@ -2,6 +2,7 @@ package app_errors
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,16 +30,29 @@ func TestConcatenatedError_AddError(t *testing.T) {
 func TestConcatenatedError_Error_Empty(t *testing.T) {
 	t.Parallel()
 	ce := NewEmptyErrorArray()
-	assert.Equal(t, "[]", ce.Error())
+	assert.Equal(t, "", ce.Error())
 }
 
 func TestConcatenatedError_Error_WithErrors(t *testing.T) {
 	t.Parallel()
 	ce := NewEmptyErrorArray()
 	ce.AddError(errors.New("first error"))
-	s := ce.Error()
-	assert.NotEmpty(t, s)
-	assert.NotEqual(t, "[]", s)
+	// Plain human-readable message, no JSON (avoids double-encoding when nested).
+	assert.Equal(t, "first error", ce.Error())
+}
+
+func TestConcatenatedError_Error_MultipleWithWrappedCause(t *testing.T) {
+	t.Parallel()
+	ce := NewEmptyErrorArray()
+	ce.AddError(fmt.Errorf("invalid client id: %w", errors.New("invalid UUID length: 0")))
+	ce.AddError(errors.New("invalid url, scheme must be http or https"))
+	ce.AddError(errors.New("scope cannot be empty"))
+
+	// Joined with "; "; the wrapped cause is included via each error's .Error().
+	assert.Equal(t,
+		"invalid client id: invalid UUID length: 0; invalid url, scheme must be http or https; scope cannot be empty",
+		ce.Error(),
+	)
 }
 
 func TestConcatenatedError_Errors_Slice(t *testing.T) {

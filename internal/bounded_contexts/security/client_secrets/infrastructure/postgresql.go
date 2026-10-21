@@ -29,17 +29,16 @@ func (r *PostgresClientSecretRepository) Save(ctx context.Context, cs *client_se
 	p := cs.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO security.client_secrets (id, client_id, secret_hash, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO security.client_secrets (id, client_id, subscription_id, secret_hash, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
-			client_id = EXCLUDED.client_id,
 			secret_hash = EXCLUDED.secret_hash
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.SecretHash, authorId, authorRole)
+	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.SubscriptionId, p.SecretHash, authorId, authorRole)
 }
 
 func (r *PostgresClientSecretRepository) SearchById(ctx context.Context, id ids2.ClientSecretId) (*client_secrets.ClientSecret, error) {
-	query := `SELECT id, client_id, secret_hash FROM security.client_secrets WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, subscription_id, secret_hash FROM security.client_secrets WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -58,7 +57,7 @@ func (r *PostgresClientSecretRepository) HardDelete(ctx context.Context, id ids2
 }
 
 func (r *PostgresClientSecretRepository) FindByClientId(ctx context.Context, clientID ids2.ClientId) (*client_secrets.ClientSecret, error) {
-	query := `SELECT id, client_id, secret_hash FROM security.client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`
+	query := `SELECT id, client_id, subscription_id, secret_hash FROM security.client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
 }
 
@@ -73,7 +72,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 
 func (r *PostgresClientSecretRepository) fromRow(row pgx.Row) (*client_secrets.ClientSecret, error) {
 	var p client_secrets.ClientSecretPrimitives
-	err := row.Scan(&p.Id, &p.ClientId, &p.SecretHash)
+	err := row.Scan(&p.Id, &p.ClientId, &p.SubscriptionId, &p.SecretHash)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, app_errors.NotFoundError(client_secrets.ErrClientSecretNotFound).WithDescription("client secret not found")
 	}

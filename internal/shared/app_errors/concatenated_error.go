@@ -1,8 +1,8 @@
 package app_errors
 
 import (
-	"encoding/json"
 	"errors"
+	"strings"
 )
 
 var ErrSeveralErrorsBuildingEntity = errors.New("several errors building entity")
@@ -14,18 +14,11 @@ func NewEmptyErrorArray() *ConcatenatedError {
 }
 
 func (e *ConcatenatedError) Error() string {
-	if len(*e) == 0 {
-		return "[]"
-	}
-	errorsSlice := make([]interface{}, 0, len(*e))
+	messages := make([]string, 0, len(*e))
 	for _, err := range *e {
-		errorsSlice = append(errorsSlice, err)
+		messages = append(messages, err.Error())
 	}
-	b, err := json.Marshal(errorsSlice)
-	if err != nil {
-		return `["failed to marshal errors"]`
-	}
-	return string(b)
+	return strings.Join(messages, "; ")
 }
 
 func (e *ConcatenatedError) AddError(err error) {

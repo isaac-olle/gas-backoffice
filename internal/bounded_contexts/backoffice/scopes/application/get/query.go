@@ -9,11 +9,12 @@ import (
 const QueryType query.Type = "query.backoffice.scope.get"
 
 type Query struct {
-	scopeId ids.ScopeId
+	scopeId             ids.ScopeId
+	protectedResourceId ids.ProtectedResourceId
 }
 
-func NewQuery(scopeId ids.ScopeId) *Query {
-	return &Query{scopeId: scopeId}
+func NewQuery(scopeId ids.ScopeId, protectedResourceId ids.ProtectedResourceId) *Query {
+	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

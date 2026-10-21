@@ -7,6 +7,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
@@ -28,13 +29,24 @@ func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *prot
 	p := pr.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.protected_resources (id, name, user_id, scope_ids, is_system, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO backoffice.protected_resources (id, name, subscription_id, is_system, enabled, scope_ids, author_id, author_role, version)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
-			scope_ids = EXCLUDED.scope_ids
+			enabled = EXCLUDED.enabled,
+			scope_ids = EXCLUDED.scope_ids,
+			version = EXCLUDED.version + 1
+		WHERE backoffice.protected_resources.version = EXCLUDED.version
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserId, p.ScopeIds, p.IsSystem, authorId, authorRole)
+	tag, err := r.postgres.SaveWithResult(ctx, query,
+		p.Id, p.Name, p.SubscriptionId, p.IsSystem, p.Enabled, p.ScopeIds, authorId, authorRole, p.Version)
+	if err != nil {
+		return fmt.Errorf("error saving protected resource: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return persistance.ErrConcurrentModification
+	}
+	return nil
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
@@ -47,12 +59,20 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresProtectedResourceRepository) SearchById(ctx context.Context, id ids.ProtectedResourceId) (*protected_resources.ProtectedResource, error) {
-	query := `SELECT id, name, user_id, scope_ids, is_system FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
-func (r *PostgresProtectedResourceRepository) Matching(ctx context.Context, _ criteria.Criteria) ([]*protected_resources.ProtectedResource, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *PostgresProtectedResourceRepository) Matching(ctx context.Context, c criteria.Criteria) ([]*protected_resources.ProtectedResource, error) {
+	where, args, err := c.ToPostgresql(1)
+	if err != nil {
+		return nil, err
+	}
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version FROM backoffice.protected_resources WHERE deleted_at IS NULL`
+	if where != "" {
+		query += " AND " + where
+	}
+	return r.postgres.FindMany(ctx, query, r.fromRow, args...)
 }
 
 func (r *PostgresProtectedResourceRepository) SoftDelete(ctx context.Context, id ids.ProtectedResourceId) error {
@@ -67,7 +87,7 @@ func (r *PostgresProtectedResourceRepository) HardDelete(ctx context.Context, id
 
 func (r *PostgresProtectedResourceRepository) fromRow(row pgx.Row) (*protected_resources.ProtectedResource, error) {
 	var p protected_resources.ProtectedResourcePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.UserId, &p.ScopeIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.IsSystem, &p.Enabled, &p.ScopeIds, &p.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

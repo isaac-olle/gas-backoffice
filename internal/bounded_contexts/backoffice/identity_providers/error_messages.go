@@ -8,4 +8,7 @@ var (
 	ErrIdentityProviderNotFound      app_errors.ErrorCode = "IDENTITY_PROVIDER_NOT_FOUND"
 	ErrIdentityProviderDisabled      app_errors.ErrorCode = "IDENTITY_PROVIDER_DISABLED"
 	ErrIdentityProviderMisconfigured app_errors.ErrorCode = "IDENTITY_PROVIDER_MISCONFIGURED"
+	ErrInvalidIdentityProvider       app_errors.ErrorCode = "INVALID_IDENTITY_PROVIDER"
+	ErrIdentityProviderNotCreated    app_errors.ErrorCode = "IDENTITY_PROVIDER_NOT_CREATED"
+	ErrIdentityProviderNotSaved      app_errors.ErrorCode = "IDENTITY_PROVIDER_NOT_SAVED"
 )

@@ -36,6 +36,14 @@ func TestNewUrl(t *testing.T) {
 	}
 }
 
+func TestNewUrl_DecodesPercentEncodedInput(t *testing.T) {
+	t.Parallel()
+
+	u, err := NewUrl("http%3A%2F%2F127.0.0.1%3A5173%2Fcallback")
+	require.NoError(t, err)
+	assert.Equal(t, "http://127.0.0.1:5173/callback", u.String())
+}
+
 func TestNewUrl_FragmentNotAllowedOption(t *testing.T) {
 	t.Parallel()
 	opt := NewFragmentNotAllowedOption()

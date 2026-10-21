@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"io"
 	"net/http"
 	"testing"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func TestCreateUserHandler(t *testing.T) {
@@ -34,20 +34,20 @@ func TestCreateUserHandler(t *testing.T) {
 		},
 		{
 			name:     "missing_user_id_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
+			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
 			userIdFn: handlerstest.MissingUserIdExtractor(),
 			wantErr:  true,
 		},
 		{
 			name:     "bus_error_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
+			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
 			userIdFn: handlerstest.ValidUserIdExtractor(),
 			busErr:   errors.New("bus error"),
 			wantErr:  true,
 		},
 		{
 			name:       "success_returns_201",
-			body:       handlerstest.JsonBody(map[string]string{"name": "My User", "role": "tenant"}),
+			body:       handlerstest.JsonBody(map[string]string{"name": "My User"}),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusCreated,
@@ -56,6 +56,7 @@ func TestCreateUserHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
 			h := users.NewCreateUserHandler(bus, tt.userIdFn, handlerstest.ValidUserIdExtractor())
 

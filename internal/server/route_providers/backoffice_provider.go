@@ -13,9 +13,8 @@ type Backoffice struct {
 	queryBus        query.Bus
 	commandExecutor command.CommandExecutor
 	pgxPool         *pgxpool.Pool
-	backofficePrId  string
 	jwtIssuer       string
-	publicBaseURL   string
+	cookieOrigins   []string
 }
 
 func NewBackoffice(
@@ -23,16 +22,16 @@ func NewBackoffice(
 	queryBus query.Bus,
 	commandExecutor command.CommandExecutor,
 	pgxPool *pgxpool.Pool,
-	backofficePrId, jwtIssuer, publicBaseURL string,
+	jwtIssuer string,
+	cookieOrigins []string,
 ) *Backoffice {
 	return &Backoffice{
 		executor:        executor,
 		queryBus:        queryBus,
 		commandExecutor: commandExecutor,
 		pgxPool:         pgxPool,
-		backofficePrId:  backofficePrId,
 		jwtIssuer:       jwtIssuer,
-		publicBaseURL:   publicBaseURL,
+		cookieOrigins:   cookieOrigins,
 	}
 }
 
@@ -41,7 +40,9 @@ func (p *Backoffice) Register(root *gin.RouterGroup) {
 	g := v1.Group("/backoffice")
 	registerAdmins(g, p)
 	registerUsers(g, p)
-
-	// federated login (OIDC) — public, mounted at /v1/auth/... (not under /backoffice)
-	registerAuth(v1, p)
+	registerSubscriptions(g, p)
+	registerSubscriptionResources(g, p)
+	registerIdentityProviders(g, p)
+	registerErrorLogs(g, p)
+	registerAuth(g, p)
 }

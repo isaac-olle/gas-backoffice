@@ -10,15 +10,17 @@ import (
 const CommandType command.Type = "command.backoffice.client.create"
 
 type Command struct {
-	clientID     ids.ClientId
-	name         string
-	ownership    clients.Ownership
-	allowedFlows []string
-	redirectUris []string
+	clientID          ids.ClientId
+	name              string
+	ownership         clients.Ownership
+	allowedGrantTypes []string
+	redirectUris      []string
+	public            bool
+	isSystem          bool
 }
 
-func NewCommand(id ids.ClientId, name string, ownership clients.Ownership, allowedFlows, redirectUris []string) *Command {
-	return &Command{clientID: id, name: name, ownership: ownership, allowedFlows: allowedFlows, redirectUris: redirectUris}
+func NewCommand(id ids.ClientId, name string, ownership clients.Ownership, allowedGrantTypes, redirectUris []string, public bool, isSystem bool) *Command {
+	return &Command{clientID: id, name: name, ownership: ownership, allowedGrantTypes: allowedGrantTypes, redirectUris: redirectUris, public: public, isSystem: isSystem}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

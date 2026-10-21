@@ -12,6 +12,7 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
+	keyPairInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure"
 	kpmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
@@ -44,7 +45,7 @@ func TestCreateKeyPairService_HappyPath(t *testing.T) {
 		publishedEvts = evts
 	})
 
-	svc := create.NewService(repo, bus)
+	svc := create.NewService(repo, bus, keyPairInfra.NewPEMKeyGenerator())
 
 	cmd := create.NewCommand(id, prId, "RS256")
 	require.NoError(t, svc.Create(context.Background(), cmd))
@@ -80,7 +81,7 @@ func TestCreateKeyPairService_ECAlgorithms(t *testing.T) {
 			bus := eventmocks.NewMockBus(t)
 			bus.EXPECT().Publish(mock.Anything, mock.Anything)
 
-			svc := create.NewService(repo, bus)
+			svc := create.NewService(repo, bus, keyPairInfra.NewPEMKeyGenerator())
 			cmd := create.NewCommand(uuid.New().String(), uuid.New().String(), alg)
 			require.NoError(t, svc.Create(context.Background(), cmd))
 
@@ -140,7 +141,7 @@ func TestCreateKeyPairService_ErrorCases(t *testing.T) {
 				tc.setupRepo(repo)
 			}
 			bus := eventmocks.NewMockBus(t)
-			svc := create.NewService(repo, bus)
+			svc := create.NewService(repo, bus, keyPairInfra.NewPEMKeyGenerator())
 
 			cmd := create.NewCommand(tc.id, tc.prId, tc.algorithm)
 			err := svc.Create(context.Background(), cmd)

@@ -23,7 +23,7 @@ func NewService(clientFinder *domain_services.ClientFinder, repository clients.R
 func (s *Service) SoftDelete(ctx context.Context, cmd *Command) error {
 	clientId, err := ids.NewClientIdFromString(cmd.clientId)
 	if err != nil {
-		return app_errors.BadRequestError(clients.ErrClientNotFound).WithCause(err)
+		return app_errors.BadRequestError(clients.ErrClientNotFound).WithCause(err, false)
 	}
 
 	client, err := s.clientFinder.Find(ctx, clientId)
@@ -31,11 +31,22 @@ func (s *Service) SoftDelete(ctx context.Context, cmd *Command) error {
 		return app_errors.AddTrace(err)
 	}
 
+	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if err = client.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	if client.IsSystemResource() {
+		return app_errors.ForbiddenError(clients.ErrSystemResource).
+			WithDescription("client is a system resource and cannot be deleted")
+	}
+
 	client.Delete()
 
 	if err = s.repository.SoftDelete(ctx, clientId); err != nil {
-		return app_errors.InternalError(clients.ErrClientNotSaved).
-			WithCause(err)
+		return app_errors.InternalError(clients.ErrClientNotSaved).WithCause(
+			err, false)
+
 	}
 
 	s.eventBus.Publish(ctx, client.PullDomainEvents())

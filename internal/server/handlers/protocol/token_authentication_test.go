@@ -1,109 +1,42 @@
 package protocol_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authenticate_client"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
-	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
-type mockAuthMethod struct {
-	canProcess bool
-	canErr     error
-	clientID   string
-	authErr    error
+type stubAuthClientService struct {
+	result authenticate_client.Result
+	err    error
 }
 
-func (m *mockAuthMethod) CanProcess(_ *gin.Context) (bool, error) {
-	return m.canProcess, m.canErr
+func (s *stubAuthClientService) Authenticate(_ context.Context, _ authenticate_client.Credentials) (authenticate_client.Result, error) {
+	return s.result, s.err
 }
 
-func (m *mockAuthMethod) Authenticate(_ *gin.Context) (string, error) {
-	return m.clientID, m.authErr
-}
-
-func newAuthCtx() (*httptest.ResponseRecorder, *gin.Context) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request, _ = http.NewRequest(http.MethodPost, "/", nil)
-	return w, c
-}
-
-func TestTokenAuthenticationHandler_Execute(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		method     *mockAuthMethod
-		wantErr    bool
-		wantClient string
-	}{
-		{
-			name:    "no_method_matches",
-			method:  &mockAuthMethod{canProcess: false},
-			wantErr: true,
-		},
-		{
-			name:    "can_process_returns_error",
-			method:  &mockAuthMethod{canProcess: true, canErr: assert.AnError},
-			wantErr: true,
-		},
-		{
-			name:    "authenticate_returns_error",
-			method:  &mockAuthMethod{canProcess: true, authErr: assert.AnError},
-			wantErr: true,
-		},
-		{
-			name:       "success",
-			method:     &mockAuthMethod{canProcess: true, clientID: "client-123"},
-			wantClient: "client-123",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			h := protocol.NewTokenAuthenticationHandler(
-				authentication_methods.NewClientAuthMethodFactory(tt.method),
-			)
-			_, c := newAuthCtx()
-
-			_, err := h.Execute(c)
-			if tt.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			clientID, ok := protocol.AuthenticatedClientIDFromContext(c.Request.Context())
-			assert.True(t, ok)
-			assert.Equal(t, tt.wantClient, clientID)
-		})
-	}
-}
-
-func TestTokenAuthenticationHandler_Success_CallsNext(t *testing.T) {
+func TestTokenAuthentication_ConfidentialClient(t *testing.T) {
 	t.Parallel()
 
 	nextCalled := false
-
 	hm := middlewares.NewHandlerMiddleware()
-	h := protocol.NewTokenAuthenticationHandler(
-		authentication_methods.NewClientAuthMethodFactory(
-			&mockAuthMethod{canProcess: true, clientID: "client-123"},
-		),
-	)
+	svc := &stubAuthClientService{result: authenticate_client.Result{ClientID: "conf-client"}}
 
 	r := gin.New()
-	r.POST("/", hm.Run(h), func(c *gin.Context) {
+	r.POST("/", protocol.TokenAuthentication(svc), hm.Run(&noopHandler{}), func(c *gin.Context) {
 		nextCalled = true
+		clientID, ok := protocol.AuthenticatedClientIDFromContext(c.Request.Context())
+		assert.True(t, ok)
+		assert.Equal(t, "conf-client", clientID)
+		assert.False(t, protocol.IsPublicClientFromContext(c.Request.Context()))
 	})
 
 	w := httptest.NewRecorder()
@@ -113,15 +46,50 @@ func TestTokenAuthenticationHandler_Success_CallsNext(t *testing.T) {
 	assert.True(t, nextCalled)
 }
 
-func TestTokenAuthenticationHandler_Default(t *testing.T) {
+func TestTokenAuthentication_PublicClient(t *testing.T) {
 	t.Parallel()
 
-	h := protocol.NewTokenAuthenticationHandler(
-		authentication_methods.NewClientAuthMethodFactory(),
-	)
-	w, c := newAuthCtx()
+	nextCalled := false
+	hm := middlewares.NewHandlerMiddleware()
+	svc := &stubAuthClientService{result: authenticate_client.Result{ClientID: "pub-client", IsPublic: true}}
 
-	h.Default(c)
+	r := gin.New()
+	r.POST("/", protocol.TokenAuthentication(svc), hm.Run(&noopHandler{}), func(c *gin.Context) {
+		nextCalled = true
+		clientID, ok := protocol.AuthenticatedClientIDFromContext(c.Request.Context())
+		assert.True(t, ok)
+		assert.Equal(t, "pub-client", clientID)
+		assert.True(t, protocol.IsPublicClientFromContext(c.Request.Context()))
+	})
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, "/", nil)
+	r.ServeHTTP(w, req)
+
+	assert.True(t, nextCalled)
 }
+
+func TestTokenAuthentication_AuthFailure(t *testing.T) {
+	t.Parallel()
+
+	nextCalled := false
+	svc := &stubAuthClientService{err: assert.AnError}
+
+	r := gin.New()
+	r.POST("/", protocol.TokenAuthentication(svc), func(c *gin.Context) {
+		nextCalled = true
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, "/", nil)
+	r.ServeHTTP(w, req)
+
+	assert.False(t, nextCalled)
+	_ = w
+}
+
+type noopHandler struct{}
+
+func (h *noopHandler) Execute(_ *gin.Context) (any, error) { return nil, nil }
+func (h *noopHandler) Success(c *gin.Context, _ any) error { c.Next(); return nil }
+func (h *noopHandler) Default(_ *gin.Context)              {}

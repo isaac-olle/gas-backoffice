@@ -18,8 +18,10 @@ func GenerateState() (State, error) {
 	b := make([]byte, stateByteLength)
 	if _, err := rand.Read(b); err != nil {
 		return State{}, app_errors.InternalError("STATE_GENERATION_FAILED").
-			WithDescription("failed to generate secure state").
-			WithCause(err)
+			WithDescription("failed to generate secure state").WithCause(
+
+			err, false)
+
 	}
 	return State{value: base64.RawURLEncoding.EncodeToString(b)}, nil
 }

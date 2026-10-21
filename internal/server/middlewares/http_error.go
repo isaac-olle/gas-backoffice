@@ -22,9 +22,12 @@ func HttpError(
 		var appError *app_errors.AppError
 		if !errors.As(err, &appError) {
 			appError = app_errors.InternalError(errInvalidErrorType).
-				WithDescription("error type is not 'app_error'").
-				WithCause(err)
+				WithDescription("error type is not 'app_error'").WithCause(
+
+				err, false)
+
 		}
+		appError.WithRequestId(c.GetString(RequestIDHeader))
 
 		for _, manager := range errorManagers {
 			manager.Manage(appError)

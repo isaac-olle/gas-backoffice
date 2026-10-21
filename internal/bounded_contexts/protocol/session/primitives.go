@@ -1,17 +1,42 @@
 package session
 
+import "time"
+
+type BaseSessionPrimitives struct {
+	ClientID            string
+	Scope               string
+	GrantType           string
+	ProtectedResourceId string
+}
+
 type AuthorizationCodeSessionPrimitives struct {
-	SessionID     string
-	ClientID      string
-	RedirectURI   string
-	Scope         string
-	State         string
-	ResponseTypes []string
-	Code          string
-	Pkce          *PkcePrimitives
-	SessionState  string
-	Flow          string
-	Consumed      bool
+	*BaseSessionPrimitives
+	SessionID         string
+	ClientOwnerUserId string
+	RedirectURI       string
+	State             string
+	ResponseTypes     []string
+	Code              string
+	Pkce              *PkcePrimitives
+	SessionState      string
+	Consumed          bool
+	Identity          UserIdentityPrimitives
+}
+
+// UserIdentityPrimitives is the flattened persistence shape of
+// sessionvos.UserIdentity, stored on the same row as the session.
+type UserIdentityPrimitives struct {
+	IdpId        string
+	IDToken      string
+	AccessToken  string
+	RefreshToken *string
+	Claims       IdpClaimsPrimitives
+	ExpiresAt    time.Time
+}
+
+type IdpClaimsPrimitives struct {
+	Sub   string `json:"sub"`
+	Email string `json:"email"`
 }
 
 type PkcePrimitives struct {
@@ -20,9 +45,8 @@ type PkcePrimitives struct {
 }
 
 type ClientCredentialsSessionPrimitives struct {
+	*BaseSessionPrimitives
 	ID       string
-	ClientID string
 	UserId   string
-	Scope    string
 	IssuedAt string
 }

@@ -2,39 +2,40 @@ package clients
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type CreateClientHandler struct {
 	commandExecutor command.CommandExecutor
 	clientId        func(context.Context) (ids.ClientId, bool)
-	userId          func(context.Context) (ids.UserId, bool)
+	subscriptionId  func(context.Context) (ids.SubscriptionId, bool)
 }
 
 func NewCreateClientHandler(
 	commandExecutor command.CommandExecutor,
 	clientId func(context.Context) (ids.ClientId, bool),
-	userId func(context.Context) (ids.UserId, bool),
+	subscriptionId func(context.Context) (ids.SubscriptionId, bool),
 ) *CreateClientHandler {
 	return &CreateClientHandler{
 		commandExecutor: commandExecutor,
 		clientId:        clientId,
-		userId:          userId,
+		subscriptionId:  subscriptionId,
 	}
 }
 
 type createClientRequest struct {
-	Name         string   `json:"name" binding:"required"`
-	AllowedFlows []string `json:"allowed_flows" binding:"required,min=1"`
-	RedirectUris []string `json:"redirect_uris" binding:"required,min=1"`
+	Name              string   `json:"name" binding:"required"`
+	AllowedGrantTypes []string `json:"allowed_grant_types" binding:"required,min=1"`
+	RedirectUris      []string `json:"redirect_uris" binding:"required,min=1"`
+	Public            bool     `json:"public"`
 }
 
 func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
@@ -48,13 +49,13 @@ func (h *CreateClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	userId, ok := h.userId(c.Request.Context())
+	subscriptionId, ok := h.subscriptionId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_USER_ID")
+		return nil, app_errors.InternalError("MISSING_SUBSCRIPTION_ID")
 	}
 
 	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), clientCreate.NewCommand(
-		clientId, req.Name, clients.NewOwnership(userId), req.AllowedFlows, req.RedirectUris,
+		clientId, req.Name, clients.NewOwnership(subscriptionId), req.AllowedGrantTypes, req.RedirectUris, req.Public, false,
 	))
 }
 

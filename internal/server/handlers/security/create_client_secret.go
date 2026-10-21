@@ -37,7 +37,7 @@ type createClientSecretRequest struct {
 func (h *CreateClientSecretHandler) Execute(c *gin.Context) (any, error) {
 	var req createClientSecretRequest
 	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
-		return nil, app_errors.BadRequestError("INVALID_CLIENT_SECRET_REQUEST").WithCause(err)
+		return nil, app_errors.BadRequestError("INVALID_CLIENT_SECRET_REQUEST").WithCause(err, false)
 	}
 
 	clientId, ok := h.clientId(c.Request.Context())
@@ -52,7 +52,7 @@ func (h *CreateClientSecretHandler) Execute(c *gin.Context) (any, error) {
 
 	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
-		clientSecretCreate.NewCommand(secretId.String(), clientId.String(), req.PlaintextSecret),
+		clientSecretCreate.NewCommand(secretId, clientId, req.PlaintextSecret),
 	)
 }
 

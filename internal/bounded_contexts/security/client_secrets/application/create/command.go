@@ -3,17 +3,18 @@ package create
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const CommandType command.Type = "command.security.client_secret.create"
 
 type Command struct {
-	id          string
-	clientId    string
+	id          ids.ClientSecretId
+	clientId    ids.ClientId
 	plainSecret string
 }
 
-func NewCommand(id, clientId, plainSecret string) *Command {
+func NewCommand(id ids.ClientSecretId, clientId ids.ClientId, plainSecret string) *Command {
 	return &Command{id: id, clientId: clientId, plainSecret: plainSecret}
 }
 

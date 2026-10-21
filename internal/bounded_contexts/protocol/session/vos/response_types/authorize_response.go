@@ -1,6 +1,9 @@
 package response_types
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 type AuthorizeResponse struct {
 	baseURL        string
@@ -53,12 +56,15 @@ func (r *AuthorizeResponse) Build() string {
 	return result
 }
 
+// buildParamsString percent-encodes every pair. Concatenar-los crus corrompia
+// qualsevol valor amb caràcters reservats — en particular un state en base64
+// estàndard, on el '+' arribava al destí convertit en espai.
 func (r *AuthorizeResponse) buildParamsString(params map[string]string) string {
-	pairs := make([]string, 0, len(params))
+	values := url.Values{}
 	for key, value := range params {
 		if value != "" {
-			pairs = append(pairs, key+"="+value)
+			values.Set(key, value)
 		}
 	}
-	return strings.Join(pairs, "&")
+	return values.Encode()
 }

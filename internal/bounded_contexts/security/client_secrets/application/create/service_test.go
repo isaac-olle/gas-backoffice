@@ -10,12 +10,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/_shared/client_projection"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/create"
 	csmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	securityEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 )
 
@@ -26,95 +28,169 @@ func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
 	assert.Equal(t, code, appErr.Code)
 }
 
+func newService(repo client_secrets.Repository, hasher client_secrets.SecretHasher, bus event.Bus, projection *client_projection.ClientProjection) *create.Service {
+	return create.NewService(&fakeClientProjectionRepository{projection: projection}, repo, hasher, bus)
+}
+
+func newClientId(t *testing.T) ids2.ClientId {
+	t.Helper()
+	id, err := ids2.NewClientIdFromString(uuid.New().String())
+	require.NoError(t, err)
+	return id
+}
+
+func newSecretId(t *testing.T) ids2.ClientSecretId {
+	t.Helper()
+	id, err := ids2.NewClientSecretIdFromString(uuid.New().String())
+	require.NoError(t, err)
+	return id
+}
+
 func TestCreateClientSecretService_HappyPath(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New().String()
-	clientId := uuid.New().String()
 	const plainSecret = "plaintext-secret"
 	const hashedSecret = "$argon2id$hashed"
 
-	var savedCS *client_secrets.ClientSecret
-	repo := csmocks.NewMockRepository(t)
-	repo.EXPECT().Save(mock.Anything, mock.Anything).Run(func(_ context.Context, cs *client_secrets.ClientSecret) {
-		savedCS = cs
-	}).Return(nil)
+	adminId := ids2.NewUserId()
+	tenantId := ids2.NewUserId()
 
-	hasher := &mockSecretHasher{hash: hashedSecret}
+	tests := []struct {
+		name          string
+		callerUserId  ids2.UserId
+		callerAdminId ids2.UserId
+	}{
+		{
+			name:          "owning tenant creates a secret for its own client",
+			callerUserId:  tenantId,
+			callerAdminId: adminId,
+		},
+		{
+			name:          "owning admin creates a secret for its tenant's client",
+			callerUserId:  adminId,
+			callerAdminId: adminId,
+		},
+	}
 
-	var publishedEvts []event.Event
-	bus := eventmocks.NewMockBus(t)
-	bus.EXPECT().Publish(mock.Anything, mock.Anything).Run(func(_ context.Context, evts []event.Event) {
-		publishedEvts = evts
-	})
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	svc := create.NewService(repo, hasher, bus)
+			id := newSecretId(t)
+			clientId := newClientId(t)
 
-	cmd := create.NewCommand(id, clientId, plainSecret)
-	require.NoError(t, svc.Create(context.Background(), cmd))
+			var savedCS *client_secrets.ClientSecret
+			repo := csmocks.NewMockRepository(t)
+			repo.EXPECT().Save(mock.Anything, mock.Anything).Run(func(_ context.Context, cs *client_secrets.ClientSecret) {
+				savedCS = cs
+			}).Return(nil)
 
-	require.NotNil(t, savedCS)
-	p := savedCS.ToPrimitives()
-	assert.Equal(t, id, p.Id)
-	assert.Equal(t, clientId, p.ClientId)
-	assert.Equal(t, hashedSecret, p.SecretHash)
+			var publishedEvts []event.Event
+			bus := eventmocks.NewMockBus(t)
+			bus.EXPECT().Publish(mock.Anything, mock.Anything).Run(func(_ context.Context, evts []event.Event) {
+				publishedEvts = evts
+			})
 
-	require.Len(t, publishedEvts, 1)
-	evt, ok := publishedEvts[0].(securityEvents.ClientSecretCreated)
-	require.True(t, ok, "expected ClientSecretCreated event")
-	assert.Equal(t, clientId, evt.ClientId)
-	assert.Equal(t, id, evt.AggregateID())
+			svc := newService(repo, &mockSecretHasher{hash: hashedSecret}, bus, aClientProjection(clientId, adminId, tenantId))
+
+			cmd := create.NewCommand(id, clientId, tc.callerUserId, tc.callerAdminId, plainSecret)
+			require.NoError(t, svc.Create(context.Background(), cmd))
+
+			require.NotNil(t, savedCS)
+			p := savedCS.ToPrimitives()
+			assert.Equal(t, id.String(), p.Id)
+			assert.Equal(t, clientId.String(), p.ClientId)
+			// Ownership is the CLIENT's owner, not the caller's own ids.
+			assert.Equal(t, tenantId.String(), p.UserId)
+			assert.Equal(t, adminId.String(), p.AdminId)
+			assert.Equal(t, hashedSecret, p.SecretHash)
+
+			require.Len(t, publishedEvts, 1)
+			evt, ok := publishedEvts[0].(securityEvents.ClientSecretCreated)
+			require.True(t, ok, "expected ClientSecretCreated event")
+			assert.Equal(t, clientId.String(), evt.ClientId)
+			assert.Equal(t, id.String(), evt.AggregateID())
+		})
+	}
 }
 
 func TestCreateClientSecretService_ErrorCases(t *testing.T) {
 	t.Parallel()
 
+	adminId := ids2.NewUserId()
+	tenantId := ids2.NewUserId()
+	otherAdminId := ids2.NewUserId()
+
 	tests := []struct {
-		name        string
-		id          string
-		clientId    string
-		plainSecret string
-		setupRepo   func(repo *csmocks.MockRepository)
-		setupHasher func(hasher *mockSecretHasher)
-		wantErrCode app_errors.ErrorCode
+		name          string
+		callerUserId  ids2.UserId
+		callerAdminId ids2.UserId
+		plainSecret   string
+		hasher        *mockSecretHasher
+		noClient      bool
+		setupRepo     func(repo *csmocks.MockRepository)
+		wantErrCode   app_errors.ErrorCode
 	}{
 		{
-			name:        "rejects invalid client id",
-			id:          uuid.New().String(),
-			clientId:    "not-a-uuid",
-			plainSecret: "plaintext",
-			wantErrCode: client_secrets.ErrClientSecretNotCreated,
+			name:          "returns not found when client does not exist",
+			callerUserId:  tenantId,
+			callerAdminId: adminId,
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{hash: "hash"},
+			noClient:      true,
+			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
 		},
 		{
-			name:        "rejects invalid secret id",
-			id:          "not-a-uuid",
-			clientId:    uuid.New().String(),
-			plainSecret: "plain",
-			setupHasher: func(hasher *mockSecretHasher) { hasher.hash = "somehash" },
-			wantErrCode: client_secrets.ErrClientSecretNotCreated,
+			name:          "rejects empty plain secret",
+			callerUserId:  tenantId,
+			callerAdminId: adminId,
+			plainSecret:   "",
+			hasher:        &mockSecretHasher{hash: "hash"},
+			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
 		},
 		{
-			name:        "propagates hasher error",
-			id:          uuid.New().String(),
-			clientId:    uuid.New().String(),
-			plainSecret: "plain",
-			setupHasher: func(hasher *mockSecretHasher) {
-				hasher.err = errors.New("hash failed")
-			},
-			wantErrCode: client_secrets.ErrClientSecretNotCreated,
+			name:          "propagates hasher error",
+			callerUserId:  tenantId,
+			callerAdminId: adminId,
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{err: errors.New("hash failed")},
+			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
 		},
 		{
-			name:        "wraps repository save error",
-			id:          uuid.New().String(),
-			clientId:    uuid.New().String(),
-			plainSecret: "plain",
-			setupHasher: func(hasher *mockSecretHasher) {
-				hasher.hash = "hash"
-			},
+			name:          "wraps repository save error",
+			callerUserId:  tenantId,
+			callerAdminId: adminId,
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{hash: "hash"},
 			setupRepo: func(repo *csmocks.MockRepository) {
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			wantErrCode: client_secrets.ErrClientSecretNotSaved,
+		},
+		{
+			name:          "returns forbidden when client belongs to an unrelated user",
+			callerUserId:  ids2.NewUserId(),
+			callerAdminId: ids2.NewUserId(),
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{hash: "hash"},
+			wantErrCode:   client_secrets.ErrInvalidOwnership,
+		},
+		{
+			name:          "returns forbidden for a sibling tenant under the same admin",
+			callerUserId:  ids2.NewUserId(),
+			callerAdminId: adminId,
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{hash: "hash"},
+			wantErrCode:   client_secrets.ErrInvalidOwnership,
+		},
+		{
+			name:          "returns forbidden for a different admin",
+			callerUserId:  otherAdminId,
+			callerAdminId: otherAdminId,
+			plainSecret:   "plain",
+			hasher:        &mockSecretHasher{hash: "hash"},
+			wantErrCode:   client_secrets.ErrInvalidOwnership,
 		},
 	}
 
@@ -127,14 +203,17 @@ func TestCreateClientSecretService_ErrorCases(t *testing.T) {
 			if tc.setupRepo != nil {
 				tc.setupRepo(repo)
 			}
-			hasher := &mockSecretHasher{}
-			if tc.setupHasher != nil {
-				tc.setupHasher(hasher)
-			}
 			bus := eventmocks.NewMockBus(t)
-			svc := create.NewService(repo, hasher, bus)
 
-			cmd := create.NewCommand(tc.id, tc.clientId, tc.plainSecret)
+			clientId := newClientId(t)
+			var projection *client_projection.ClientProjection
+			if !tc.noClient {
+				projection = aClientProjection(clientId, adminId, tenantId)
+			}
+
+			svc := newService(repo, tc.hasher, bus, projection)
+
+			cmd := create.NewCommand(newSecretId(t), clientId, tc.callerUserId, tc.callerAdminId, tc.plainSecret)
 			err := svc.Create(context.Background(), cmd)
 
 			assertErrCode(t, err, tc.wantErrCode)

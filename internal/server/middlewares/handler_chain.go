@@ -30,7 +30,7 @@ func NewHandlerChain(pool TxStarter, onSuccess func(*gin.Context) error, handler
 func (ch *HandlerChain) Execute(c *gin.Context) (any, error) {
 	tx, err := ch.pool.Begin(c.Request.Context())
 	if err != nil {
-		return nil, app_errors.InternalError(errBeginTx).WithCause(err)
+		return nil, app_errors.InternalError(errBeginTx).WithCause(err, false)
 	}
 
 	ctx := persistance.ContextWithTx(c.Request.Context(), tx)
@@ -45,7 +45,7 @@ func (ch *HandlerChain) Execute(c *gin.Context) (any, error) {
 
 	if err = tx.Commit(c.Request.Context()); err != nil {
 		_ = tx.Rollback(c.Request.Context())
-		return nil, app_errors.InternalError(errCommitTx).WithCause(err)
+		return nil, app_errors.InternalError(errCommitTx).WithCause(err, false)
 	}
 
 	return nil, nil

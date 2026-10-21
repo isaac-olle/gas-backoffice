@@ -3,6 +3,7 @@ package error_presenters
 import (
 	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,11 +16,17 @@ func NewHttpErrorPresenter() *HttpErrorPresenter {
 
 func (p *HttpErrorPresenter) Present(c *gin.Context, err *app_errors2.AppError) {
 	status := toHttpStatus(err.Type)
-	c.JSON(status, gin.H{
+	body := gin.H{
 		"error_id":    err.ErrorId,
 		"code":        string(err.Code),
 		"description": err.Description,
-	})
+		"request_id":  err.RequestId,
+		"occurred_at": err.OccurredAt.Format(time.RFC3339),
+	}
+	if causes := err.PublicCauses(); len(causes) > 0 {
+		body["causes"] = causes
+	}
+	c.JSON(status, body)
 }
 
 func toHttpStatus(errType app_errors2.ErrorType) int {

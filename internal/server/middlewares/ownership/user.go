@@ -2,7 +2,7 @@ package ownership
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
@@ -17,7 +17,7 @@ func User() gin.HandlerFunc {
 			return
 		}
 
-		ownership := users.NewOwnership(author.Id)
+		ownership := tenants.NewOwnership(author.Id)
 		c.Request = c.Request.WithContext(vo2.WithOwnership(c.Request.Context(), ownership))
 		c.Next()
 	}

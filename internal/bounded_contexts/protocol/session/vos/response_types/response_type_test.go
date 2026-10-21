@@ -1,6 +1,7 @@
 package response_types_test
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,16 +28,14 @@ func TestNew_CodeResponse(t *testing.T) {
 
 func TestNew_TokenResponse(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("token", nil)
-	require.NoError(t, err)
-	assert.Equal(t, responsetypes.ResponseTypeToken, rt.Type())
+	_, err := responsetypes.New("token", nil)
+	assert.Error(t, err, "token response_type is not yet supported via New()")
 }
 
 func TestNew_IDTokenResponse(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("id_token", nil)
-	require.NoError(t, err)
-	assert.Equal(t, responsetypes.ResponseTypeIDToken, rt.Type())
+	_, err := responsetypes.New("id_token", nil)
+	assert.Error(t, err, "id_token response_type is not yet supported via New()")
 }
 
 func TestNew_EmptyResponseType(t *testing.T) {
@@ -54,9 +53,8 @@ func TestNew_UnknownResponseType(t *testing.T) {
 func TestNew_StackResponseType(t *testing.T) {
 	t.Parallel()
 	gen := &mockCodeGen{code: "code-456"}
-	rt, err := responsetypes.New("code token", gen)
-	require.NoError(t, err)
-	assert.NotNil(t, rt)
+	_, err := responsetypes.New("code token", gen)
+	assert.Error(t, err, "stack response_type is not yet supported via New()")
 }
 
 func TestFromPrimitives_Code(t *testing.T) {
@@ -70,9 +68,8 @@ func TestFromPrimitives_Code(t *testing.T) {
 
 func TestFromPrimitives_Token(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.FromPrimitives([]string{"token"}, "")
-	require.NoError(t, err)
-	assert.Equal(t, responsetypes.ResponseTypeToken, rt.Type())
+	_, err := responsetypes.FromPrimitives([]string{"token"}, "")
+	assert.Error(t, err, "token is not yet supported via FromPrimitives()")
 }
 
 func TestFromPrimitives_Empty(t *testing.T) {
@@ -141,14 +138,14 @@ func TestCodeResponse_AddToResponse(t *testing.T) {
 
 func TestTokenResponse_String(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("token", nil)
+	rt, err := responsetypes.NewToken("token")
 	require.NoError(t, err)
 	assert.Equal(t, "token", rt.String())
 }
 
 func TestTokenResponse_AddToResponse(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("token", nil)
+	rt, err := responsetypes.NewToken("token")
 	require.NoError(t, err)
 	resp := responsetypes.NewAuthorizeResponse("https://example.com/cb")
 	rt.AddToResponse(resp)
@@ -158,14 +155,14 @@ func TestTokenResponse_AddToResponse(t *testing.T) {
 
 func TestIDTokenResponse_String(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("id_token", nil)
+	rt, err := responsetypes.NewIDToken("id_token")
 	require.NoError(t, err)
 	assert.Equal(t, "id_token", rt.String())
 }
 
 func TestIDTokenResponse_AddToResponse(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.New("id_token", nil)
+	rt, err := responsetypes.NewIDToken("id_token")
 	require.NoError(t, err)
 	resp := responsetypes.NewAuthorizeResponse("https://example.com/cb")
 	rt.AddToResponse(resp)
@@ -175,13 +172,9 @@ func TestIDTokenResponse_AddToResponse(t *testing.T) {
 
 func TestStackFromPrimitives(t *testing.T) {
 	t.Parallel()
-	t.Run("reconstructs stack from stored types and code", func(t *testing.T) {
-		rt, err := responsetypes.FromPrimitives([]string{"code", "token"}, "stored-code")
-		require.NoError(t, err)
-		stack, ok := rt.(*responsetypes.StackResponseType)
-		require.True(t, ok)
-		assert.Equal(t, "stored-code", stack.Code())
-		assert.Len(t, stack.ResponseTypes(), 2)
+	t.Run("rejects stack types from primitives (not yet supported)", func(t *testing.T) {
+		_, err := responsetypes.FromPrimitives([]string{"code", "token"}, "stored-code")
+		assert.Error(t, err, "stack not yet supported via FromPrimitives()")
 	})
 
 	t.Run("rejects unknown type in primitives", func(t *testing.T) {
@@ -222,7 +215,40 @@ func TestStackResponseType_ResponseTypes_And_Code(t *testing.T) {
 
 func TestFromPrimitives_IDToken(t *testing.T) {
 	t.Parallel()
-	rt, err := responsetypes.FromPrimitives([]string{"id_token"}, "")
-	require.NoError(t, err)
-	assert.Equal(t, responsetypes.ResponseTypeIDToken, rt.Type())
+	_, err := responsetypes.FromPrimitives([]string{"id_token"}, "")
+	assert.Error(t, err, "id_token is not yet supported via FromPrimitives()")
+}
+
+// Regressió: els paràmetres es concatenaven crus, així que un valor amb
+// caràcters reservats arribava corromput al destí. El cas que ho va destapar
+// era un state en base64 estàndard: el '+' es llegia com un espai a l'altra
+// banda i el desxifrat petava amb "illegal base64 data".
+func TestAuthorizeResponse_Build_EscapesReservedCharacters(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		value string
+	}{
+		{name: "plus from standard base64", value: "qrvMA+ARIjNE"},
+		{name: "slash from standard base64", value: "Pvv/Gis8TV5v"},
+		{name: "base64 padding", value: "qrvMA+ARIjNE=="},
+		{name: "ampersand", value: "a&b=c"},
+		{name: "space", value: "a b"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			r := responsetypes.NewAuthorizeResponse("https://example.com/callback")
+			r.AddQueryParameter("code", "mycode")
+			r.AddState(tc.value)
+
+			parsed, err := url.Parse(r.Build())
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.value, parsed.Query().Get("state"))
+			assert.Equal(t, "mycode", parsed.Query().Get("code"))
+		})
+	}
 }

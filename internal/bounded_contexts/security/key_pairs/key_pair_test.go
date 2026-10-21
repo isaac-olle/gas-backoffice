@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	keyPairInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -25,13 +26,16 @@ func TestNewKeyPair(t *testing.T) {
 	validId := uuid.New().String()
 	validPrId := uuid.New().String()
 
+	stubPrivKeyPEM, stubPubKeyPEM, err := keyPairInfra.NewPEMKeyGenerator().Generate("RS256")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name       string
 		id         string
 		prId       string
 		algorithm  string
-		privKeyHex string
-		pubKeyHex  string
+		privKeyPEM string
+		pubKeyPEM  string
 		wantErr    bool
 		wantEvents int
 	}{
@@ -40,8 +44,8 @@ func TestNewKeyPair(t *testing.T) {
 			id:         validId,
 			prId:       validPrId,
 			algorithm:  "RS256",
-			privKeyHex: stubPrivKeyHex,
-			pubKeyHex:  stubPubKeyHex,
+			privKeyPEM: stubPrivKeyPEM,
+			pubKeyPEM:  stubPubKeyPEM,
 			wantErr:    false,
 			wantEvents: 1,
 		},
@@ -50,8 +54,8 @@ func TestNewKeyPair(t *testing.T) {
 			id:         "not-a-uuid",
 			prId:       validPrId,
 			algorithm:  "RS256",
-			privKeyHex: stubPrivKeyHex,
-			pubKeyHex:  stubPubKeyHex,
+			privKeyPEM: stubPrivKeyPEM,
+			pubKeyPEM:  stubPubKeyPEM,
 			wantErr:    true,
 		},
 		{
@@ -59,8 +63,8 @@ func TestNewKeyPair(t *testing.T) {
 			id:         validId,
 			prId:       "not-a-uuid",
 			algorithm:  "RS256",
-			privKeyHex: stubPrivKeyHex,
-			pubKeyHex:  stubPubKeyHex,
+			privKeyPEM: stubPrivKeyPEM,
+			pubKeyPEM:  stubPubKeyPEM,
 			wantErr:    true,
 		},
 		{
@@ -68,8 +72,8 @@ func TestNewKeyPair(t *testing.T) {
 			id:         uuid.New().String(),
 			prId:       uuid.New().String(),
 			algorithm:  "RS256",
-			privKeyHex: "",
-			pubKeyHex:  "",
+			privKeyPEM: "",
+			pubKeyPEM:  "",
 			wantErr:    true,
 		},
 		{
@@ -77,8 +81,8 @@ func TestNewKeyPair(t *testing.T) {
 			id:         uuid.New().String(),
 			prId:       uuid.New().String(),
 			algorithm:  "HS256",
-			privKeyHex: stubPrivKeyHex,
-			pubKeyHex:  stubPubKeyHex,
+			privKeyPEM: stubPrivKeyPEM,
+			pubKeyPEM:  stubPubKeyPEM,
 			wantErr:    true,
 		},
 	}
@@ -87,7 +91,7 @@ func TestNewKeyPair(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			kp, err := key_pairs.NewKeyPair(tc.id, tc.prId, tc.algorithm, tc.privKeyHex, tc.pubKeyHex)
+			kp, err := key_pairs.NewKeyPair(tc.id, tc.prId, tc.algorithm, tc.privKeyPEM, tc.pubKeyPEM)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -127,24 +131,24 @@ func TestFromPrimitives(t *testing.T) {
 	})
 }
 
-func TestCheckOwnership(t *testing.T) {
+func TestEnsureOwnership(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns true for matching ownership", func(t *testing.T) {
+	t.Run("returns nil for matching ownership", func(t *testing.T) {
 		t.Parallel()
 		kp := newKeyPairMother(t)
 		prId := kp.ToPrimitives().ProtectedResourceId
 		ownership, err := key_pairs.NewOwnership(prId)
 		require.NoError(t, err)
-		assert.True(t, kp.CheckOwnership(ownership))
+		assert.NoError(t, kp.EnsureOwnership(ownership))
 	})
 
-	t.Run("returns false for different protected resource id", func(t *testing.T) {
+	t.Run("returns error for different protected resource id", func(t *testing.T) {
 		t.Parallel()
 		kp := newKeyPairMother(t)
 		otherOwnership, err := key_pairs.NewOwnership(uuid.New().String())
 		require.NoError(t, err)
-		assert.False(t, kp.CheckOwnership(otherOwnership))
+		assert.Error(t, kp.EnsureOwnership(otherOwnership))
 	})
 }
 

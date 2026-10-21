@@ -1,31 +1,36 @@
 package protected_resources
 
 type ProtectedResourcePrimitives struct {
-	Id       string
-	Name     string
-	UserId   string
-	ScopeIds []string
-	IsSystem bool
+	Id             string   `json:"id"`
+	Name           string   `json:"name"`
+	SubscriptionId string   `json:"subscription_id"`
+	IsSystem       bool     `json:"is_system"`
+	Enabled        bool     `json:"enabled"`
+	ScopeIds       []string `json:"scope_ids"`
+	Version        int      `json:"version"`
 }
 
 type OwnershipPrimitives struct {
-	UserId string
+	SubscriptionId string `json:"subscription_id"`
 }
 
 func (o Ownership) ToPrimitives() OwnershipPrimitives {
-	return OwnershipPrimitives{UserId: o.UserId.String()}
+	return OwnershipPrimitives{SubscriptionId: o.SubscriptionId.String()}
 }
 
 func (pr *ProtectedResource) ToPrimitives() ProtectedResourcePrimitives {
 	scopeIds := make([]string, 0, pr.scopeIds.Size())
-	for _, id := range pr.scopeIds.Values() {
-		scopeIds = append(scopeIds, id.String())
+	for _, sc := range pr.scopeIds.Values() {
+		scopeIds = append(scopeIds, sc.String())
 	}
+
 	return ProtectedResourcePrimitives{
-		Id:       pr.id.String(),
-		Name:     pr.name.String(),
-		UserId:   pr.ownership.UserId.String(),
-		ScopeIds: scopeIds,
-		IsSystem: pr.isSystem,
+		Id:             pr.id.String(),
+		Name:           pr.name.String(),
+		SubscriptionId: pr.ownership.SubscriptionId.String(),
+		IsSystem:       pr.isSystem,
+		Enabled:        pr.enabled,
+		ScopeIds:       scopeIds,
+		Version:        pr.version,
 	}
 }

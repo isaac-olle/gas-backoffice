@@ -8,12 +8,13 @@ import (
 const CommandType command.Type = "command.backoffice.scope.add_allowed_client"
 
 type Command struct {
-	scopeId  string
-	clientId string
+	scopeId             string
+	clientId            string
+	protectedResourceId string
 }
 
-func NewCommand(scopeId, clientId string) *Command {
-	return &Command{scopeId: scopeId, clientId: clientId}
+func NewCommand(scopeId, clientId, protectedResourceId string) *Command {
+	return &Command{scopeId: scopeId, clientId: clientId, protectedResourceId: protectedResourceId}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

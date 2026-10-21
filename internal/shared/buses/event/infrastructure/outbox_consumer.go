@@ -3,6 +3,9 @@ package infrastructure
 import (
 	"context"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"time"
 )
@@ -49,12 +52,15 @@ func (c *Consumer) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			c.poll(ctx)
+			c.Poll(ctx)
 		}
 	}
 }
 
-func (c *Consumer) poll(ctx context.Context) {
+// Poll pulls one batch of pending outbox events and dispatches each to
+// subscribers. Exported so it can be driven directly in tests without waiting
+// on the ticker.
+func (c *Consumer) Poll(ctx context.Context) {
 	primitives, err := c.outboxRepo.PullPending(ctx, c.batchSize)
 	if err != nil {
 		c.consecutiveErrors++
@@ -74,7 +80,6 @@ func (c *Consumer) poll(ctx context.Context) {
 		return
 	}
 
-	events := make([]event2.Event, 0, len(primitives))
 	for _, p := range primitives {
 		evt, err := c.registry.Build(p)
 		if err != nil {
@@ -85,10 +90,37 @@ func (c *Consumer) poll(ctx context.Context) {
 			)
 			continue
 		}
-		events = append(events, evt)
+		c.inner.Publish(c.withAuthor(ctx, p), []event2.Event{evt})
 	}
+}
 
-	if len(events) > 0 {
-		c.inner.Publish(ctx, events)
+// withAuthor rebuilds the vo.Author that published this event (persisted
+// alongside it in the outbox row) and injects it into ctx, so handlers that
+// write to the database still get the right author_id/author_role. Events
+// published without an author (e.g. system-generated) pass ctx through as-is.
+func (c *Consumer) withAuthor(ctx context.Context, p *event2.Primitives) context.Context {
+	if p.AuthorId == "" {
+		return ctx
 	}
+	role, err := vo.NewRole(p.AuthorRole)
+	if err != nil {
+		c.logger.Error("outbox consumer: invalid author role",
+			shared_logger.Field{Key: "event_id", Value: p.ID},
+			shared_logger.Field{Key: "author_role", Value: p.AuthorRole},
+			shared_logger.Field{Key: "error", Value: err.Error()},
+		)
+		return ctx
+	}
+	// The outbox only persists author_id/author_role (all subscribers need for
+	// auditing), so the rebuilt author carries no AdminId.
+	authorId, err := ids.NewUserIdFromString(p.AuthorId)
+	if err != nil {
+		c.logger.Error("outbox consumer: invalid author id",
+			shared_logger.Field{Key: "event_id", Value: p.ID},
+			shared_logger.Field{Key: "author_id", Value: p.AuthorId},
+			shared_logger.Field{Key: "error", Value: err.Error()},
+		)
+		return ctx
+	}
+	return vo.WithAuthor(ctx, &authors.UserAuthor{Id: authorId, Role: role})
 }

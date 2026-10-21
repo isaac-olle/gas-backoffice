@@ -1,23 +1,25 @@
 package scopes
 
 type ScopePrimitives struct {
-	Id                  string
-	Name                string
-	ProtectedResourceId string
-	UserId              string
-	AllowedClientIds    []string
-	IsSystem            bool
+	Id                  string   `json:"id"`
+	Name                string   `json:"name"`
+	ProtectedResourceId string   `json:"protected_resource_id"`
+	SubscriptionId      string   `json:"subscription_id"`
+	AllowedClientIds    []string `json:"allowed_client_ids"`
+	IsSystem            bool     `json:"is_system"`
+	Enabled             bool     `json:"enabled"`
+	Version             int      `json:"version"`
 }
 
 type OwnershipPrimitives struct {
-	ProtectedResourceId string
-	UserId              string
+	ProtectedResourceId string `json:"protected_resource_id"`
+	SubscriptionId      string `json:"subscription_id"`
 }
 
 func (o Ownership) ToPrimitives() OwnershipPrimitives {
 	return OwnershipPrimitives{
 		ProtectedResourceId: o.ProtectedResourceId.String(),
-		UserId:              o.UserId.String(),
+		SubscriptionId:      o.SubscriptionId.String(),
 	}
 }
 
@@ -30,8 +32,10 @@ func (s *Scope) ToPrimitives() ScopePrimitives {
 		Id:                  s.id.String(),
 		Name:                s.name.String(),
 		ProtectedResourceId: s.ownership.ProtectedResourceId.String(),
-		UserId:              s.ownership.UserId.String(),
+		SubscriptionId:      s.ownership.SubscriptionId.String(),
 		AllowedClientIds:    allowedClientIds,
 		IsSystem:            s.isSystem,
+		Enabled:             s.enabled,
+		Version:             s.version,
 	}
 }

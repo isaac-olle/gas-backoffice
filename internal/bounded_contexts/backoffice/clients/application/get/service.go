@@ -18,15 +18,19 @@ func NewService(clientFinder *domain_services.ClientFinder) *Service {
 }
 
 func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
-	id, err := ids.NewClientIdFromString(qry.clientId)
+	clientId, err := ids.NewClientIdFromString(qry.clientId)
 	if err != nil {
 		return nil, app_errors.BadRequestError(clients.ErrClientNotFound).
-			WithDescription("invalid client id").
-			WithCause(err)
+			WithDescription("invalid client id").WithCause(err, false)
 	}
 
-	client, err := s.clientFinder.Find(ctx, id)
+	client, err := s.clientFinder.Find(ctx, clientId)
 	if err != nil {
+		return nil, app_errors.AddTrace(err)
+	}
+
+	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if err = client.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
 

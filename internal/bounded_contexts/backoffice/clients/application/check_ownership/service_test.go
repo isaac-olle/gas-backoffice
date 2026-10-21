@@ -2,8 +2,6 @@ package check_ownership_test
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,75 +10,98 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/check_ownership"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 	clientmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func TestCheckOwnership(t *testing.T) {
+func aClient(t *testing.T, userId ids2.UserId) (*clients.Client, ids2.ClientId) {
+	t.Helper()
+	clientId := ids2.NewClientId()
+	c, err := clients.NewClient(clientId, "my-client", clients.NewOwnership(ids2.NewUserId(), userId), nil, nil, false, false)
+	require.NoError(t, err)
+	c.PullDomainEvents()
+	return c, clientId
+}
+
+func newService(repo *clientmocks.MockRepository) *check_ownership.Service {
+	return check_ownership.NewService(domain_services.NewClientFinder(repo))
+}
+
+func TestCheck(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns ownership primitives when owner matches", func(t *testing.T) {
+	t.Run("returns ownership primitives when the client belongs to the user", func(t *testing.T) {
 		t.Parallel()
 		repo := clientmocks.NewMockRepository(t)
 		userId := ids2.NewUserId()
-		clientId := ids2.NewClientId()
-		c := aClientWithOwnership(t, userId)
-
+		c, clientId := aClient(t, userId)
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 
-		result, err := check_ownership.NewService(repo).CheckOwnership(
-			context.Background(),
-			check_ownership.NewQuery(clientId.String(), userId.String()),
-		)
+		result, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(clientId.String(), ids2.NewUserId().String(), userId.String()))
 		require.NoError(t, err)
 		p, ok := result.(clients.OwnershipPrimitives)
 		require.True(t, ok)
 		assert.Equal(t, userId.String(), p.UserId)
 	})
 
-	errCases := []struct {
-		desc      string
-		query     func(t *testing.T) *check_ownership.Query
-		setupRepo func(repo *clientmocks.MockRepository)
-		wantCode  app_errors.ErrorCode
-	}{
-		{
-			desc:     "rejects invalid client id format",
-			query:    func(t *testing.T) *check_ownership.Query { return aQuery(t, withClientId("bad-id")) },
-			wantCode: clients.ErrClientNotFound,
-		},
-		{
-			desc:  "returns not found when repository errors",
-			query: func(t *testing.T) *check_ownership.Query { return aQuery(t) },
-			setupRepo: func(repo *clientmocks.MockRepository) {
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			wantCode: clients.ErrClientNotFound,
-		},
-		{
-			desc:  "returns forbidden when user does not match",
-			query: func(t *testing.T) *check_ownership.Query { return aQuery(t, withUserId(ids2.NewUserId())) },
-			setupRepo: func(repo *clientmocks.MockRepository) {
-				c := aClientWithOwnership(t, ids2.NewUserId())
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
-			},
-			wantCode: clients.ErrInvalidOwnership,
-		},
-	}
-	for _, tc := range errCases {
-		tc := tc
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			repo := clientmocks.NewMockRepository(t)
-			if tc.setupRepo != nil {
-				tc.setupRepo(repo)
-			}
-			_, err := check_ownership.NewService(repo).CheckOwnership(context.Background(), tc.query(t))
-			assertErrCode(t, err, tc.wantCode)
-		})
-	}
-}
+	t.Run("returns ownership primitives when the caller is the owning admin", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		adminId := ids2.NewUserId()
+		clientId := ids2.NewClientId()
+		c, err := clients.NewClient(clientId, "tenant-client", clients.NewOwnership(adminId, ids2.NewUserId()), nil, nil, false, false)
+		require.NoError(t, err)
+		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+		result, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(clientId.String(), adminId.String(), adminId.String()))
+		require.NoError(t, err)
+		p, ok := result.(clients.OwnershipPrimitives)
+		require.True(t, ok)
+		assert.Equal(t, adminId.String(), p.AdminId)
+	})
+
+	t.Run("rejects invalid admin id", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		_, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(ids2.NewClientId().String(), "bad-id", ids2.NewUserId().String()))
+		assertErrCode(t, err, clients.ErrClientNotFound)
+	})
+
+	t.Run("rejects invalid client id", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		_, err := newService(repo).Check(context.Background(), check_ownership.NewQuery("bad-id", ids2.NewUserId().String(), ids2.NewUserId().String()))
+		assertErrCode(t, err, clients.ErrClientNotFound)
+	})
+
+	t.Run("rejects invalid user id", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		_, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(ids2.NewClientId().String(), ids2.NewUserId().String(), "bad-id"))
+		assertErrCode(t, err, clients.ErrClientNotFound)
+	})
+
+	t.Run("returns not found when client does not exist", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(nil, nil)
+
+		_, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(ids2.NewClientId().String(), ids2.NewUserId().String(), ids2.NewUserId().String()))
+		assertErrCode(t, err, clients.ErrClientNotFound)
+	})
+
+	t.Run("returns forbidden when client belongs to another user", func(t *testing.T) {
+		t.Parallel()
+		repo := clientmocks.NewMockRepository(t)
+		c, clientId := aClient(t, ids2.NewUserId())
+		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
+
+		_, err := newService(repo).Check(context.Background(), check_ownership.NewQuery(clientId.String(), ids2.NewUserId().String(), ids2.NewUserId().String()))
+		assertErrCode(t, err, clients.ErrInvalidOwnership)
+	})
+}
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
 	t.Helper()

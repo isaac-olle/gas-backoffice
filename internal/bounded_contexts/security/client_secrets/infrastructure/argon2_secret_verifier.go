@@ -33,8 +33,10 @@ func (v *Argon2SecretVerifier) Verify(ctx context.Context, clientID, plainSecret
 	match, err := argon2id.ComparePasswordAndHash(plainSecret, p.SecretHash)
 	if err != nil {
 		return app_errors.InternalError(client_secrets.ErrInvalidClientSecret).
-			WithDescription("failed to verify client secret").
-			WithCause(err)
+			WithDescription("failed to verify client secret").WithCause(
+
+			err, false)
+
 	}
 	if !match {
 		return app_errors.UnauthorizedError(client_secrets.ErrInvalidClientSecret).

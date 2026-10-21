@@ -21,9 +21,10 @@ DO $$ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS security.client_assertion_keys (
-    id          TEXT        NOT NULL PRIMARY KEY,
+    id              TEXT        NOT NULL PRIMARY KEY,
     -- ownership
-    client_id   TEXT        NOT NULL,
+    client_id       TEXT        NOT NULL,
+    subscription_id TEXT        NOT NULL REFERENCES backoffice.subscriptions(id),
     -- data
     algorithm   TEXT        NOT NULL,
     public_key  BYTEA       NOT NULL,
@@ -38,11 +39,13 @@ DO $$ BEGIN
     CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_assertion_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at();
   END IF;
 END $$;
+CREATE INDEX IF NOT EXISTS client_assertion_keys_subscription_id_idx ON security.client_assertion_keys (subscription_id);
 
 CREATE TABLE IF NOT EXISTS security.client_secrets (
-    id          TEXT        NOT NULL PRIMARY KEY,
+    id              TEXT        NOT NULL PRIMARY KEY,
     -- ownership
-    client_id   TEXT        NOT NULL,
+    client_id       TEXT        NOT NULL,
+    subscription_id TEXT        NOT NULL REFERENCES backoffice.subscriptions(id),
     -- data
     secret_hash TEXT        NOT NULL,
     author_id   TEXT        NOT NULL DEFAULT '',
@@ -56,6 +59,8 @@ DO $$ BEGIN
     CREATE TRIGGER set_updated_at BEFORE UPDATE ON security.client_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at();
   END IF;
 END $$;
+CREATE INDEX IF NOT EXISTS client_secrets_subscription_id_idx ON security.client_secrets (subscription_id);
+
 
 GRANT USAGE ON SCHEMA security TO gas_backoffice_service;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA security TO gas_backoffice_service;

@@ -13,10 +13,11 @@ type Command struct {
 	id        ids.ScopeId
 	name      string
 	ownership scopes.Ownership
+	isSystem  bool
 }
 
-func NewCommand(id ids.ScopeId, name string, ownership scopes.Ownership) *Command {
-	return &Command{id: id, name: name, ownership: ownership}
+func NewCommand(id ids.ScopeId, name string, ownership scopes.Ownership, isSystem bool) *Command {
+	return &Command{id: id, name: name, ownership: ownership, isSystem: isSystem}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

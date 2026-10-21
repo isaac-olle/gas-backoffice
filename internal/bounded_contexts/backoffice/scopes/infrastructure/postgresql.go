@@ -8,6 +8,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
@@ -29,15 +30,24 @@ func (r *PostgresScopeRepository) Save(ctx context.Context, scope *scopes.Scope)
 	p := scope.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.scopes (id, name, protected_resource_id, user_id, allowed_client_ids, is_system, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO backoffice.scopes (id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, author_id, author_role, version)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
-			protected_resource_id = EXCLUDED.protected_resource_id,
-			user_id = EXCLUDED.user_id,
-			allowed_client_ids = EXCLUDED.allowed_client_ids
+			allowed_client_ids = EXCLUDED.allowed_client_ids,
+			enabled = EXCLUDED.enabled,
+			version = EXCLUDED.version + 1
+		WHERE backoffice.scopes.version = EXCLUDED.version
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.ProtectedResourceId, p.UserId, p.AllowedClientIds, p.IsSystem, authorId, authorRole)
+	tag, err := r.postgres.SaveWithResult(ctx, query,
+		p.Id, p.Name, p.ProtectedResourceId, p.SubscriptionId, p.AllowedClientIds, p.IsSystem, p.Enabled, authorId, authorRole, p.Version)
+	if err != nil {
+		return fmt.Errorf("error saving scope: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return persistance.ErrConcurrentModification
+	}
+	return nil
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
@@ -50,12 +60,26 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, user_id, allowed_client_ids, is_system FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
-func (r *PostgresScopeRepository) Matching(ctx context.Context, _ criteria.Criteria) ([]*scopes.Scope, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *PostgresScopeRepository) Matching(ctx context.Context, c criteria.Criteria) ([]*scopes.Scope, error) {
+	where, args, err := c.ToPostgresql(1)
+	if err != nil {
+		return nil, err
+	}
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version FROM backoffice.scopes WHERE deleted_at IS NULL`
+	if where != "" {
+		query += " AND " + where
+	}
+	return r.postgres.FindMany(ctx, query, r.fromRow, args...)
+}
+
+func (r *PostgresScopeRepository) FindByAllowedClientId(ctx context.Context, clientId ids.ClientId) ([]*scopes.Scope, error) {
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version
+		FROM backoffice.scopes WHERE $1 = ANY(allowed_client_ids) AND deleted_at IS NULL`
+	return r.postgres.FindMany(ctx, query, r.fromRow, clientId.String())
 }
 
 func (r *PostgresScopeRepository) SoftDelete(ctx context.Context, id ids.ScopeId) error {
@@ -70,7 +94,7 @@ func (r *PostgresScopeRepository) HardDelete(ctx context.Context, id ids.ScopeId
 
 func (r *PostgresScopeRepository) fromRow(row pgx.Row) (*scopes.Scope, error) {
 	var p scopes.ScopePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.UserId, &p.AllowedClientIds, &p.IsSystem)
+	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.SubscriptionId, &p.AllowedClientIds, &p.IsSystem, &p.Enabled, &p.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, app_errors.NotFoundError(scopes.ErrScopeNotFound).WithDescription("scope not found")
 	}

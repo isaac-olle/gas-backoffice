@@ -17,12 +17,12 @@ const testAdminID = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
 const testUserId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 func withAdminAuthor(c *gin.Context) {
-	author, _ := authors2.NewUserAuthorFromString(testAdminID, vo2.AdminRole)
+	author, _ := authors2.NewUserAuthorFromString(testAdminID, testAdminID, vo2.AdminRole)
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
 func withTenantAuthor(c *gin.Context) {
-	author, _ := authors2.NewUserAuthorFromString(testUserId, vo2.TenantRole)
+	author, _ := authors2.NewUserAuthorFromString(testUserId, testAdminID, vo2.TenantRole)
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 

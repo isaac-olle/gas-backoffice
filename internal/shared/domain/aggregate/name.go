@@ -14,10 +14,14 @@ const (
 	Client            = sharedtypes.AggregateClient
 	Session           = sharedtypes.AggregateSession
 
+	IdentityProvider = sharedtypes.AggregateIdentityProvider
+
 	ClientAssertionKey = sharedtypes.AggregateClientAssertionKey
 	KeyPair            = sharedtypes.AggregateKeyPair
 	ClientSecret       = sharedtypes.AggregateClientSecret
 
 	AuthCodeSession          = sharedtypes.AggregateAuthCodeSession
 	ClientCredentialsSession = sharedtypes.AggregateClientCredentialsSession
+
+	UserIdentity = sharedtypes.AggregateUserIdentity
 )

@@ -1,19 +1,18 @@
-.PHONY: up down migrate-local migrate-dev seed local-token dev-token run build test lint
+.PHONY: local-deploy local-undeploy up down migrate-local migrate-dev seed local-token dev-token run build test lint
 
 up:
-	docker compose -f deploy/docker-compose.yml up -d
+	docker compose -f deploy/docker-compose.yml up -d --remove-orphans
+	docker compose -f deploy/docker-compose.yml wait migrate
 
 down:
-	docker compose -f deploy/docker-compose.yml down
+	docker compose -f deploy/docker-compose.yml down -v --remove-orphans
 
 migrate-local:
-	go run ./cmd/migrate --env-file .env.local
+	go run ./scripts/migrate --env-file .env.local
 
 migrate-dev:
-	go run ./cmd/migrate --env-file .env.dev
+	go run ./scripts/migrate --env-file .env.dev
 
-seed:
-	go run ./cmd/db_seed --env-file .env.dev
 
 local-token:
 	go run ./scripts/generate_admin_token --env .env.local
@@ -21,8 +20,13 @@ local-token:
 dev-token:
 	go run ./scripts/generate_admin_token --env .env.dev
 
+
+seed:
+	./scripts/seed.sh
+
+
 run:
-	go run ./cmd/api --env-file .env.local
+	ENV=local go run ./cmd/api
 
 build:
 	go build -o build/gas ./cmd/api

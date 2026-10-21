@@ -4,6 +4,7 @@ import (
 	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,8 @@ func (p *OpenIDAuthorizeErrorPresenter) Present(c *gin.Context, err *app_errors2
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":             oidcCode,
 			"error_description": err.Description,
+			"request_id":        err.RequestId,
+			"occurred_at":       err.OccurredAt.Format(time.RFC3339),
 		})
 		return
 	}
@@ -36,6 +39,8 @@ func (p *OpenIDAuthorizeErrorPresenter) Present(c *gin.Context, err *app_errors2
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":             oidcCode,
 			"error_description": err.Description,
+			"request_id":        err.RequestId,
+			"occurred_at":       err.OccurredAt.Format(time.RFC3339),
 		})
 		return
 	}
@@ -44,6 +49,8 @@ func (p *OpenIDAuthorizeErrorPresenter) Present(c *gin.Context, err *app_errors2
 	params := url.Values{}
 	params.Set("error", oidcCode)
 	params.Set("error_description", err.Description)
+	params.Set("request_id", err.RequestId)
+	params.Set("occurred_at", err.OccurredAt.Format(time.RFC3339))
 	if state != "" {
 		params.Set("state", state)
 	}

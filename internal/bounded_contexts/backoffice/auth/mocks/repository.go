@@ -98,23 +98,23 @@ func (_c *MockRepository_HardDelete_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // Matching provides a mock function for the type MockRepository
-func (_mock *MockRepository) Matching(ctx context.Context, criteria1 criteria.Criteria) ([]*auth.Session, error) {
+func (_mock *MockRepository) Matching(ctx context.Context, criteria1 criteria.Criteria) ([]*auth.LoginRequest, error) {
 	ret := _mock.Called(ctx, criteria1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Matching")
 	}
 
-	var r0 []*auth.Session
+	var r0 []*auth.LoginRequest
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, criteria.Criteria) ([]*auth.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, criteria.Criteria) ([]*auth.LoginRequest, error)); ok {
 		return returnFunc(ctx, criteria1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, criteria.Criteria) []*auth.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, criteria.Criteria) []*auth.LoginRequest); ok {
 		r0 = returnFunc(ctx, criteria1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*auth.Session)
+			r0 = ret.Get(0).([]*auth.LoginRequest)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, criteria.Criteria) error); ok {
@@ -155,18 +155,18 @@ func (_c *MockRepository_Matching_Call) Run(run func(ctx context.Context, criter
 	return _c
 }
 
-func (_c *MockRepository_Matching_Call) Return(sessions []*auth.Session, err error) *MockRepository_Matching_Call {
+func (_c *MockRepository_Matching_Call) Return(sessions []*auth.LoginRequest, err error) *MockRepository_Matching_Call {
 	_c.Call.Return(sessions, err)
 	return _c
 }
 
-func (_c *MockRepository_Matching_Call) RunAndReturn(run func(ctx context.Context, criteria1 criteria.Criteria) ([]*auth.Session, error)) *MockRepository_Matching_Call {
+func (_c *MockRepository_Matching_Call) RunAndReturn(run func(ctx context.Context, criteria1 criteria.Criteria) ([]*auth.LoginRequest, error)) *MockRepository_Matching_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Save provides a mock function for the type MockRepository
-func (_mock *MockRepository) Save(ctx context.Context, aggregate *auth.Session) error {
+func (_mock *MockRepository) Save(ctx context.Context, aggregate *auth.LoginRequest) error {
 	ret := _mock.Called(ctx, aggregate)
 
 	if len(ret) == 0 {
@@ -174,7 +174,7 @@ func (_mock *MockRepository) Save(ctx context.Context, aggregate *auth.Session) 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auth.Session) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auth.LoginRequest) error); ok {
 		r0 = returnFunc(ctx, aggregate)
 	} else {
 		r0 = ret.Error(0)
@@ -189,20 +189,20 @@ type MockRepository_Save_Call struct {
 
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
-//   - aggregate *auth.Session
+//   - aggregate *auth.LoginRequest
 func (_e *MockRepository_Expecter) Save(ctx interface{}, aggregate interface{}) *MockRepository_Save_Call {
 	return &MockRepository_Save_Call{Call: _e.mock.On("Save", ctx, aggregate)}
 }
 
-func (_c *MockRepository_Save_Call) Run(run func(ctx context.Context, aggregate *auth.Session)) *MockRepository_Save_Call {
+func (_c *MockRepository_Save_Call) Run(run func(ctx context.Context, aggregate *auth.LoginRequest)) *MockRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *auth.Session
+		var arg1 *auth.LoginRequest
 		if args[1] != nil {
-			arg1 = args[1].(*auth.Session)
+			arg1 = args[1].(*auth.LoginRequest)
 		}
 		run(
 			arg0,
@@ -217,29 +217,29 @@ func (_c *MockRepository_Save_Call) Return(err error) *MockRepository_Save_Call 
 	return _c
 }
 
-func (_c *MockRepository_Save_Call) RunAndReturn(run func(ctx context.Context, aggregate *auth.Session) error) *MockRepository_Save_Call {
+func (_c *MockRepository_Save_Call) RunAndReturn(run func(ctx context.Context, aggregate *auth.LoginRequest) error) *MockRepository_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SearchById provides a mock function for the type MockRepository
-func (_mock *MockRepository) SearchById(ctx context.Context, id ids.SessionId) (*auth.Session, error) {
+func (_mock *MockRepository) SearchById(ctx context.Context, id ids.SessionId) (*auth.LoginRequest, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchById")
 	}
 
-	var r0 *auth.Session
+	var r0 *auth.LoginRequest
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.SessionId) (*auth.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.SessionId) (*auth.LoginRequest, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.SessionId) *auth.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.SessionId) *auth.LoginRequest); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*auth.Session)
+			r0 = ret.Get(0).(*auth.LoginRequest)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ids.SessionId) error); ok {
@@ -280,12 +280,12 @@ func (_c *MockRepository_SearchById_Call) Run(run func(ctx context.Context, id i
 	return _c
 }
 
-func (_c *MockRepository_SearchById_Call) Return(session *auth.Session, err error) *MockRepository_SearchById_Call {
+func (_c *MockRepository_SearchById_Call) Return(session *auth.LoginRequest, err error) *MockRepository_SearchById_Call {
 	_c.Call.Return(session, err)
 	return _c
 }
 
-func (_c *MockRepository_SearchById_Call) RunAndReturn(run func(ctx context.Context, id ids.SessionId) (*auth.Session, error)) *MockRepository_SearchById_Call {
+func (_c *MockRepository_SearchById_Call) RunAndReturn(run func(ctx context.Context, id ids.SessionId) (*auth.LoginRequest, error)) *MockRepository_SearchById_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -18,9 +18,10 @@ import (
 func TestGetProtectedResourceHandler(t *testing.T) {
 	t.Parallel()
 	validPR, _ := protectedResourcesAggregate.FromPrimitives(protectedResourcesAggregate.ProtectedResourcePrimitives{
-		Id:     handlerstest.PrID,
-		Name:   "My Resource",
-		UserId: handlerstest.UserId,
+		Id:      handlerstest.PrID,
+		Name:    "My Resource",
+		AdminId: handlerstest.AdminID,
+		UserId:  handlerstest.UserId,
 	})
 
 	tests := []struct {
@@ -54,7 +55,7 @@ func TestGetProtectedResourceHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewQueryBus(tt.busResult, tt.busErr)
-			h := prHandlers.NewGetProtectedResourceHandler(bus, tt.prIdFn)
+			h := prHandlers.NewGetProtectedResourceHandler(bus, tt.prIdFn, handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodGet, nil)
 			result, err := h.Execute(c)
@@ -73,7 +74,7 @@ func TestGetProtectedResourceHandler(t *testing.T) {
 func TestGetProtectedResourceHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewQueryBus(nil, nil)
-	h := prHandlers.NewGetProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor())
+	h := prHandlers.NewGetProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodGet, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

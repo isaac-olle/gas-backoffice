@@ -1,15 +1,19 @@
 package protocol
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	buildAuthResponse "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/build_authorization_response"
-	sessionCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_authorization_session"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authorize"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
+
+// AuthorizeExecutor is the narrow view of authorize.Service the HTTP layer
+// needs, so tests can stub it without wiring the whole dependency graph.
+type AuthorizeExecutor interface {
+	Authorize(ctx context.Context, req authorize.Request) (string, error)
+}
 
 type authorizeRequest struct {
 	ResponseType        string `form:"response_type" binding:"required"`
@@ -19,43 +23,36 @@ type authorizeRequest struct {
 	State               string `form:"state"`
 	CodeChallenge       string `form:"code_challenge"`
 	CodeChallengeMethod string `form:"code_challenge_method"`
+	IdpReferenceName    string `form:"idp_reference_name"`
 }
 
 type AuthorizeHandler struct {
-	commandExecutor command.CommandExecutor
-	queryBus        query.Bus
+	authorizeService AuthorizeExecutor
 }
 
-func NewAuthorizeHandler(commandExecutor command.CommandExecutor, qryBus query.Bus) *AuthorizeHandler {
-	return &AuthorizeHandler{commandExecutor: commandExecutor, queryBus: qryBus}
+func NewAuthorizeHandler(authorizeService AuthorizeExecutor) *AuthorizeHandler {
+	return &AuthorizeHandler{authorizeService: authorizeService}
 }
 
 func (h *AuthorizeHandler) Execute(c *gin.Context) (any, error) {
 	var req authorizeRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
-		return nil, err
+		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	sessionID := ids.NewSessionId()
-	cmd := sessionCreate.NewCommand(
-		sessionID,
-		req.ResponseType,
-		req.ClientID,
-		req.RedirectURI,
-		req.Scope,
-		req.State,
-		req.CodeChallenge,
-		req.CodeChallengeMethod,
-	)
-	if err := h.commandExecutor.SingleExecution(c.Request.Context(), cmd); err != nil {
-		return nil, err
-	}
-
-	return query.DispatchTyped[string](c.Request.Context(), h.queryBus, buildAuthResponse.NewQuery(sessionID))
+	return h.authorizeService.Authorize(c.Request.Context(), authorize.Request{
+		ResponseType:        req.ResponseType,
+		ClientID:            req.ClientID,
+		RedirectURI:         req.RedirectURI,
+		Scope:               req.Scope,
+		State:               req.State,
+		CodeChallenge:       req.CodeChallenge,
+		CodeChallengeMethod: req.CodeChallengeMethod,
+		IdpReferenceName:    req.IdpReferenceName,
+	})
 }
 
 func (h *AuthorizeHandler) Success(c *gin.Context, result any) error {
-	c.Set("redirect", result.(string))
 	c.Redirect(http.StatusFound, result.(string))
 	return nil
 }

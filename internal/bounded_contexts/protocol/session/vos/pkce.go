@@ -48,6 +48,10 @@ func NewPkce(challenge string, methodString string) (*Pkce, error) {
 func (p *Pkce) Challenge() string           { return p.CodeChallenge }
 func (p *Pkce) Method() CodeChallengeMethod { return p.method }
 
+// IsPresent reports whether PKCE was used for this authorization request.
+// Safe to call on a nil *Pkce.
+func (p *Pkce) IsPresent() bool { return p != nil }
+
 func (p *Pkce) Verify(codeVerifier string) bool {
 	switch p.method {
 	case CodeChallengePlain:

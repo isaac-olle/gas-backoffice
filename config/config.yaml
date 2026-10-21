@@ -1,20 +1,23 @@
 environment: ${ENV}
 
 server:
-  host: ${API_HOST}
   port: ${API_PORT}
   shutdown_timeout: 30
-  public_base_url: ${API_PUBLIC_BASE_URL}
+  allowed_origins: "${ALLOWED_ORIGINS}"
+  cookie_origins: "${COOKIE_ORIGINS}"
 
 application:
   name: gas
-  seed_admin_name: ${GAS_SEED_ADMIN_NAME}
-  backoffice_pr_name: ${GAS_BACKOFFICE_PR_NAME}
+  seed_token: ${SEED_TOKEN}
   backoffice_client_id: ${GAS_BACKOFFICE_CLIENT_ID}
-  backoffice_redirect_uri: ${GAS_BACKOFFICE_REDIRECT_URI}
-  backoffice_login_scope: ${GAS_BACKOFFICE_LOGIN_SCOPE}
+  backoffice_protected_resource_id: ${GAS_BACKOFFICE_PROTECTED_RESOURCE_ID}
+  backoffice_client_redirect_uri: "${GAS_BACKOFFICE_CLIENT_REDIRECT_URI}"
+  backoffice_client_secret: ${GAS_BACKOFFICE_CLIENT_SECRET}
+  protocol_url: ${GAS_PROTOCOL_URL}
 
 databases:
   postgres: ${POSTGRES_DSN}
   migrations_dsn: ${MIGRATIONS_DSN}
-  migrations_path: ${MIGRATIONS_PATH}
+
+security:
+  encryption_key: ${ENCRYPTION_KEY}

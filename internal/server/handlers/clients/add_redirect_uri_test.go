@@ -57,7 +57,7 @@ func TestAddRedirectUriHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := clients.NewAddRedirectUriHandler(bus, tt.clientIdFn)
+			h := clients.NewAddRedirectUriHandler(bus, tt.clientIdFn, handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -76,7 +76,7 @@ func TestAddRedirectUriHandler(t *testing.T) {
 func TestAddRedirectUriHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := clients.NewAddRedirectUriHandler(bus, handlerstest.ValidClientIdExtractor())
+	h := clients.NewAddRedirectUriHandler(bus, handlerstest.ValidClientIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

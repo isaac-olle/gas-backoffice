@@ -2,29 +2,45 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
+	getJwks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/jwks/application/get_jwks"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authenticate_client"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authorize"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
 	protocolHandler "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
-	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol/authentication_methods"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	error_presenters "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors/error_presenters"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 type Protocol struct {
-	executor        *middlewares.HandlerMiddleware
-	commandExecutor command.CommandExecutor
-	queryBus        query.Bus
-	managers        []app_errors.ErrorManager
+	executor             *middlewares.HandlerMiddleware
+	authorizeService     *authorize.Service
+	tokenService         *token.Service
+	authClientService    *authenticate_client.Service
+	jwksService          *getJwks.Service
+	createSessionService *create_session.Service
+	managers             []app_errors.ErrorManager
 }
 
-func NewProtocol(hm *middlewares.HandlerMiddleware, commandExecutor command.CommandExecutor, qryBus query.Bus, managers ...app_errors.ErrorManager) *Protocol {
+func NewProtocol(
+	hm *middlewares.HandlerMiddleware,
+	authorizeService *authorize.Service,
+	tokenService *token.Service,
+	authClientService *authenticate_client.Service,
+	jwksService *getJwks.Service,
+	createSessionService *create_session.Service,
+	managers ...app_errors.ErrorManager,
+) *Protocol {
 	return &Protocol{
-		executor:        hm,
-		commandExecutor: commandExecutor,
-		queryBus:        qryBus,
-		managers:        managers,
+		executor:             hm,
+		authorizeService:     authorizeService,
+		tokenService:         tokenService,
+		authClientService:    authClientService,
+		jwksService:          jwksService,
+		createSessionService: createSessionService,
+		managers:             managers,
 	}
 }
 
@@ -40,17 +56,19 @@ func (p *Protocol) Register(root *gin.RouterGroup) {
 
 	group.GET("/authorize",
 		middlewares.HttpError(authorizePresenter, p.managers...),
-		p.executor.Run(protocolHandler.NewAuthorizeHandler(p.commandExecutor, p.queryBus)),
+		p.executor.Run(protocolHandler.NewAuthorizeHandler(p.authorizeService)),
 	)
 	group.POST("/token",
 		middlewares.HttpError(tokenPresenter, p.managers...),
-		p.executor.Run(protocolHandler.NewTokenAuthenticationHandler(
-			authentication_methods.NewClientAuthMethodFactory(
-				authentication_methods.NewBasicAuthMethod(p.queryBus),
-				authentication_methods.NewJWTAssertionMethod(p.queryBus),
-				authentication_methods.NewBodyCredentialsMethod(p.queryBus),
-			),
-		)),
-		p.executor.Run(protocolHandler.NewTokenHandler(p.queryBus)),
+		protocolHandler.TokenAuthentication(p.authClientService),
+		p.executor.Run(protocolHandler.NewTokenHandler(p.tokenService)),
+	)
+	group.GET("/jwks",
+		p.executor.Run(protocolHandler.NewJwksHandler(p.jwksService)),
+	)
+
+	// External IDP redirect target — :idp_id is the IDP reference name (e.g. google)
+	root.GET("/v1/oidc/callback/:idp_id",
+		p.executor.Run(protocolHandler.NewCallbackHandler(p.createSessionService)),
 	)
 }

@@ -8,22 +8,22 @@ import (
 const ProtectedResourceCreatedType event.Type = "backoffice.protected_resource.created"
 
 type ProtectedResourceCreated struct {
-	Name   string
-	UserId string
+	Name           string
+	SubscriptionId string
 	event.BaseEvent
 }
 
 func (e ProtectedResourceCreated) Type() event.Type { return ProtectedResourceCreatedType }
 
-func NewProtectedResourceCreated(aggregateId, name, userId string) ProtectedResourceCreated {
+func NewProtectedResourceCreated(aggregateId, name, subscriptionId string) ProtectedResourceCreated {
 	return ProtectedResourceCreated{
-		Name:   name,
-		UserId: userId,
+		Name:           name,
+		SubscriptionId: subscriptionId,
 		BaseEvent: event.NewEvent(
 			aggregateId,
 			ProtectedResourceCreatedType,
 			false,
-			map[string]any{"name": name, "user_id": userId},
+			map[string]any{"name": name, "subscription_id": subscriptionId},
 			aggregate.ProtectedResource,
 		),
 	}

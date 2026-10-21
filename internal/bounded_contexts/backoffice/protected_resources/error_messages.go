@@ -5,11 +5,14 @@ import (
 )
 
 var (
-	ErrProtectedResourceNotFound   app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_FOUND"
-	ErrProtectedResourceNotCreated app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_CREATED"
-	ErrProtectedResourceNotSaved   app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_SAVED"
-	ErrProtectedResourceNotUpdated app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_UPDATED"
-	ErrInvalidOwnership            app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_OWNERSHIP"
-	ErrInvalidUserId               app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_USER_ID"
-	ErrSystemResource              app_errors.ErrorCode = "PROTECTED_RESOURCE_IS_SYSTEM_RESOURCE"
+	ErrProtectedResourceDuplicateName          app_errors.ErrorCode = "PROTECTED_RESOURCE_DUPLICATE_NAME"
+	ErrProtectedResourceNotFound               app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_FOUND"
+	ErrProtectedResourceNotCreated             app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_CREATED"
+	ErrProtectedResourceNotSaved               app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_SAVED"
+	ErrProtectedResourceNotUpdated             app_errors.ErrorCode = "PROTECTED_RESOURCE_NOT_UPDATED"
+	ErrInvalidOwnership                        app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_OWNERSHIP"
+	ErrInvalidUserId                           app_errors.ErrorCode = "PROTECTED_RESOURCE_INVALID_USER_ID"
+	ErrSystemResource                          app_errors.ErrorCode = "PROTECTED_RESOURCE_IS_SYSTEM_RESOURCE"
+	ErrProtectedResourcesNotListed             app_errors.ErrorCode = "PROTECTED_RESOURCES_NOT_LISTED"
+	ErrProtectedResourceConcurrentModification app_errors.ErrorCode = "PROTECTED_RESOURCE_CONCURRENT_MODIFICATION"
 )

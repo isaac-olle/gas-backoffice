@@ -26,27 +26,26 @@ func TestNewClientName(t *testing.T) {
 	})
 }
 
-func TestNewFlow(t *testing.T) {
+func TestNewGrantType(t *testing.T) {
 	t.Parallel()
 
-	validFlows := []string{
-		vos.AuthorizationCodeFlow,
-		vos.PKCEFlow,
-		vos.ClientCredentialsFlow,
+	validGrantTypes := []string{
+		vos.AuthorizationCodeGrantType,
+		vos.ClientCredentialsGrantType,
 	}
-	for _, raw := range validFlows {
+	for _, raw := range validGrantTypes {
 		raw := raw
-		t.Run("accepts flow "+raw, func(t *testing.T) {
+		t.Run("accepts grant type "+raw, func(t *testing.T) {
 			t.Parallel()
-			flow, err := vos.NewFlow(raw)
+			grantType, err := vos.NewGrantType(raw)
 			require.NoError(t, err)
-			assert.Equal(t, raw, flow.String())
+			assert.Equal(t, raw, grantType.String())
 		})
 	}
 
-	t.Run("rejects unsupported flow", func(t *testing.T) {
+	t.Run("rejects unsupported grant type", func(t *testing.T) {
 		t.Parallel()
-		_, err := vos.NewFlow("implicit")
+		_, err := vos.NewGrantType("implicit")
 		assert.Error(t, err)
 	})
 }

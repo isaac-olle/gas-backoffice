@@ -5,10 +5,12 @@ import (
 )
 
 var (
-	ErrScopeNotFound    app_errors.ErrorCode = "SCOPE_NOT_FOUND"
-	ErrScopeNotCreated  app_errors.ErrorCode = "SCOPE_NOT_CREATED"
-	ErrScopeNotSaved    app_errors.ErrorCode = "SCOPE_NOT_SAVED"
-	ErrScopeNotUpdated  app_errors.ErrorCode = "SCOPE_NOT_UPDATED"
-	ErrInvalidOwnership app_errors.ErrorCode = "SCOPE_INVALID_OWNERSHIP"
-	ErrSystemResource   app_errors.ErrorCode = "SCOPE_IS_SYSTEM_RESOURCE"
+	ErrScopeNotFound               app_errors.ErrorCode = "SCOPE_NOT_FOUND"
+	ErrScopeNotCreated             app_errors.ErrorCode = "SCOPE_NOT_CREATED"
+	ErrScopeNotSaved               app_errors.ErrorCode = "SCOPE_NOT_SAVED"
+	ErrScopeNotUpdated             app_errors.ErrorCode = "SCOPE_NOT_UPDATED"
+	ErrInvalidOwnership            app_errors.ErrorCode = "SCOPE_INVALID_OWNERSHIP"
+	ErrSystemResource              app_errors.ErrorCode = "SCOPE_IS_SYSTEM_RESOURCE"
+	ErrScopeDuplicatedName         app_errors.ErrorCode = "SCOPE_DUPLICATE_NAME"
+	ErrScopeConcurrentModification app_errors.ErrorCode = "SCOPE_CONCURRENT_MODIFICATION"
 )

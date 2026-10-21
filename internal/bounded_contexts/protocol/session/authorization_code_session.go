@@ -1,6 +1,8 @@
 package session
 
 import (
+	"strings"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -11,20 +13,18 @@ import (
 )
 
 type AuthorizationCodeSession struct {
-	BaseSession
-	sessionID    ids.SessionId
-	redirectURI  sessionvos.RedirectURI
-	state        sessionvos.State
-	responseType responsetypes.ResponseType
-	pkce         *sessionvos.Pkce
-	sessionState sessionvos.SessionState
-	consumed     sessionvos.Consumed
+	*BaseSession
+	sessionID         ids.SessionId
+	redirectURI       sessionvos.RedirectURI
+	state             sessionvos.State
+	responseType      responsetypes.ResponseType
+	pkce              *sessionvos.Pkce
+	sessionState      sessionvos.SessionState
+	consumed          sessionvos.Consumed
+	clientOwnerUserId string
+	identity          sessionvos.UserIdentity
 }
 
-// newAuthorizationCodeSession assembles the aggregate from already-built value
-// objects and records the creation event. Both the string-based public
-// constructor and CreateSessionForLogin funnel through here, so a caller that
-// already holds value objects never has to round-trip them back to strings.
 func newAuthorizationCodeSession(
 	sessionID ids.SessionId,
 	clientID ids.ClientId,
@@ -32,25 +32,30 @@ func newAuthorizationCodeSession(
 	scope sessionvos.Scope,
 	state sessionvos.State,
 	responseType responsetypes.ResponseType,
-	flow sessionvos.Flow,
+	grantType sessionvos.GrantType,
 	pkce *sessionvos.Pkce,
+	protectedResourceId string,
+	clientOwnerUserId string,
+	identity sessionvos.UserIdentity,
 ) *AuthorizationCodeSession {
 	sess := &AuthorizationCodeSession{
-		BaseSession:  newBaseSession(clientID, scope, flow, aggregate.AuthCodeSession),
-		sessionID:    sessionID,
-		redirectURI:  redirectURI,
-		state:        state,
-		responseType: responseType,
-		pkce:         pkce,
-		sessionState: sessionvos.Authorizing,
-		consumed:     false,
+		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, protectedResourceId),
+		sessionID:         sessionID,
+		redirectURI:       redirectURI,
+		state:             state,
+		responseType:      responseType,
+		pkce:              pkce,
+		sessionState:      sessionvos.Authorizing,
+		consumed:          false,
+		clientOwnerUserId: clientOwnerUserId,
+		identity:          identity,
 	}
 	sess.Record(protocolEvents.NewSessionCreated(
 		sessionID.String(),
 		clientID.String(),
 		redirectURI.String(),
 		scope.String(),
-		flow.String(),
+		grantType.String(),
 	))
 	return sess
 }
@@ -65,6 +70,8 @@ func NewAuthorizationCodeSession(
 	codeGenerator responsetypes.CodeGenerator,
 	pkceChallenge string,
 	pkceMethod string,
+	client *Client,
+	identity sessionvos.UserIdentity,
 ) (*AuthorizationCodeSession, error) {
 	errorArray := app_errors.NewEmptyErrorArray()
 
@@ -101,58 +108,48 @@ func NewAuthorizationCodeSession(
 	if errorArray.HasErrors() {
 		return nil, app_errors.BadRequestError(ErrInvalidSessionParameters).
 			WithDescription("several errors building session").
-			WithCause(errorArray)
+			WithCause(errorArray, true)
 	}
 
-	return newAuthorizationCodeSession(sessionID, clientID, redirectURI, scope, state, responseType, sessionvos.AuthorizationCodeFlow, pkce), nil
+	if !client.HasGrantType(sessionvos.AuthorizationCodeGrantType.String()) {
+		return nil, app_errors.BadRequestError(ErrGrantTypeNotAllowed).
+			WithDescription("authorization_code grant type not allowed for this client")
+	}
+
+	if client.Public && !pkce.IsPresent() {
+		return nil, app_errors.BadRequestError(ErrPkceRequired).
+			WithDescription("code_challenge is required for public clients")
+	}
+
+	if !client.HasRedirectURI(redirectURI.String()) {
+		return nil, app_errors.BadRequestError(ErrInvalidRedirectURI).
+			WithDescription("redirect_uri not registered for this client").WithDetails(map[string]interface{}{
+			"redirect_uri": redirectURI.String(),
+		})
+	}
+
+	requestedScopes := strings.Fields(scope.String())
+	for _, scopeName := range requestedScopes {
+		if !client.HasScope(scopeName) {
+			return nil, app_errors.BadRequestError(ErrInvalidScope).
+				WithDescription("scope not allowed for this client: " + scopeName)
+		}
+	}
+
+	protectedResourceId, err := client.ResolveProtectedResourceId(requestedScopes)
+	if err != nil {
+		return nil, err
+	}
+
+	return newAuthorizationCodeSession(sessionID, clientID, redirectURI, scope, state, responseType, sessionvos.AuthorizationCodeGrantType, pkce, protectedResourceId, client.UserId, identity), nil
 }
 
-// CreateSessionForLogin builds an AuthorizationCodeSession for a federated
-// login. The client id, redirect uri and scope are injected (they identify the
-// backoffice frontend as a gas OAuth client); the response type is fixed to
-// "code", the state is generated here as a value object, and there is no PKCE.
-func CreateSessionForLogin(
-	sessionID ids.SessionId,
-	backofficeClientID string,
-	redirectURI string,
-	scope string,
-	codeGenerator responsetypes.CodeGenerator,
-) (*AuthorizationCodeSession, error) {
-	const responseTypeCode = "code"
-	errorArray := app_errors.NewEmptyErrorArray()
+func (s *AuthorizationCodeSession) ProtectedResourceId() string {
+	return s.protectedResourceId
+}
 
-	clientID, err := ids.NewClientIdFromString(backofficeClientID)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	redirectURIVO, err := sessionvos.NewRedirectURI(redirectURI)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	scopeVO, err := sessionvos.NewScope(scope)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	state, err := sessionvos.GenerateState()
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	responseType, err := responsetypes.New(responseTypeCode, codeGenerator)
-	if err != nil {
-		errorArray.AddError(err)
-	}
-
-	if errorArray.HasErrors() {
-		return nil, app_errors.BadRequestError(ErrInvalidSessionParameters).
-			WithDescription("several errors building login session").
-			WithCause(errorArray)
-	}
-
-	return newAuthorizationCodeSession(sessionID, clientID, redirectURIVO, scopeVO, state, responseType, sessionvos.AuthorizationCodeFlow, nil), nil
+func (s *AuthorizationCodeSession) SessionID() ids.SessionId {
+	return s.sessionID
 }
 
 func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitives) (*AuthorizationCodeSession, error) {
@@ -198,7 +195,7 @@ func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitive
 		errorArray.AddError(err)
 	}
 
-	flow, err := sessionvos.NewFlowFromString(p.Flow)
+	grantType, err := sessionvos.NewGrantTypeFromString(p.GrantType)
 	if err != nil {
 		errorArray.AddError(err)
 	}
@@ -213,21 +210,36 @@ func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitive
 		errorArray.AddError(err)
 	}
 
+	identity, err := sessionvos.NewUserIdentity(
+		p.Identity.IdpId,
+		p.Identity.IDToken,
+		p.Identity.AccessToken,
+		p.Identity.RefreshToken,
+		sessionvos.IdpClaims{Sub: p.Identity.Claims.Sub, Email: p.Identity.Claims.Email},
+		p.Identity.ExpiresAt,
+	)
+	if err != nil {
+		errorArray.AddError(err)
+	}
+
 	if errorArray.HasErrors() {
 		return nil, app_errors.BadRequestError(ErrInvalidSessionParameters).
 			WithDescription("several errors building session from primitives").
-			WithCause(errorArray)
+			WithCause(errorArray, false)
+
 	}
 
 	return &AuthorizationCodeSession{
-		BaseSession:  newBaseSession(clientID, scope, flow, aggregate.AuthCodeSession),
-		sessionID:    sessionID,
-		redirectURI:  redirectURI,
-		state:        state,
-		responseType: responseType,
-		pkce:         pkce,
-		sessionState: sessionState,
-		consumed:     sessionvos.Consumed(p.Consumed),
+		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, p.ProtectedResourceId),
+		sessionID:         sessionID,
+		redirectURI:       redirectURI,
+		state:             state,
+		responseType:      responseType,
+		pkce:              pkce,
+		sessionState:      sessionState,
+		consumed:          sessionvos.Consumed(p.Consumed),
+		clientOwnerUserId: p.ClientOwnerUserId,
+		identity:          identity,
 	}, nil
 }
 
@@ -265,18 +277,34 @@ func (s *AuthorizationCodeSession) ToPrimitives() *AuthorizationCodeSessionPrimi
 	}
 
 	return &AuthorizationCodeSessionPrimitives{
-		SessionID:     s.sessionID.String(),
-		ClientID:      s.clientID.String(),
-		RedirectURI:   s.redirectURI.String(),
-		Scope:         s.scope.String(),
-		State:         s.state.String(),
-		ResponseTypes: responseTypes,
-		Code:          code,
-		Pkce:          pkcePrimitives,
-		SessionState:  s.sessionState.String(),
-		Flow:          s.flow.String(),
-		Consumed:      bool(s.consumed),
+		BaseSessionPrimitives: s.BaseSession.ToPrimitives(),
+		SessionID:             s.sessionID.String(),
+		ClientOwnerUserId:     s.clientOwnerUserId,
+		RedirectURI:           s.redirectURI.String(),
+		State:                 s.state.String(),
+		ResponseTypes:         responseTypes,
+		Code:                  code,
+		Pkce:                  pkcePrimitives,
+		SessionState:          s.sessionState.String(),
+		Consumed:              bool(s.consumed),
+		Identity: UserIdentityPrimitives{
+			IdpId:        s.identity.IdpId().String(),
+			IDToken:      s.identity.IDToken(),
+			AccessToken:  s.identity.AccessToken(),
+			RefreshToken: s.identity.RefreshToken(),
+			Claims: IdpClaimsPrimitives{
+				Sub:   s.identity.Claims().Sub,
+				Email: s.identity.Claims().Email,
+			},
+			ExpiresAt: s.identity.ExpiresAt(),
+		},
 	}
+}
+
+// Identity returns the resolved external identity (tokens + claims) for this
+// session, as obtained from the identity provider during create_session.
+func (s *AuthorizationCodeSession) Identity() sessionvos.UserIdentity {
+	return s.identity
 }
 
 func (s *AuthorizationCodeSession) CheckExchangeParams(clientID, redirectURI string) error {
@@ -312,9 +340,35 @@ func (s *AuthorizationCodeSession) CheckPkce(codeVerifier string) (bool, error) 
 	return true, nil
 }
 
+// Authenticate closes the authorization step once the external IDP has
+// resolved the user: the session moves from authorizing to active.
+func (s *AuthorizationCodeSession) Authenticate() error {
+	if s.sessionState != sessionvos.Authorizing {
+		return app_errors.BadRequestError(ErrSessionNotAuthorizing).
+			WithDescription("session is not waiting for authentication").
+			WithDetails(map[string]interface{}{"session_state": s.sessionState.String()})
+	}
+	s.sessionState = sessionvos.SessionStateActive
+	s.Record(protocolEvents.NewSessionAuthenticated(s.sessionID.String(), s.clientID.String()))
+	return nil
+}
+
 func (s *AuthorizationCodeSession) Consume() {
 	s.consumed = true
 	s.sessionState = sessionvos.SessionStateConsumed
+}
+
+func (s *AuthorizationCodeSession) IsConsumed() bool {
+	return bool(s.consumed)
+}
+
+func (s *AuthorizationCodeSession) TokenClaims() TokenClaims {
+	return TokenClaims{
+		Scope:               s.scope.String(),
+		ClientID:            s.clientID.String(),
+		UserID:              s.clientOwnerUserId,
+		ProtectedResourceId: s.protectedResourceId,
+	}
 }
 
 func (s *AuthorizationCodeSession) BuildRedirectURI() string {

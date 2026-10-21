@@ -1,0 +1,60 @@
+### Seed system (only executable once)
+
+POST http://{{$env.API_HOST}}:{{$env.API_PORT}}/v1/seed
+Content-Type: application/json
+Authorization: Bearer {{$env.SEED_TOKEN}}
+
+{
+  "admin": {
+    "email": "{{$env.SEED_ADMIN_EMAIL}}"
+  },
+  "protected_resource": {
+    "id": "{{$env.GAS_BACKOFFICE_PROTECTED_RESOURCE_ID}}",
+    "name": "Gas Backoffice"
+  },
+  "scopes": [
+    {
+      "id": "{{$env.GAS_BACKOFFICE_OPENID_SCOPE_ID}}",
+      "name": "openid"
+    },
+    {
+      "id": "{{$env.GAS_BACKOFFICE_EMAIL_SCOPE_ID}}",
+      "name": "email"
+    }
+  ],
+  "client": {
+    "id": "{{$env.GAS_BACKOFFICE_CLIENT_ID}}",
+    "name": "Gas Backoffice Frontend",
+    "redirect_uris": ["{{$env.GAS_BACKOFFICE_CLIENT_REDIRECT_URI}}"],
+    "secret": "{{$env.GAS_BACKOFFICE_CLIENT_SECRET}}"
+  },
+  "identity_providers": [
+    {
+      "id": "{{$env.GOOGLE_IDP_ID}}",
+      "reference_name": "google",
+      "name": "Google",
+      "issuer": "{{$env.GOOGLE_ISSUER}}",
+      "client_id": "{{$env.GOOGLE_CLIENT_ID}}",
+      "client_secret": "{{$env.GOOGLE_CLIENT_SECRET}}",
+      "authorization_endpoint": "{{$env.GOOGLE_AUTHORIZATION_ENDPOINT}}",
+      "token_endpoint": "{{$env.GOOGLE_TOKEN_ENDPOINT}}",
+      "userinfo_endpoint": "{{$env.GOOGLE_USERINFO_ENDPOINT}}",
+      "jwks_uri": "{{$env.GOOGLE_JWKS_URI}}",
+      "scopes": ["openid", "email", "profile"],
+      "backoffice_redirect_uri": "{{$env.BACKOFFICE_REDIRECT_URI}}"
+    }
+  ]
+}
+
+> {%
+    const reasons = {
+        400: "dades del seed invàlides",
+        401: "SEED_TOKEN incorrecte o no configurat a l'API",
+        409: "el seed ja s'havia executat",
+        422: "una de les comandes del seed ha fallat",
+    };
+    client.test("Seed executat", function () {
+        const reason = reasons[response.status] || "resposta inesperada";
+        client.assert(response.status === 201, "HTTP " + response.status + ": " + reason + " — " + JSON.stringify(response.body));
+    });
+%}

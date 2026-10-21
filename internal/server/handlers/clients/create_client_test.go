@@ -36,21 +36,21 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:       "missing_client_id_returns_error",
-			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
+			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_grant_types": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn: handlerstest.MissingClientIdExtractor(),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    true,
 		},
 		{
 			name:       "missing_user_id_returns_error",
-			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
+			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_grant_types": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
 			userIdFn:   handlerstest.MissingUserIdExtractor(),
 			wantErr:    true,
 		},
 		{
 			name:       "bus_error_returns_error",
-			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
+			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_grant_types": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			busErr:     errors.New("bus error"),
@@ -58,7 +58,7 @@ func TestCreateClientHandler(t *testing.T) {
 		},
 		{
 			name:       "success_returns_201",
-			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_flows": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
+			body:       handlerstest.JsonBody(map[string]any{"name": "My Client", "allowed_grant_types": []string{"authorization_code"}, "redirect_uris": []string{"https://example.com/callback"}}),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
@@ -69,7 +69,7 @@ func TestCreateClientHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := clients.NewCreateClientHandler(bus, tt.clientIdFn, tt.userIdFn)
+			h := clients.NewCreateClientHandler(bus, tt.clientIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -88,7 +88,7 @@ func TestCreateClientHandler(t *testing.T) {
 func TestCreateClientHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := clients.NewCreateClientHandler(bus, handlerstest.ValidClientIdExtractor(), handlerstest.ValidUserIdExtractor())
+	h := clients.NewCreateClientHandler(bus, handlerstest.ValidClientIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

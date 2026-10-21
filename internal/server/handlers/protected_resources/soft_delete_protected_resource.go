@@ -2,13 +2,13 @@ package protected_resources
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	prSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/soft_delete"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type SoftDeleteProtectedResourceHandler struct {
@@ -28,6 +28,7 @@ func (h *SoftDeleteProtectedResourceHandler) Execute(c *gin.Context) (any, error
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
+
 	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prSoftDelete.NewCommand(prId))
 }
 

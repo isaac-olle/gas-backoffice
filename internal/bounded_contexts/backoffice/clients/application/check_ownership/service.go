@@ -2,48 +2,39 @@ package check_ownership
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type Service struct {
-	repository clients.Repository
+	clientFinder *domain_services.ClientFinder
 }
 
-func NewService(repository clients.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(clientFinder *domain_services.ClientFinder) *Service {
+	return &Service{clientFinder: clientFinder}
 }
 
-func (s *Service) CheckOwnership(ctx context.Context, qry *Query) (any, error) {
+// Check returns clients.OwnershipPrimitives on success, or a
+// app_errors.ForbiddenError (via EnsureOwnership) on failure.
+func (s *Service) Check(ctx context.Context, qry *Query) (any, error) {
 	clientId, err := ids.NewClientIdFromString(qry.clientId)
 	if err != nil {
 		return nil, app_errors.BadRequestError(clients.ErrClientNotFound).
-			WithDescription("invalid client id").
-			WithCause(err)
+			WithDescription("invalid client id").WithCause(err, false)
 	}
 
-	userId, err := ids.NewUserIdFromString(qry.userId)
+	client, err := s.clientFinder.Find(ctx, clientId)
 	if err != nil {
-		return nil, app_errors.BadRequestError(clients.ErrClientNotFound).
-			WithDescription("invalid user id").
-			WithCause(err)
+		return nil, app_errors.AddTrace(err)
 	}
 
-	ownership := clients.NewOwnership(userId)
-
-	client, err := s.repository.SearchById(ctx, clientId)
-	if err != nil {
-		return nil, app_errors.NotFoundError(clients.ErrClientNotFound).
-			WithDescription("client not found").
-			WithCause(err)
+	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if err = client.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+		return nil, app_errors.AddTrace(err)
 	}
 
-	if !client.CheckOwnership(ownership) {
-		return nil, app_errors.ForbiddenError(clients.ErrInvalidOwnership).
-			WithDescription("client does not belong to the provided admin and user")
-	}
-
-	return ownership.ToPrimitives(), nil
+	return client.ToPrimitives(), nil
 }

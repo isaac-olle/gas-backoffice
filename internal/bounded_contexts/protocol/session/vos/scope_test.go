@@ -23,3 +23,13 @@ func TestNewScope(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestScopeHas(t *testing.T) {
+	t.Parallel()
+	scope, err := sessionvos.NewScope("openid profile email")
+	require.NoError(t, err)
+
+	assert.True(t, scope.Has("openid"))
+	assert.False(t, scope.Has("open"))
+	assert.False(t, scope.Has("offline_access"))
+}

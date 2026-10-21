@@ -19,8 +19,10 @@ func (f *ClientFinder) Find(ctx context.Context, clientID string) (*session.Clie
 	client, err := f.repository.FindById(ctx, clientID)
 	if err != nil {
 		return nil, app_errors.InternalError(session.ErrCannotGetClient).
-			WithDescription("repository failed to find client").
-			WithCause(err)
+			WithDescription("repository failed to find client").WithCause(
+
+			err, false)
+
 	}
 	if client == nil {
 		return nil, app_errors.NotFoundError(session.ErrClientNotFound).

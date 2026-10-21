@@ -8,17 +8,42 @@ import (
 )
 
 type BaseSession struct {
-	clientID ids2.ClientId
-	scope    sessionvos.Scope
-	flow     sessionvos.Flow
+	clientID            ids2.ClientId
+	scope               sessionvos.Scope
+	grantType           sessionvos.GrantType
+	protectedResourceId string
 	*aggregate2.Root
 }
 
-func newBaseSession(clientID ids2.ClientId, scope sessionvos.Scope, flow sessionvos.Flow, aggregateName aggregate2.Name) BaseSession {
-	return BaseSession{
-		clientID: clientID,
-		scope:    scope,
-		flow:     flow,
-		Root:     aggregate2.NewRoot(aggregateName),
+func newBaseSession(
+	clientID ids2.ClientId,
+	scope sessionvos.Scope,
+	grantType sessionvos.GrantType,
+	aggregateName aggregate2.Name,
+	protectedResourceId string,
+) *BaseSession {
+	return &BaseSession{
+		clientID:            clientID,
+		scope:               scope,
+		grantType:           grantType,
+		protectedResourceId: protectedResourceId,
+		Root:                aggregate2.NewRoot(aggregateName),
+	}
+}
+
+func (b BaseSession) ClientID() ids2.ClientId {
+	return b.clientID
+}
+
+func (b BaseSession) HasScope(scope string) bool {
+	return b.scope.Has(scope)
+}
+
+func (b BaseSession) ToPrimitives() *BaseSessionPrimitives {
+	return &BaseSessionPrimitives{
+		ClientID:            b.clientID.String(),
+		Scope:               b.scope.String(),
+		GrantType:           b.grantType.String(),
+		ProtectedResourceId: b.protectedResourceId,
 	}
 }

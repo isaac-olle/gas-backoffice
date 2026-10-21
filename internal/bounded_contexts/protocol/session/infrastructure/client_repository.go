@@ -21,18 +21,19 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			c.id,
 			c.name,
 			c.user_id,
-			c.allowed_flows,
+			c.allowed_grant_types,
 			c.redirect_uris,
+			c.public,
 			s.id,
 			s.name,
 			s.protected_resource_id,
 			pr.name
 		FROM backoffice.clients c
 		LEFT JOIN backoffice.scopes s
-			ON s.id = ANY(c.allowed_scopes) AND s.deleted_at IS NULL
+			ON $1 = ANY(s.allowed_client_ids) AND s.deleted_at IS NULL AND s.enabled = TRUE
 		LEFT JOIN backoffice.protected_resources pr
-			ON pr.id = s.protected_resource_id AND pr.deleted_at IS NULL
-		WHERE c.id = $1 AND c.deleted_at IS NULL
+			ON pr.id = s.protected_resource_id AND pr.deleted_at IS NULL AND pr.enabled = TRUE
+		WHERE c.id = $1 AND c.deleted_at IS NULL AND c.enabled = TRUE
 	`, clientID)
 	if err != nil {
 		return nil, err
@@ -43,26 +44,29 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 
 	for rows.Next() {
 		var (
-			id           string
-			name         string
-			userId       string
-			allowedFlows []string
-			redirectURIs []string
-			scopeID      *string
-			scopeName    *string
-			prID         *string
-			prName       *string
+			id                string
+			name              string
+			userId            string
+			allowedGrantTypes []string
+			redirectURIs      []string
+			public            bool
+			scopeID           *string
+			scopeName         *string
+			prID              *string
+			prName            *string
 		)
 
-		if err = rows.Scan(&id, &name, &userId, &allowedFlows, &redirectURIs, &scopeID, &scopeName, &prID, &prName); err != nil {
+		if err = rows.Scan(&id, &name, &userId, &allowedGrantTypes, &redirectURIs, &public, &scopeID, &scopeName, &prID, &prName); err != nil {
 			return nil, err
 		}
 
 		if client == nil {
-			client = session.NewClient(id, name, userId, allowedFlows, redirectURIs, nil)
+			client = session.NewClient(id, name, userId, allowedGrantTypes, redirectURIs, nil, public)
 		}
 
-		if scopeID != nil {
+		// prName is nil when the scope's protected resource is missing or soft-deleted
+		// (LEFT JOIN with deleted_at IS NULL): skip the scope rather than deref a nil pointer.
+		if scopeID != nil && prName != nil {
 			client.Scopes = append(client.Scopes, session.NewScope(*scopeID, *scopeName, *prID, *prName))
 		}
 	}

@@ -3,29 +3,35 @@ package infrastructure
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/jwt"
 	"time"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/crypto/jwt"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/crypto/key_factory"
 )
 
-type JwtTokenGenerator struct {
-	generator jwt.TokenGenerator
+type JwtTokenGenerator struct{}
+
+func NewJwtTokenGenerator() *JwtTokenGenerator {
+	return &JwtTokenGenerator{}
 }
 
-func NewJwtTokenGenerator(generator jwt.TokenGenerator) *JwtTokenGenerator {
-	return &JwtTokenGenerator{generator: generator}
-}
-
-func (g *JwtTokenGenerator) Generate(_ context.Context, claims map[string]any, kp *key_pairs.KeyPair, expiresIn time.Duration) (string, error) {
+func (g *JwtTokenGenerator) Generate(_ context.Context, iss string, spec key_pairs.TokenSpec, kp *key_pairs.KeyPair, expiresIn time.Duration) (string, error) {
 	p := kp.ToPrimitives()
 
-	jwtKey, err := jwt.NewKey([]byte(p.PrivateKey), p.Algorithm, p.Id)
+	signingKey, err := key_factory.NewSigningKeyFromPEM([]byte(p.PrivateKey), p.Algorithm)
 	if err != nil {
 		return "", fmt.Errorf("invalid private key in key pair: %w", err)
 	}
 
-	token, err := g.generator.Generate(claims, jwtKey, expiresIn)
+	header, err := jwt.NewTokenHeaderBuilder(signingKey, p.Id).Build(spec.IncludeJWK, spec.IncludeX5c)
+	if err != nil {
+		return "", fmt.Errorf("build token header: %w", err)
+	}
+
+	claims := jwt.NewTokenClaimBuilder(iss, spec.Sub, spec.Aud, spec.JTI, spec.ExtraClaims).Build(expiresIn)
+
+	token, err := jwt.NewTokenSigner(signingKey).Sign(header, claims)
 	if err != nil {
 		return "", fmt.Errorf("token generation failed: %w", err)
 	}

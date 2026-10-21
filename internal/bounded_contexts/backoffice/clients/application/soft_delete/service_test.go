@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"testing"
@@ -26,7 +26,8 @@ func TestSoftDelete(t *testing.T) {
 	t.Run("soft deletes client and publishes ClientDeleted event", func(t *testing.T) {
 		t.Parallel()
 		repo, bus := newMocks(t)
-		c, clientId := aClient(t)
+		userId := ids2.NewUserId()
+		c, clientId := aClient(t, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 		repo.EXPECT().SoftDelete(mock.Anything, clientId).Return(nil)
@@ -35,7 +36,7 @@ func TestSoftDelete(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientDeletedType
 			}))
 
-		err := newService(t, repo, bus).SoftDelete(context.Background(), soft_delete.NewCommand(clientId.String()))
+		err := newService(t, repo, bus).SoftDelete(context.Background(), soft_delete.NewCommand(clientId.String(), ids2.NewUserId().String(), userId.String()))
 		require.NoError(t, err)
 	})
 
@@ -67,10 +68,38 @@ func TestSoftDelete(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "wraps repository soft delete failure",
+			desc: "returns forbidden when ownership does not match",
 			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId()), nil, nil)
+				c, _ := aClient(t, ids2.NewUserId())
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
+			},
+			wantCode: clients.ErrInvalidOwnership,
+		},
+		{
+			desc: "returns forbidden when client is system resource",
+			cmd: func(t *testing.T) *soft_delete.Command {
+				return aCommand(t, withUserId(systemResourceUserId.String()))
+			},
+			setupRepo: func(repo *clientmocks.MockRepository) {
+				c, _ := clients.FromPrimitives(clients.ClientPrimitives{
+					Id:       ids2.NewClientId().String(),
+					Name:     "system-client",
+					AdminId:  ids2.NewUserId().String(),
+					UserId:   systemResourceUserId.String(),
+					IsSystem: true,
+				})
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
+			},
+			wantCode: clients.ErrSystemResource,
+		},
+		{
+			desc: "wraps repository soft delete failure",
+			cmd: func(t *testing.T) *soft_delete.Command {
+				return aCommand(t, withUserId(saveFailureUserId.String()))
+			},
+			setupRepo: func(repo *clientmocks.MockRepository) {
+				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), saveFailureUserId), nil, nil, false, false)
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().SoftDelete(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(fmt.Errorf("db error"))
@@ -93,6 +122,11 @@ func TestSoftDelete(t *testing.T) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+var (
+	systemResourceUserId = ids2.NewUserId()
+	saveFailureUserId    = ids2.NewUserId()
+)
+
 func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
 	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
@@ -100,7 +134,8 @@ func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 
 func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *soft_delete.Service {
 	t.Helper()
-	return soft_delete.NewService(domain_services.NewClientFinder(repo), repo, bus)
+	finder := domain_services.NewClientFinder(repo)
+	return soft_delete.NewService(finder, repo, bus)
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

@@ -1,6 +1,7 @@
 package protocol_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
-	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
 )
 
@@ -28,16 +29,32 @@ func tokenCtx(form url.Values) (*httptest.ResponseRecorder, *gin.Context) {
 	return w, c
 }
 
+func seedAuth(c *gin.Context, clientID string, isPublic bool) {
+	c.Request = c.Request.WithContext(
+		protocol.WithAuthenticatedClient(c.Request.Context(), clientID, isPublic),
+	)
+}
+
+type stubTokenService struct {
+	resp *session.TokenResponse
+	err  error
+}
+
+func (s *stubTokenService) Execute(_ context.Context, _ string, _ token.Request) (*session.TokenResponse, error) {
+	return s.resp, s.err
+}
+
 func TestTokenHandler(t *testing.T) {
 	t.Parallel()
 
-	tokenResp := &session.TokenResponse{Token: "access-token", Scope: "openid"}
+	tokenResp := &session.TokenResponse{AccessToken: "access-token", Scope: "openid"}
 
 	tests := []struct {
 		name       string
 		form       url.Values
-		qryResult  any
-		qryErr     error
+		isPublic   bool
+		serviceErr error
+		resp       *session.TokenResponse
 		wantErr    bool
 		wantStatus int
 	}{
@@ -47,9 +64,10 @@ func TestTokenHandler(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "unsupported_grant_type",
-			form:    url.Values{"grant_type": {"implicit"}},
-			wantErr: true,
+			name:       "unsupported_grant_type",
+			form:       url.Values{"grant_type": {"implicit"}},
+			serviceErr: assert.AnError,
+			wantErr:    true,
 		},
 		{
 			name:    "auth_code_missing_code",
@@ -57,15 +75,15 @@ func TestTokenHandler(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "auth_code_query_bus_error",
-			form:    url.Values{"grant_type": {"authorization_code"}, "code": {"xyz"}, "redirect_uri": {"https://example.com/cb"}},
-			qryErr:  assert.AnError,
-			wantErr: true,
+			name:       "auth_code_service_error",
+			form:       url.Values{"grant_type": {"authorization_code"}, "code": {"xyz"}, "redirect_uri": {"https://example.com/cb"}},
+			serviceErr: assert.AnError,
+			wantErr:    true,
 		},
 		{
 			name:       "auth_code_success",
 			form:       url.Values{"grant_type": {"authorization_code"}, "code": {"xyz"}, "redirect_uri": {"https://example.com/cb"}},
-			qryResult:  tokenResp,
+			resp:       tokenResp,
 			wantStatus: http.StatusOK,
 		},
 		{
@@ -74,16 +92,23 @@ func TestTokenHandler(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "client_credentials_query_bus_error",
-			form:    url.Values{"grant_type": {"client_credentials"}, "scope": {"openid"}},
-			qryErr:  assert.AnError,
-			wantErr: true,
+			name:       "client_credentials_service_error",
+			form:       url.Values{"grant_type": {"client_credentials"}, "scope": {"openid"}},
+			serviceErr: assert.AnError,
+			wantErr:    true,
 		},
 		{
 			name:       "client_credentials_success",
 			form:       url.Values{"grant_type": {"client_credentials"}, "scope": {"openid"}},
-			qryResult:  tokenResp,
+			resp:       tokenResp,
 			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "public_client_cannot_use_client_credentials",
+			form:       url.Values{"grant_type": {"client_credentials"}, "scope": {"openid"}},
+			isPublic:   true,
+			serviceErr: assert.AnError,
+			wantErr:    true,
 		},
 	}
 
@@ -91,8 +116,9 @@ func TestTokenHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := protocol.NewTokenHandler(handlerstest.NewQueryBus(tt.qryResult, tt.qryErr))
+			h := protocol.NewTokenHandler(&stubTokenService{resp: tt.resp, err: tt.serviceErr})
 			w, c := tokenCtx(tt.form)
+			seedAuth(c, "test-client", tt.isPublic)
 
 			result, err := h.Execute(c)
 			if tt.wantErr {
@@ -109,7 +135,7 @@ func TestTokenHandler(t *testing.T) {
 func TestTokenHandler_Default(t *testing.T) {
 	t.Parallel()
 
-	h := protocol.NewTokenHandler(handlerstest.NewQueryBus(nil, nil))
+	h := protocol.NewTokenHandler(&stubTokenService{})
 	_, c := tokenCtx(url.Values{})
 
 	h.Default(c)

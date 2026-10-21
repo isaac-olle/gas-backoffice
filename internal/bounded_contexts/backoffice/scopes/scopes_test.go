@@ -17,13 +17,14 @@ func TestNewScope(t *testing.T) {
 		prId := ids2.NewProtectedResourceId()
 		userId := ids2.NewUserId()
 
-		scope, err := NewScope(scopeId, "read:users", NewOwnershipFromVos(prId, userId))
+		scope, err := NewScope(scopeId, "read:users", NewOwnershipFromVos(prId, ids2.NewUserId(), userId), false)
 		require.NoError(t, err)
 
 		prims := scope.ToPrimitives()
 		assert.Equal(t, scopeId.String(), prims.Id)
 		assert.Equal(t, "read:users", prims.Name)
 		assert.Equal(t, prId.String(), prims.ProtectedResourceId)
+		assert.Equal(t, 1, prims.Version)
 
 		events := scope.PullDomainEvents()
 		require.Len(t, events, 1)
@@ -35,7 +36,8 @@ func TestNewScope(t *testing.T) {
 		_, err := NewScope(
 			ids2.NewScopeId(),
 			"",
-			NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId()),
+			NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId()),
+			false,
 		)
 		assert.Error(t, err)
 	})
@@ -55,6 +57,7 @@ func TestScopeFromPrimitives(t *testing.T) {
 			Id:                  scopeId.String(),
 			Name:                "read:users",
 			ProtectedResourceId: prId.String(),
+			AdminId:             ids2.NewUserId().String(),
 			UserId:              userId.String(),
 			AllowedClientIds:    []string{clientId.String()},
 		}
@@ -66,7 +69,24 @@ func TestScopeFromPrimitives(t *testing.T) {
 		assert.Equal(t, scopeId.String(), got.Id)
 		assert.Equal(t, "read:users", got.Name)
 		assert.Len(t, got.AllowedClientIds, 1)
+		assert.Equal(t, 1, got.Version)
 		assert.Empty(t, scope.PullDomainEvents())
+	})
+
+	t.Run("preserves a non-default version", func(t *testing.T) {
+		t.Parallel()
+		prims := ScopePrimitives{
+			Id:                  ids2.NewScopeId().String(),
+			Name:                "read:users",
+			ProtectedResourceId: ids2.NewProtectedResourceId().String(),
+			AdminId:             ids2.NewUserId().String(),
+			UserId:              ids2.NewUserId().String(),
+			Version:             5,
+		}
+
+		scope, err := FromPrimitives(prims)
+		require.NoError(t, err)
+		assert.Equal(t, 5, scope.ToPrimitives().Version)
 	})
 
 	invalidCases := []struct {
@@ -79,6 +99,7 @@ func TestScopeFromPrimitives(t *testing.T) {
 				Id:                  "bad-id",
 				Name:                "read:users",
 				ProtectedResourceId: ids2.NewProtectedResourceId().String(),
+				AdminId:             ids2.NewUserId().String(),
 				UserId:              ids2.NewUserId().String(),
 			},
 		},
@@ -88,6 +109,17 @@ func TestScopeFromPrimitives(t *testing.T) {
 				Id:                  ids2.NewScopeId().String(),
 				Name:                "read:users",
 				ProtectedResourceId: "bad-pr-id",
+				AdminId:             ids2.NewUserId().String(),
+				UserId:              ids2.NewUserId().String(),
+			},
+		},
+		{
+			"rejects invalid admin id",
+			ScopePrimitives{
+				Id:                  ids2.NewScopeId().String(),
+				Name:                "read:users",
+				ProtectedResourceId: ids2.NewProtectedResourceId().String(),
+				AdminId:             "bad-admin-id",
 				UserId:              ids2.NewUserId().String(),
 			},
 		},
@@ -102,26 +134,48 @@ func TestScopeFromPrimitives(t *testing.T) {
 	}
 }
 
-func TestScope_CheckOwnership(t *testing.T) {
+func TestScope_EnsureOwnership(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns true when ownership matches", func(t *testing.T) {
-		t.Parallel()
-		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
-		scope, err := NewScope(ids2.NewScopeId(), "read:users", NewOwnershipFromVos(prId, userId))
+	prId := ids2.NewProtectedResourceId()
+	adminId := ids2.NewUserId()
+	ownerId := ids2.NewUserId()
+	newOwnedScope := func(t *testing.T) *Scope {
+		t.Helper()
+		scope, err := NewScope(ids2.NewScopeId(), "read:users", NewOwnershipFromVos(prId, adminId, ownerId), false)
 		require.NoError(t, err)
+		return scope
+	}
 
-		assert.True(t, scope.CheckOwnership(newOwnership(prId, userId)))
+	t.Run("returns nil when ownership matches", func(t *testing.T) {
+		t.Parallel()
+		assert.NoError(t, newOwnedScope(t).EnsureOwnership(newOwnership(prId, adminId, ownerId)))
 	})
 
-	t.Run("returns false when protected resource id does not match", func(t *testing.T) {
+	t.Run("returns nil when the caller is the owning admin", func(t *testing.T) {
 		t.Parallel()
-		userId := ids2.NewUserId()
-		scope, err := NewScope(ids2.NewScopeId(), "read:users", NewOwnershipFromVos(ids2.NewProtectedResourceId(), userId))
-		require.NoError(t, err)
+		assert.NoError(t, newOwnedScope(t).EnsureOwnership(newOwnership(prId, adminId, adminId)))
+	})
 
-		assert.False(t, scope.CheckOwnership(newOwnership(ids2.NewProtectedResourceId(), userId)))
+	t.Run("returns error when protected resource id does not match", func(t *testing.T) {
+		t.Parallel()
+		assert.Error(t, newOwnedScope(t).EnsureOwnership(newOwnership(ids2.NewProtectedResourceId(), adminId, ownerId)))
+	})
+
+	t.Run("returns error when the owning admin targets another protected resource", func(t *testing.T) {
+		t.Parallel()
+		assert.Error(t, newOwnedScope(t).EnsureOwnership(newOwnership(ids2.NewProtectedResourceId(), adminId, adminId)))
+	})
+
+	t.Run("returns error when the caller is another admin", func(t *testing.T) {
+		t.Parallel()
+		otherAdmin := ids2.NewUserId()
+		assert.Error(t, newOwnedScope(t).EnsureOwnership(newOwnership(prId, otherAdmin, otherAdmin)))
+	})
+
+	t.Run("returns error when the caller is a sibling tenant of the same admin", func(t *testing.T) {
+		t.Parallel()
+		assert.Error(t, newOwnedScope(t).EnsureOwnership(newOwnership(prId, adminId, ids2.NewUserId())))
 	})
 }
 
@@ -133,7 +187,8 @@ func TestScope_AddAllowedClient(t *testing.T) {
 		scope, err := NewScope(
 			ids2.NewScopeId(),
 			"read:users",
-			NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId()),
+			NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId()),
+			false,
 		)
 		require.NoError(t, err)
 		scope.PullDomainEvents() // clear creation event
@@ -154,7 +209,7 @@ func TestScope_IsSystemResource(t *testing.T) {
 
 	t.Run("returns false by default on new scope", func(t *testing.T) {
 		t.Parallel()
-		scope, err := NewScope(ids2.NewScopeId(), "r:x", NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId()))
+		scope, err := NewScope(ids2.NewScopeId(), "r:x", NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId()), false)
 		require.NoError(t, err)
 		assert.False(t, scope.IsSystemResource())
 	})
@@ -165,6 +220,7 @@ func TestScope_IsSystemResource(t *testing.T) {
 			Id:                  ids2.NewScopeId().String(),
 			Name:                "r:x",
 			ProtectedResourceId: ids2.NewProtectedResourceId().String(),
+			AdminId:             ids2.NewUserId().String(),
 			UserId:              ids2.NewUserId().String(),
 			IsSystem:            true,
 		}
@@ -179,7 +235,7 @@ func TestScope_Delete(t *testing.T) {
 
 	t.Run("records a scope deleted event", func(t *testing.T) {
 		t.Parallel()
-		scope, err := NewScope(ids2.NewScopeId(), "r:x", NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId()))
+		scope, err := NewScope(ids2.NewScopeId(), "r:x", NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId()), false)
 		require.NoError(t, err)
 		scope.PullDomainEvents()
 
@@ -195,19 +251,20 @@ func TestOwnershipEquals(t *testing.T) {
 	t.Parallel()
 
 	prId := ids2.NewProtectedResourceId()
+	adminId := ids2.NewUserId()
 	userId := ids2.NewUserId()
 
 	t.Run("returns true for same ownership", func(t *testing.T) {
 		t.Parallel()
-		o1 := newOwnership(prId, userId)
-		o2 := newOwnership(prId, userId)
+		o1 := newOwnership(prId, adminId, userId)
+		o2 := newOwnership(prId, adminId, userId)
 		assert.True(t, o1.Equals(o2))
 	})
 
 	t.Run("returns false when protected resource differs", func(t *testing.T) {
 		t.Parallel()
-		o1 := newOwnership(prId, userId)
-		o2 := newOwnership(ids2.NewProtectedResourceId(), userId)
+		o1 := newOwnership(prId, adminId, userId)
+		o2 := newOwnership(ids2.NewProtectedResourceId(), adminId, userId)
 		assert.False(t, o1.Equals(o2))
 	})
 }
@@ -216,24 +273,32 @@ func TestNewOwnershipFromStrings(t *testing.T) {
 	t.Parallel()
 
 	prId := ids2.NewProtectedResourceId()
+	adminId := ids2.NewUserId()
 	userId := ids2.NewUserId()
 
 	t.Run("creates ownership from valid string ids", func(t *testing.T) {
 		t.Parallel()
-		o, err := NewOwnership(prId.String(), userId.String())
+		o, err := NewOwnership(prId.String(), adminId.String(), userId.String())
 		require.NoError(t, err)
 		assert.Equal(t, prId.String(), o.ProtectedResourceId.String())
+		assert.Equal(t, adminId.String(), o.AdminId.String())
 	})
 
 	t.Run("rejects invalid protected resource id", func(t *testing.T) {
 		t.Parallel()
-		_, err := NewOwnership("bad-id", userId.String())
+		_, err := NewOwnership("bad-id", adminId.String(), userId.String())
+		assert.Error(t, err)
+	})
+
+	t.Run("rejects invalid admin id", func(t *testing.T) {
+		t.Parallel()
+		_, err := NewOwnership(prId.String(), "bad-id", userId.String())
 		assert.Error(t, err)
 	})
 
 	t.Run("rejects invalid user id", func(t *testing.T) {
 		t.Parallel()
-		_, err := NewOwnership(prId.String(), "bad-id")
+		_, err := NewOwnership(prId.String(), adminId.String(), "bad-id")
 		assert.Error(t, err)
 	})
 }
@@ -241,10 +306,12 @@ func TestNewOwnershipFromStrings(t *testing.T) {
 func TestOwnershipToPrimitives(t *testing.T) {
 	t.Parallel()
 	prId := ids2.NewProtectedResourceId()
+	adminId := ids2.NewUserId()
 	userId := ids2.NewUserId()
-	o := newOwnership(prId, userId)
+	o := newOwnership(prId, adminId, userId)
 	p := o.ToPrimitives()
 	assert.Equal(t, prId.String(), p.ProtectedResourceId)
+	assert.Equal(t, adminId.String(), p.AdminId)
 	assert.Equal(t, userId.String(), p.UserId)
 }
 
@@ -258,6 +325,7 @@ func TestScope_RemoveAllowedClient(t *testing.T) {
 			Id:                  ids2.NewScopeId().String(),
 			Name:                "read:users",
 			ProtectedResourceId: ids2.NewProtectedResourceId().String(),
+			AdminId:             ids2.NewUserId().String(),
 			UserId:              ids2.NewUserId().String(),
 			AllowedClientIds:    []string{clientId.String()},
 		}

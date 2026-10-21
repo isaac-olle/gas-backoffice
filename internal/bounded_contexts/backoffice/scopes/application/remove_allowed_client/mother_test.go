@@ -12,8 +12,10 @@ import (
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
-	scopeId  string
-	clientId string
+	scopeId             string
+	clientId            string
+	protectedResourceId string
+	userId              string
 }
 
 func withScopeId(scopeId string) commandOpt {
@@ -24,26 +26,37 @@ func withClientId(clientId string) commandOpt {
 	return func(b *commandBuilder) { b.clientId = clientId }
 }
 
+func withProtectedResourceId(protectedResourceId string) commandOpt {
+	return func(b *commandBuilder) { b.protectedResourceId = protectedResourceId }
+}
+
+func withUserId(userId string) commandOpt {
+	return func(b *commandBuilder) { b.userId = userId }
+}
+
 func aCommand(t *testing.T, opts ...commandOpt) *remove_allowed_client.Command {
 	t.Helper()
 	b := &commandBuilder{
-		scopeId:  ids2.NewScopeId().String(),
-		clientId: ids2.NewClientId().String(),
+		scopeId:             ids2.NewScopeId().String(),
+		clientId:            ids2.NewClientId().String(),
+		protectedResourceId: ids2.NewProtectedResourceId().String(),
+		userId:              ids2.NewUserId().String(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
-	return remove_allowed_client.NewCommand(b.scopeId, b.clientId)
+	return remove_allowed_client.NewCommand(b.scopeId, b.clientId, b.protectedResourceId, ids2.NewUserId().String(), b.userId)
 }
 
-func aScopeWithClient(t *testing.T, clientId ids2.ClientId) (*scopes.Scope, ids2.ScopeId) {
+func aScopeWithClient(t *testing.T, clientId ids2.ClientId, prId ids2.ProtectedResourceId, userId ids2.UserId) (*scopes.Scope, ids2.ScopeId) {
 	t.Helper()
 	scopeId := ids2.NewScopeId()
 	prims := scopes.ScopePrimitives{
 		Id:                  scopeId.String(),
 		Name:                "read:users",
-		ProtectedResourceId: ids2.NewProtectedResourceId().String(),
-		UserId:              ids2.NewUserId().String(),
+		ProtectedResourceId: prId.String(),
+		AdminId:             ids2.NewUserId().String(),
+		UserId:              userId.String(),
 		AllowedClientIds:    []string{clientId.String()},
 	}
 	scope, err := scopes.FromPrimitives(prims)

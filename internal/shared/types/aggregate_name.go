@@ -14,8 +14,12 @@ const (
 	AggregateKeyPair            AggregateName = "key-pair"
 	AggregateClientSecret       AggregateName = "client-secret"
 
+	AggregateIdentityProvider AggregateName = "identity-provider"
+
 	AggregateAuthCodeSession          AggregateName = "auth-code-session"
 	AggregateClientCredentialsSession AggregateName = "client-credentials-session"
+
+	AggregateUserIdentity AggregateName = "user-identity"
 )
 
 func (a AggregateName) String() string {

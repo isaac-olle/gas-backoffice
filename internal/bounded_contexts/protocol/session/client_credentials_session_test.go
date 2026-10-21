@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 func TestNewClientCredentialsSession(t *testing.T) {
@@ -56,7 +57,7 @@ func TestNewClientCredentialsSession(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			sess, err := session.NewClientCredentialsSession(tc.clientID, tc.userId, tc.scope)
+			sess, err := session.NewClientCredentialsSession(ids.NewSessionId(), tc.clientID, tc.userId, tc.scope, "")
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -74,10 +75,12 @@ func TestClientCredentialsSessionFromPrimitives(t *testing.T) {
 	t.Run("reconstructs session from primitives", func(t *testing.T) {
 		t.Parallel()
 		p := &session.ClientCredentialsSessionPrimitives{
+			BaseSessionPrimitives: &session.BaseSessionPrimitives{
+				ClientID: uuid.New().String(),
+				Scope:    "read",
+			},
 			ID:       uuid.New().String(),
-			ClientID: uuid.New().String(),
 			UserId:   uuid.New().String(),
-			Scope:    "read",
 			IssuedAt: time.Now().UTC().Format(time.RFC3339),
 		}
 
@@ -100,7 +103,7 @@ func TestClientCredentialsSessionToPrimitives_RoundTrip(t *testing.T) {
 		clientID := uuid.New().String()
 		userId := uuid.New().String()
 
-		orig, err := session.NewClientCredentialsSession(clientID, userId, "openid")
+		orig, err := session.NewClientCredentialsSession(ids.NewSessionId(), clientID, userId, "openid", "")
 		require.NoError(t, err)
 
 		prim := orig.ToPrimitives()

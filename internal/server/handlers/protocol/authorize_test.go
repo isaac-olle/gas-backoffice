@@ -1,6 +1,7 @@
 package protocol_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,25 +10,39 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
-	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authorize"
+	handlerprotocol "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 func init() {
 	gin.SetMode(gin.TestMode)
 }
 
+type stubAuthorizeService struct {
+	url string
+	err error
+}
+
+func (s *stubAuthorizeService) Authorize(_ context.Context, _ authorize.Request) (string, error) {
+	return s.url, s.err
+}
+
+func newAuthorizeHandler(url string, err error) *handlerprotocol.AuthorizeHandler {
+	return handlerprotocol.NewAuthorizeHandler(&stubAuthorizeService{url: url, err: err})
+}
+
 func TestAuthorizeHandler(t *testing.T) {
 	t.Parallel()
 
 	validQuery := "response_type=code&client_id=abc&redirect_uri=https://example.com/cb&scope=openid&state=xyz"
+	googleURL := "https://accounts.google.com/o/oauth2/v2/auth?state=xyz&client_id=client-id"
 
 	tests := []struct {
 		name         string
 		query        string
-		cmdErr       error
-		qryResult    any
-		qryErr       error
+		serviceErr   error
+		urlResult    string
 		wantErr      bool
 		wantStatus   int
 		wantLocation string
@@ -38,23 +53,17 @@ func TestAuthorizeHandler(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "command_bus_error",
-			query:   validQuery,
-			cmdErr:  assert.AnError,
-			wantErr: true,
-		},
-		{
-			name:    "query_bus_error",
-			query:   validQuery,
-			qryErr:  assert.AnError,
-			wantErr: true,
+			name:       "authorize_service_error",
+			query:      validQuery,
+			serviceErr: assert.AnError,
+			wantErr:    true,
 		},
 		{
 			name:         "success",
 			query:        validQuery,
-			qryResult:    "https://example.com/cb?code=abc123&state=xyz",
+			urlResult:    googleURL,
 			wantStatus:   http.StatusFound,
-			wantLocation: "https://example.com/cb?code=abc123&state=xyz",
+			wantLocation: googleURL,
 		},
 	}
 
@@ -62,10 +71,7 @@ func TestAuthorizeHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := protocol.NewAuthorizeHandler(
-				handlerstest.NewCommandExecutor(tt.cmdErr),
-				handlerstest.NewQueryBus(tt.qryResult, tt.qryErr),
-			)
+			h := newAuthorizeHandler(tt.urlResult, tt.serviceErr)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
@@ -74,6 +80,11 @@ func TestAuthorizeHandler(t *testing.T) {
 			result, err := h.Execute(c)
 			if tt.wantErr {
 				assert.Error(t, err)
+				if tt.name == "missing_required_params" {
+					var appErr *app_errors.AppError
+					require.ErrorAs(t, err, &appErr)
+					assert.Equal(t, app_errors.ErrInvalidRequestBody, appErr.Code)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -87,10 +98,7 @@ func TestAuthorizeHandler(t *testing.T) {
 func TestAuthorizeHandler_Default(t *testing.T) {
 	t.Parallel()
 
-	h := protocol.NewAuthorizeHandler(
-		handlerstest.NewCommandExecutor(nil),
-		handlerstest.NewQueryBus(nil, nil),
-	)
+	h := newAuthorizeHandler("", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)

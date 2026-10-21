@@ -13,6 +13,10 @@ type Primitives struct {
 	OccurredOn    time.Time      `json:"occurredOn"`
 	External      bool           `json:"external"`
 	Data          map[string]any `json:"data"`
+	// AuthorId/AuthorRole are outbox transport metadata (who published this
+	// event), never part of the event's own JSON payload.
+	AuthorId   string `json:"-"`
+	AuthorRole string `json:"-"`
 }
 
 // FromPrimitivesBase reconstructs a BaseEvent from primitives.

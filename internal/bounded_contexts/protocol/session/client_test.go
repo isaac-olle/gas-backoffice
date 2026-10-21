@@ -27,20 +27,21 @@ func newFullClient() *session.Client {
 			session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
 			session.NewScope(uuid.New().String(), "profile", pr1, "Resource A"),
 		},
+		false,
 	)
 }
 
-func TestClient_HasFlow(t *testing.T) {
+func TestClient_HasGrantType(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name string
-		flow string
-		want bool
+		name      string
+		grantType string
+		want      bool
 	}{
-		{"returns true for registered flow authorization_code", "authorization_code", true},
-		{"returns true for registered flow client_credentials", "client_credentials", true},
-		{"returns false for unregistered flow", "pkce", false},
+		{"returns true for registered grant type authorization_code", "authorization_code", true},
+		{"returns true for registered grant type client_credentials", "client_credentials", true},
+		{"returns false for unregistered grant type", "implicit", false},
 	}
 
 	for _, tc := range tests {
@@ -48,7 +49,7 @@ func TestClient_HasFlow(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			c := newFullClient()
-			assert.Equal(t, tc.want, c.HasFlow(tc.flow))
+			assert.Equal(t, tc.want, c.HasGrantType(tc.grantType))
 		})
 	}
 }
@@ -108,6 +109,7 @@ func TestClient_ResolveProtectedResourceId(t *testing.T) {
 			[]string{"client_credentials"},
 			[]string{},
 			scopes,
+			false,
 		)
 	}
 
@@ -180,15 +182,15 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		flows        []string
+		grantTypes   []string
 		scopes       []*session.Scope
 		requestScope string
 		wantPrId     string
 		wantErrCode  app_errors.ErrorCode
 	}{
 		{
-			name:  "returns PR id for valid single scope",
-			flows: []string{"client_credentials"},
+			name:       "returns PR id for valid single scope",
+			grantTypes: []string{"client_credentials"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
 			},
@@ -196,8 +198,8 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 			wantPrId:     pr1,
 		},
 		{
-			name:  "returns PR id for multiple scopes from same PR",
-			flows: []string{"client_credentials"},
+			name:       "returns PR id for multiple scopes from same PR",
+			grantTypes: []string{"client_credentials"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
 				session.NewScope(uuid.New().String(), "profile", pr1, "Resource A"),
@@ -206,17 +208,17 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 			wantPrId:     pr1,
 		},
 		{
-			name:  "rejects client without client_credentials flow",
-			flows: []string{"authorization_code"},
+			name:       "rejects client without client_credentials grant type",
+			grantTypes: []string{"authorization_code"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
 			},
 			requestScope: "openid",
-			wantErrCode:  session.ErrFlowNotAllowed,
+			wantErrCode:  session.ErrGrantTypeNotAllowed,
 		},
 		{
-			name:  "rejects scope not registered for client",
-			flows: []string{"client_credentials"},
+			name:       "rejects scope not registered for client",
+			grantTypes: []string{"client_credentials"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "openid", pr1, "Resource A"),
 			},
@@ -224,8 +226,8 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 			wantErrCode:  session.ErrInvalidScope,
 		},
 		{
-			name:  "rejects ambiguous scope name across PRs",
-			flows: []string{"client_credentials"},
+			name:       "rejects ambiguous scope name across PRs",
+			grantTypes: []string{"client_credentials"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
 				session.NewScope(uuid.New().String(), "users:read", pr2, "Resource B"),
@@ -234,8 +236,8 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 			wantErrCode:  session.ErrAmbiguousScope,
 		},
 		{
-			name:  "rejects scopes from different PRs",
-			flows: []string{"client_credentials"},
+			name:       "rejects scopes from different PRs",
+			grantTypes: []string{"client_credentials"},
 			scopes: []*session.Scope{
 				session.NewScope(uuid.New().String(), "users:read", pr1, "Resource A"),
 				session.NewScope(uuid.New().String(), "orders:read", pr2, "Resource B"),
@@ -253,8 +255,9 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 			c := session.NewClient(
 				uuid.New().String(), "TC",
 				uuid.New().String(),
-				tc.flows, []string{},
+				tc.grantTypes, []string{},
 				tc.scopes,
+				false,
 			)
 
 			prId, err := c.CheckClientCredentials(tc.requestScope)
@@ -270,9 +273,9 @@ func TestClient_CheckClientCredentials(t *testing.T) {
 	}
 }
 
-func TestClientCredentialsFlowConstant(t *testing.T) {
+func TestClientCredentialsGrantTypeConstant(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "client_credentials", sessionvos.ClientCredentialsFlow.String())
+	assert.Equal(t, "client_credentials", sessionvos.ClientCredentialsGrantType.String())
 }
 
 func TestNewScope(t *testing.T) {

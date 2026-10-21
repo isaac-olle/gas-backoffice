@@ -346,3 +346,71 @@ func (_c *MockRepository_SoftDelete_Call) RunAndReturn(run func(ctx context.Cont
 	_c.Call.Return(run)
 	return _c
 }
+
+// FindByAllowedClientId provides a mock function for the type MockRepository
+func (_mock *MockRepository) FindByAllowedClientId(ctx context.Context, clientId ids.ClientId) ([]*scopes.Scope, error) {
+	ret := _mock.Called(ctx, clientId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByAllowedClientId")
+	}
+
+	var r0 []*scopes.Scope
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.ClientId) ([]*scopes.Scope, error)); ok {
+		return returnFunc(ctx, clientId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ids.ClientId) []*scopes.Scope); ok {
+		r0 = returnFunc(ctx, clientId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*scopes.Scope)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ids.ClientId) error); ok {
+		r1 = returnFunc(ctx, clientId)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_FindByAllowedClientId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByAllowedClientId'
+type MockRepository_FindByAllowedClientId_Call struct {
+	*mock.Call
+}
+
+// FindByAllowedClientId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - clientId ids.ClientId
+func (_e *MockRepository_Expecter) FindByAllowedClientId(ctx interface{}, clientId interface{}) *MockRepository_FindByAllowedClientId_Call {
+	return &MockRepository_FindByAllowedClientId_Call{Call: _e.mock.On("FindByAllowedClientId", ctx, clientId)}
+}
+
+func (_c *MockRepository_FindByAllowedClientId_Call) Run(run func(ctx context.Context, clientId ids.ClientId)) *MockRepository_FindByAllowedClientId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ids.ClientId
+		if args[1] != nil {
+			arg1 = args[1].(ids.ClientId)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_FindByAllowedClientId_Call) Return(scopes1 []*scopes.Scope, err error) *MockRepository_FindByAllowedClientId_Call {
+	_c.Call.Return(scopes1, err)
+	return _c
+}
+
+func (_c *MockRepository_FindByAllowedClientId_Call) RunAndReturn(run func(ctx context.Context, clientId ids.ClientId) ([]*scopes.Scope, error)) *MockRepository_FindByAllowedClientId_Call {
+	_c.Call.Return(run)
+	return _c
+}

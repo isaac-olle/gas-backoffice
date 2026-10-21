@@ -20,8 +20,10 @@ func (f *KeyPairFinder) Find(ctx context.Context, id ids.KeyPairId) (*key_pairs.
 	kp, err := f.repository.SearchById(ctx, id)
 	if err != nil {
 		return nil, app_errors.InternalError(key_pairs.ErrKeyPairNotFound).
-			WithDescription("repository failed to find key pair").
-			WithCause(err)
+			WithDescription("repository failed to find key pair").WithCause(
+
+			err, false)
+
 	}
 	if kp == nil {
 		return nil, app_errors.NotFoundError(key_pairs.ErrKeyPairNotFound).
@@ -35,8 +37,10 @@ func (f *KeyPairFinder) FindByProtectedResourceId(ctx context.Context, id ids.Pr
 	kp, err := f.repository.SearchByProtectedResourceId(ctx, id)
 	if err != nil {
 		return nil, app_errors.InternalError(key_pairs.ErrKeyPairNotFound).
-			WithDescription("repository failed to find key pair by protected resource").
-			WithCause(err)
+			WithDescription("repository failed to find key pair by protected resource").WithCause(
+
+			err, false)
+
 	}
 	if kp == nil {
 		return nil, app_errors.NotFoundError(key_pairs.ErrKeyPairNotFound).

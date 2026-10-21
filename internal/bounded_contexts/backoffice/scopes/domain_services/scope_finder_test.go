@@ -47,8 +47,8 @@ func TestScopeFinder_Find(t *testing.T) {
 
 func aScope(t *testing.T) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
-	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:users", ownership)
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId())
+	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:users", ownership, false)
 	require.NoError(t, err)
 	scope.PullDomainEvents()
 	return scope

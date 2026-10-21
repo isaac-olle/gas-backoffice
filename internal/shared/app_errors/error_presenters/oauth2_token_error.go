@@ -3,6 +3,7 @@ package error_presenters
 import (
 	app_errors2 "github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,8 @@ func (p *OAuth2TokenErrorPresenter) Present(c *gin.Context, err *app_errors2.App
 	c.JSON(status, gin.H{
 		"error":             oauthCode,
 		"error_description": err.Description,
+		"request_id":        err.RequestId,
+		"occurred_at":       err.OccurredAt.Format(time.RFC3339),
 	})
 }
 

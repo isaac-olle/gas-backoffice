@@ -2,33 +2,64 @@ package create
 
 import (
 	"context"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/_shared/client_projection"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
 )
 
 type Service struct {
-	repository client_assertion_keys.Repository
-	eventBus   event.Bus
+	clientProjectionRepository client_projection.Repository
+	repository                 client_assertion_keys.Repository
+	eventBus                   event.Bus
 }
 
-func NewService(repository client_assertion_keys.Repository, eventBus event.Bus) *Service {
-	return &Service{repository: repository, eventBus: eventBus}
+func NewService(
+	clientProjectionRepository client_projection.Repository,
+	repository client_assertion_keys.Repository,
+	eventBus event.Bus,
+) *Service {
+	return &Service{clientProjectionRepository: clientProjectionRepository, repository: repository, eventBus: eventBus}
 }
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	cak, err := client_assertion_keys.NewClientAssertionKey(cmd.id, cmd.clientId, cmd.algorithm, cmd.publicKey)
+	projection, err := s.clientProjectionRepository.Find(ctx, cmd.clientId)
+	if err != nil {
+		return app_errors.NotFoundError(client_assertion_keys.ErrClientAssertionKeyNotCreated).
+			WithDescription("client not found").WithCause(err, false)
+	}
+
+	pathSubscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if !projection.IsAccessibleBy([]string{pathSubscriptionId.String()}) {
+		return app_errors.ForbiddenError(client_assertion_keys.ErrInvalidOwnership).
+			WithDescription("client does not belong to the provided subscription")
+	}
+
+	// The new key is owned by the CLIENT's owner (not necessarily the caller,
+	// who may be the owning admin acting on a tenant's client).
+	subscriptionId, err := ids.NewSubscriptionIdFromString(projection.SubscriptionId)
+	if err != nil {
+		return app_errors.InternalError(client_assertion_keys.ErrClientAssertionKeyNotCreated).
+			WithDescription("invalid client subscription id").WithCause(err, false)
+	}
+
+	cak, err := client_assertion_keys.NewClientAssertionKeyForSubscription(cmd.id, cmd.clientId, subscriptionId, cmd.algorithm, cmd.publicKey)
 	if err != nil {
 		return app_errors.BadRequestError(client_assertion_keys.ErrClientAssertionKeyNotCreated).
-			WithDescription("failed to create client assertion key").
-			WithCause(err)
+			WithDescription("failed to create client assertion key").WithCause(
+
+			err, false)
+
 	}
 
 	if err = s.repository.Save(ctx, cak); err != nil {
 		return app_errors.InternalError(client_assertion_keys.ErrClientAssertionKeyNotSaved).
-			WithDescription("failed to save client assertion key").
-			WithCause(err)
+			WithDescription("failed to save client assertion key").WithCause(
+
+			err, false)
+
 	}
 
 	s.eventBus.Publish(ctx, cak.PullDomainEvents())

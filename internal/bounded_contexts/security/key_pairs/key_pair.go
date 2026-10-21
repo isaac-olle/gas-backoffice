@@ -19,7 +19,7 @@ type KeyPair struct {
 	publicKey  vo2.PublicKey
 }
 
-func NewKeyPair(id string, protectedResourceId string, algorithm string, privateKeyHex string, publicKeyHex string) (*KeyPair, error) {
+func NewKeyPair(id string, protectedResourceId string, algorithm string, privateKeyPEM string, publicKeyPEM string) (*KeyPair, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	kpId, err := ids.NewKeyPairIdFromString(id)
@@ -37,12 +37,12 @@ func NewKeyPair(id string, protectedResourceId string, algorithm string, private
 		errArr.AddError(err)
 	}
 
-	privKey, err := vo2.NewPrivateKeyFromHexString(privateKeyHex)
+	privKey, err := vo2.NewPrivateKeyFromPEMString(privateKeyPEM)
 	if err != nil {
 		errArr.AddError(err)
 	}
 
-	pubKey, err := vo2.NewPublicKeyFromHexString(publicKeyHex)
+	pubKey, err := vo2.NewPublicKeyFromPEMString(publicKeyPEM)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -105,7 +105,13 @@ func FromPrimitives(p KeyPairPrimitives) (*KeyPair, error) {
 	}, nil
 }
 
-func (kp *KeyPair) Algorithm() vo2.Algorithm        { return kp.algorithm }
-func (kp *KeyPair) PrivateKey() vo2.PrivateKey      { return kp.privateKey }
-func (kp *KeyPair) PublicKey() vo2.PublicKey        { return kp.publicKey }
-func (kp *KeyPair) CheckOwnership(o Ownership) bool { return kp.ownership == o }
+func (kp *KeyPair) Algorithm() vo2.Algorithm   { return kp.algorithm }
+func (kp *KeyPair) PrivateKey() vo2.PrivateKey { return kp.privateKey }
+func (kp *KeyPair) PublicKey() vo2.PublicKey   { return kp.publicKey }
+func (kp *KeyPair) EnsureOwnership(o Ownership) error {
+	if kp.ownership != o {
+		return app_errors.ForbiddenError(ErrInvalidOwnership).
+			WithDescription("key pair does not belong to the provided user")
+	}
+	return nil
+}

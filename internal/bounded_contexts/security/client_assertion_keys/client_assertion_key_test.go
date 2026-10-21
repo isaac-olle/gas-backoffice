@@ -31,10 +31,17 @@ func newValidIds(t *testing.T) (ids2.ClientAssertionKeyId, ids2.ClientId) {
 	return cakId, clientId
 }
 
+// newOwnerIds returns a tenant user and its owning admin.
+func newOwnerIds(t *testing.T) (adminId, userId ids2.UserId) {
+	t.Helper()
+	return ids2.NewUserId(), ids2.NewUserId()
+}
+
 func TestNewClientAssertionKey(t *testing.T) {
 	t.Parallel()
 
 	cakId, clientId := newValidIds(t)
+	adminId, userId := newOwnerIds(t)
 
 	tests := []struct {
 		name       string
@@ -64,7 +71,7 @@ func TestNewClientAssertionKey(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			cak, err := client_assertion_keys.NewClientAssertionKey(tc.cakId, tc.clientId, "RS256", tc.pubKeyHex)
+			cak, err := client_assertion_keys.NewClientAssertionKey(tc.cakId, tc.clientId, adminId, userId, "RS256", tc.pubKeyHex)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -83,10 +90,14 @@ func TestClientAssertionKeyFromPrimitives(t *testing.T) {
 		t.Parallel()
 		id := uuid.New().String()
 		clientId := uuid.New().String()
+		userId := uuid.New().String()
+		adminId := uuid.New().String()
 
 		p := client_assertion_keys.ClientAssertionKeyPrimitives{
 			Id:        id,
 			ClientId:  clientId,
+			UserId:    userId,
+			AdminId:   adminId,
 			Algorithm: "RS256",
 			PublicKey: []byte("some-raw-key-bytes"),
 		}
@@ -99,51 +110,123 @@ func TestClientAssertionKeyFromPrimitives(t *testing.T) {
 		prim := cak.ToPrimitives()
 		assert.Equal(t, id, prim.Id)
 		assert.Equal(t, clientId, prim.ClientId)
+		assert.Equal(t, userId, prim.UserId)
+		assert.Equal(t, adminId, prim.AdminId)
+	})
+
+	t.Run("rejects invalid ownership ids in primitives", func(t *testing.T) {
+		t.Parallel()
+		p := client_assertion_keys.ClientAssertionKeyPrimitives{
+			Id:        uuid.New().String(),
+			ClientId:  uuid.New().String(),
+			UserId:    "not-a-uuid",
+			AdminId:   uuid.New().String(),
+			Algorithm: "RS256",
+			PublicKey: []byte("some-raw-key-bytes"),
+		}
+		_, err := client_assertion_keys.FromPrimitives(p)
+		assert.Error(t, err)
 	})
 }
 
-func TestClientAssertionKeyCheckOwnership(t *testing.T) {
+func TestClientAssertionKeyEnsureOwnership(t *testing.T) {
 	t.Parallel()
 
 	cakId, clientId := newValidIds(t)
-	cak, err := client_assertion_keys.NewClientAssertionKey(cakId, clientId, "RS256", stubPubKeyHex)
+	adminId, userId := newOwnerIds(t)
+	cak, err := client_assertion_keys.NewClientAssertionKey(cakId, clientId, adminId, userId, "RS256", stubPubKeyHex)
 	require.NoError(t, err)
 
-	t.Run("returns true for matching client id", func(t *testing.T) {
-		t.Parallel()
-		ownership := client_assertion_keys.NewOwnershipFromVos(clientId)
-		assert.True(t, cak.CheckOwnership(ownership))
-	})
+	_, otherClientId := newValidIds(t)
+	siblingTenantId := ids2.NewUserId()
+	otherAdminId := ids2.NewUserId()
 
-	t.Run("returns false for different client id", func(t *testing.T) {
-		t.Parallel()
-		otherId, err := ids2.NewClientIdFromString(uuid.New().String())
-		require.NoError(t, err)
-		assert.False(t, cak.CheckOwnership(client_assertion_keys.NewOwnershipFromVos(otherId)))
-	})
+	tests := []struct {
+		name      string
+		ownership client_assertion_keys.Ownership
+		wantErr   bool
+	}{
+		{
+			name:      "allows the owning user",
+			ownership: client_assertion_keys.NewOwnershipFromVos(clientId, adminId, userId),
+		},
+		{
+			name:      "allows the owning admin acting as itself",
+			ownership: client_assertion_keys.NewOwnershipFromVos(clientId, adminId, adminId),
+		},
+		{
+			name:      "rejects a sibling tenant under the same admin",
+			ownership: client_assertion_keys.NewOwnershipFromVos(clientId, adminId, siblingTenantId),
+			wantErr:   true,
+		},
+		{
+			name:      "rejects a different admin",
+			ownership: client_assertion_keys.NewOwnershipFromVos(clientId, otherAdminId, otherAdminId),
+			wantErr:   true,
+		},
+		{
+			name:      "rejects a different client even for the owning user",
+			ownership: client_assertion_keys.NewOwnershipFromVos(otherClientId, adminId, userId),
+			wantErr:   true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := cak.EnsureOwnership(tc.ownership)
+			if tc.wantErr {
+				assertErrCode(t, err, client_assertion_keys.ErrInvalidOwnership)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
 }
 
 func TestClientAssertionKeyNewOwnership_InvalidUUID(t *testing.T) {
 	t.Parallel()
-	_, err := client_assertion_keys.NewOwnership("not-a-uuid")
-	assertErrCode(t, err, client_assertion_keys.ErrInvalidOwnership)
+	valid := uuid.New().String()
+	tests := []struct {
+		name                      string
+		clientId, adminId, userId string
+	}{
+		{name: "invalid client id", clientId: "not-a-uuid", adminId: valid, userId: valid},
+		{name: "invalid admin id", clientId: valid, adminId: "not-a-uuid", userId: valid},
+		{name: "invalid user id", clientId: valid, adminId: valid, userId: "not-a-uuid"},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := client_assertion_keys.NewOwnership(tc.clientId, tc.adminId, tc.userId)
+			assertErrCode(t, err, client_assertion_keys.ErrInvalidOwnership)
+		})
+	}
 }
 
 func TestClientAssertionKeyOwnership_ToPrimitives(t *testing.T) {
 	t.Parallel()
 	_, clientId := newValidIds(t)
-	o := client_assertion_keys.NewOwnershipFromVos(clientId)
+	adminId, userId := newOwnerIds(t)
+	o := client_assertion_keys.NewOwnershipFromVos(clientId, adminId, userId)
 	p := o.ToPrimitives()
 	assert.Equal(t, clientId.String(), p.ClientId)
+	assert.Equal(t, adminId.String(), p.AdminId)
+	assert.Equal(t, userId.String(), p.UserId)
 }
 
 func TestClientAssertionKeyToPrimitives(t *testing.T) {
 	t.Parallel()
 	cakId, clientId := newValidIds(t)
-	cak, err := client_assertion_keys.NewClientAssertionKey(cakId, clientId, "RS256", stubPubKeyHex)
+	adminId, userId := newOwnerIds(t)
+	cak, err := client_assertion_keys.NewClientAssertionKey(cakId, clientId, adminId, userId, "RS256", stubPubKeyHex)
 	require.NoError(t, err)
 	p := cak.ToPrimitives()
 	assert.Equal(t, clientId.String(), p.ClientId)
+	assert.Equal(t, adminId.String(), p.AdminId)
+	assert.Equal(t, userId.String(), p.UserId)
 	assert.Equal(t, "RS256", p.Algorithm)
 	assert.NotEmpty(t, p.PublicKey)
 }

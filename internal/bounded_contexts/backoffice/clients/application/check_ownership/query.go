@@ -2,30 +2,32 @@ package check_ownership
 
 import (
 	"context"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 )
 
 const QueryType query.Type = "query.backoffice.client.check_ownership"
 
+// Query checks that the client identified by clientId belongs to the caller's
+// active subscription (read from context). It mutates no state; it exists
+// purely so handlers in other modules can verify ownership of a referenced
+// client without importing the clients domain directly.
 type Query struct {
 	clientId string
-	userId   string
 }
 
-func NewQuery(clientId, userId string) *Query {
-	return &Query{clientId: clientId, userId: userId}
+func NewQuery(clientId string) *Query {
+	return &Query{clientId: clientId}
 }
 
 func (q *Query) Type() query.Type { return QueryType }
 
-type QueryHandler struct {
-	service *Service
-}
+type QueryHandler struct{ service *Service }
 
 func NewQueryHandler(service *Service) *QueryHandler {
 	return &QueryHandler{service: service}
 }
 
 func (h *QueryHandler) Handle(ctx context.Context, qry query.Query) (any, error) {
-	return query.Process[*Query, context.Context](ctx, qry, h.service.CheckOwnership)
+	return query.Process[*Query, context.Context](ctx, qry, h.service.Check)
 }

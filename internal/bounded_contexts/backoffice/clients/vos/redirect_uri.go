@@ -13,8 +13,10 @@ func NewRedirectUri(raw string) (RedirectUri, error) {
 	u, err := vo.NewUrl(raw, vo.NewFragmentNotAllowedOption())
 	if err != nil {
 		return RedirectUri{}, app_errors.BadRequestError(ErrInvalidRedirectUri).
-			WithDescription("invalid redirect uri").
-			WithCause(err)
+			WithDescription("invalid redirect uri").WithCause(
+
+			err, false)
+
 	}
 	return RedirectUri{u}, nil
 }

@@ -18,7 +18,11 @@ type ClientAssertionKey struct {
 	algorithm vo2.Algorithm
 }
 
-func NewClientAssertionKey(cakId ids2.ClientAssertionKeyId, clientId ids2.ClientId, algorithmString string, publicKey string) (*ClientAssertionKey, error) {
+func NewClientAssertionKeyForSubscription(cakId ids2.ClientAssertionKeyId, clientId ids2.ClientId, subscriptionId ids2.SubscriptionId, algorithmString, publicKey string) (*ClientAssertionKey, error) {
+	return newClientAssertionKey(cakId, NewOwnershipFromVos(clientId, subscriptionId), algorithmString, publicKey)
+}
+
+func newClientAssertionKey(cakId ids2.ClientAssertionKeyId, ownership Ownership, algorithmString, publicKey string) (*ClientAssertionKey, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	key, err := vo2.NewPublicKeyFromHexString(publicKey)
@@ -38,7 +42,7 @@ func NewClientAssertionKey(cakId ids2.ClientAssertionKeyId, clientId ids2.Client
 	cak := &ClientAssertionKey{
 		Root:      aggregate2.NewRoot(clientAssertionKeyAggregateName),
 		id:        cakId,
-		ownership: NewOwnershipFromVos(clientId),
+		ownership: ownership,
 		key:       key,
 		algorithm: algorithm,
 	}
@@ -54,7 +58,7 @@ func FromPrimitives(p ClientAssertionKeyPrimitives) (*ClientAssertionKey, error)
 		errArr.AddError(err)
 	}
 
-	ownership, err := NewOwnership(p.ClientId)
+	ownership, err := NewOwnership(p.ClientId, p.SubscriptionId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -82,4 +86,20 @@ func FromPrimitives(p ClientAssertionKeyPrimitives) (*ClientAssertionKey, error)
 	}, nil
 }
 
-func (c *ClientAssertionKey) CheckOwnership(o Ownership) bool { return c.ownership == o }
+// EnsureOwnership requires the key to target clientId and to belong to one of
+// subscriptionIds. Membership of the caller in that subscription is validated
+// earlier, at the subscription path param middleware.
+func (c *ClientAssertionKey) EnsureOwnership(clientId ids2.ClientId, subscriptionIds []ids2.SubscriptionId) error {
+	allowed := false
+	for _, id := range subscriptionIds {
+		if id == c.ownership.SubscriptionId {
+			allowed = true
+			break
+		}
+	}
+	if c.ownership.ClientId != clientId || !allowed {
+		return app_errors.ForbiddenError(ErrInvalidOwnership).
+			WithDescription("client assertion key does not belong to the provided subscription")
+	}
+	return nil
+}

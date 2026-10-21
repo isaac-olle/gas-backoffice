@@ -6,7 +6,8 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-// Repository is read-only: identity providers are configured/seeded in the DB.
 type Repository interface {
+	Save(ctx context.Context, idp *IdentityProvider) error
 	FindById(ctx context.Context, id ids.IdentityProviderId) (*IdentityProvider, error)
+	FindByReferenceName(ctx context.Context, referenceName string) (*IdentityProvider, error)
 }

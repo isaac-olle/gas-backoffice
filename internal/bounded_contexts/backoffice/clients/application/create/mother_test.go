@@ -15,36 +15,43 @@ import (
 type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
-	name         string
-	userId       ids2.UserId
-	allowedFlows []string
-	redirectUris []string
+	name              string
+	adminId           ids2.UserId
+	userId            ids2.UserId
+	allowedGrantTypes []string
+	redirectUris      []string
+	public            bool
 }
 
 func withName(name string) commandOpt {
 	return func(b *commandBuilder) { b.name = name }
 }
 
-func withFlows(flows ...string) commandOpt {
-	return func(b *commandBuilder) { b.allowedFlows = flows }
+func withGrantTypes(grantTypes ...string) commandOpt {
+	return func(b *commandBuilder) { b.allowedGrantTypes = grantTypes }
 }
 
 func withRedirectUris(uris ...string) commandOpt {
 	return func(b *commandBuilder) { b.redirectUris = uris }
 }
 
+func withPublic(public bool) commandOpt {
+	return func(b *commandBuilder) { b.public = public }
+}
+
 func aCommand(t *testing.T, opts ...commandOpt) *create.Command {
 	t.Helper()
 	b := &commandBuilder{
-		name:   "valid-client",
-		userId: ids2.NewUserId(),
+		name:    "valid-client",
+		adminId: ids2.NewUserId(),
+		userId:  ids2.NewUserId(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
 	clientId := ids2.NewClientId()
-	ownership := clients.NewOwnership(b.userId)
-	cmd := create.NewCommand(clientId, b.name, ownership, b.allowedFlows, b.redirectUris)
+	ownership := clients.NewOwnership(b.adminId, b.userId)
+	cmd := create.NewCommand(clientId, b.name, ownership, b.allowedGrantTypes, b.redirectUris, b.public, false)
 	require.NotNil(t, cmd)
 	return cmd
 }

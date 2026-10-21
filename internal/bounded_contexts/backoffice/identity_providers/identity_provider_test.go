@@ -13,6 +13,7 @@ import (
 func validPrimitives(id string) identity_providers.IdentityProviderPrimitives {
 	return identity_providers.IdentityProviderPrimitives{
 		Id:                    id,
+		ReferenceName:         "google",
 		Name:                  "google",
 		Issuer:                "https://accounts.google.com",
 		ClientId:              "client-123",
@@ -21,6 +22,7 @@ func validPrimitives(id string) identity_providers.IdentityProviderPrimitives {
 		TokenEndpoint:         "https://oauth2.googleapis.com/token",
 		JwksUri:               "https://www.googleapis.com/oauth2/v3/certs",
 		Scopes:                []string{"openid", "email", "profile"},
+		BackofficeRedirectUri: "https://api.example.com/v1/auth/callback/x",
 		Enabled:               true,
 	}
 }
@@ -70,10 +72,7 @@ func TestAuthorizationURL(t *testing.T) {
 		t.Parallel()
 		p := validPrimitives(ids2.NewIdentityProviderId().String())
 		p.AuthorizationEndpoint = ""
-		idp, err := identity_providers.FromPrimitives(p)
-		require.NoError(t, err)
-
-		_, err = idp.AuthorizationURL("https://api.example.com/cb", "s", "n")
+		_, err := identity_providers.FromPrimitives(p)
 		assert.Error(t, err)
 	})
 }

@@ -50,16 +50,13 @@ func (p *Pool) Process(ctx context.Context, task func(ctx context.Context)) {
 
 			p.mu.Lock()
 			p.activeWorkers.PullByID(w.ID)
-
 			nextTask := p.pendingTasks.PullFirst()
-			if nextTask != nil {
-				p.mu.Unlock()
-				p.Process(ctx, nextTask)
-				return
-			}
-
 			p.availableWorkers.Push(w)
 			p.mu.Unlock()
+
+			if nextTask != nil {
+				p.Process(ctx, nextTask)
+			}
 		}()
 
 		w.Work(ctx, task)

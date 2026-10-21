@@ -23,6 +23,7 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 		userIdFn       func(context.Context) (ids2.UserId, bool)
 		scopeIdFn      func(context.Context) (ids2.ScopeId, bool)
 		body           interface{}
+		queryErr       error
 		busErr         error
 		wantErr        bool
 		wantStatus     int
@@ -83,12 +84,22 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			scopeIdFn: handlerstest.NewScopeIdExtractor(),
 			wantErr:   true,
 		},
+		{
+			name:      "protected_resource_ownership_check_error_returns_error",
+			body:      map[string][]string{"scopes": {"read"}},
+			prIdFn:    handlerstest.ValidPrIdExtractor(),
+			userIdFn:  handlerstest.ValidUserIdExtractor(),
+			scopeIdFn: handlerstest.NewScopeIdExtractor(),
+			queryErr:  errors.New("protected resource does not belong to the provided user"),
+			wantErr:   true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, tt.prIdFn, tt.userIdFn, tt.scopeIdFn)
+			qryBus := handlerstest.NewQueryBus(nil, tt.queryErr)
+			h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor(), tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, handlerstest.JsonBody(tt.body))
 			result, err := h.Execute(c)
@@ -108,7 +119,8 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 func TestCreateScopesFromBodyHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidScopeIdExtractor())
+	qryBus := handlerstest.NewQueryBus(nil, nil)
+	h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor(), handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())
@@ -117,10 +129,13 @@ func TestCreateScopesFromBodyHandler_Default(t *testing.T) {
 func TestCreateScopesFromBodyHandler_InvalidBody(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
+	qryBus := handlerstest.NewQueryBus(nil, nil)
 	h := scopeHandlers.NewCreateScopesFromBodyHandler(
 		bus,
+		qryBus,
 		handlerstest.ValidPrIdExtractor(),
 		handlerstest.ValidUserIdExtractor(),
+		handlerstest.ValidAuthorExtractor(),
 		handlerstest.NewScopeIdExtractor(),
 	)
 	_, c := handlerstest.NewCtx(http.MethodPost, strings.NewReader("not valid json"))

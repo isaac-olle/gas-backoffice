@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,15 +25,18 @@ type AppError struct {
 	Code        ErrorCode
 	Description string
 	Details     map[string]any
-	Cause       error
+	Cause       []CauseError
 	StackTrace  *ErrorTrace
+	RequestId   string
+	OccurredAt  time.Time
 }
 
 func newAppError(errType ErrorType, code ErrorCode) *AppError {
 	e := &AppError{
-		ErrorId: uuid.New().String(),
-		Type:    errType,
-		Code:    code,
+		ErrorId:    uuid.New().String(),
+		Type:       errType,
+		Code:       code,
+		OccurredAt: time.Now().UTC(),
 	}
 
 	pc, file, line, ok := runtime.Caller(2)
@@ -55,14 +59,51 @@ func (e *AppError) Error() string {
 	return string(jsonError)
 }
 
+type AppErrorPrimitives struct {
+	ErrorId     string
+	Type        string
+	Code        string
+	Description string
+	Details     map[string]any
+	Cause       []string
+	StackTrace  any
+	RequestId   string
+	OccurredAt  string
+}
+
+func (e *AppError) ToPrimitives() AppErrorPrimitives {
+	causes := make([]string, 0, len(e.Cause))
+	for _, c := range e.Cause {
+		causes = append(causes, c.Error())
+	}
+
+	var stackTrace any
+	if e.StackTrace != nil {
+		stackTrace = e.StackTrace.ToJSON()
+	}
+
+	return AppErrorPrimitives{
+		ErrorId:     e.ErrorId,
+		Type:        e.Type.String(),
+		Code:        string(e.Code),
+		Description: e.Description,
+		Details:     e.Details,
+		Cause:       causes,
+		StackTrace:  stackTrace,
+		RequestId:   e.RequestId,
+		OccurredAt:  e.OccurredAt.Format(time.RFC3339),
+	}
+}
+
 var ErrInvalidRequestBody ErrorCode = "INVALID_REQUEST_BODY"
+var ErrQueryingDatabase ErrorCode = "ERROR_QUERYING_DATABASE"
 
 func BadRequestError(code ErrorCode) *AppError {
 	return newAppError(BadRequestErrorType, code)
 }
 
 func InvalidRequestBodyError(cause error) *AppError {
-	return newAppError(BadRequestErrorType, ErrInvalidRequestBody).WithCause(cause)
+	return newAppError(BadRequestErrorType, ErrInvalidRequestBody).WithCause(cause, false)
 }
 
 func InternalError(code ErrorCode) *AppError {
@@ -95,9 +136,37 @@ func (e *AppError) WithDetails(details map[string]any) *AppError {
 	return e
 }
 
-func (e *AppError) WithCause(cause error) *AppError {
-	e.Cause = cause
+func (e *AppError) WithRequestId(requestId string) *AppError {
+	e.RequestId = requestId
 	return e
+}
+
+// WithCause attaches an underlying cause with a visibility flag. If public, the
+// HTTP presenter may expose it to the client; otherwise it is only logged. A
+// *ConcatenatedError is flattened into its individual errors (each wrapped with
+// the same visibility) so every validation error surfaces as its own entry.
+func (e *AppError) WithCause(cause error, public bool) *AppError {
+	if ce, ok := cause.(*ConcatenatedError); ok {
+		for _, sub := range ce.Errors() {
+			e.Cause = append(e.Cause, CauseError{public: public, error: sub})
+		}
+		return e
+	}
+	e.Cause = append(e.Cause, CauseError{public: public, error: cause})
+	return e
+}
+
+// PublicCauses returns the messages of the causes explicitly marked public
+// (wrapped in a public *CauseError). Plain errors and private causes are omitted,
+// so internal details are never leaked to the API client.
+func (e *AppError) PublicCauses() []string {
+	var out []string
+	for _, c := range e.Cause {
+		if msg := c.StringIfPublic(); msg != "" {
+			out = append(out, msg)
+		}
+	}
+	return out
 }
 
 func (e *AppError) Is(target error) bool {

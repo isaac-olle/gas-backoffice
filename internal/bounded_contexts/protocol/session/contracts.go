@@ -2,6 +2,10 @@ package session
 
 import (
 	"context"
+	"time"
+
+	protocolShared "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/_shared"
+	sessionvos "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/vos"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -17,15 +21,53 @@ type ClientFinderRepository interface {
 	FindById(ctx context.Context, clientID string) (*Client, error)
 }
 
-type IdentityProviderFinderRepository interface {
-	FindById(ctx context.Context, idpID string) (*IdentityProvider, error)
+type AuthorizationURLBuilder interface {
+	BuildAuthorizationURL(idp *protocolShared.IdentityProviderConfig, state string) (string, error)
 }
 
-// IdentityProviderClient is the infrastructure adapter that talks to an external
-// identity provider (only Google for now). BuildAuthorizationURL produces the
-// front-channel URL the browser must be redirected to in order to authenticate.
+// IdpStatePayload is the self-contained, encrypted "state" sent to the
+// identity provider at /oidc/authorize and decoded back at the callback by
+// create_session. It carries everything /oidc/authorize validated so nothing
+// needs to be persisted until the user actually completes the IDP login.
+type IdpStatePayload struct {
+	ClientID            string `json:"cid"`
+	RedirectURI         string `json:"ru"`
+	Scope               string `json:"sc"`
+	ResponseType        string `json:"rt"`
+	CodeChallenge       string `json:"cc"`
+	CodeChallengeMethod string `json:"ccm"`
+	ClientState         string `json:"cs"`
+	IdpReferenceName    string `json:"idp"`
+	Exp                 int64  `json:"exp"`
+}
+
+// IdpStateCodec encodes/decodes the opaque "state" value sent to and received
+// back from the identity provider.
+type IdpStateCodec interface {
+	Encode(payload IdpStatePayload) (string, error)
+	Decode(encoded string) (IdpStatePayload, error)
+}
+
+// IdpTokens holds the tokens obtained from exchanging an authorization code
+// with an identity provider.
+type IdpTokens struct {
+	IDToken      string
+	AccessToken  string
+	RefreshToken string
+	ExpiresAt    time.Time
+}
+
+// IdpAuthentication holds the result of authenticating a user through an
+// identity provider: the resolved identity and the tokens obtained from it.
+type IdpAuthentication struct {
+	Tokens IdpTokens
+	Claims sessionvos.IdpClaims
+}
+
+// IdentityProviderClient is the infrastructure adapter that exchanges an
+// authorization code for tokens with an external identity provider.
 type IdentityProviderClient interface {
-	BuildAuthorizationURL(idp *IdentityProvider, sess *AuthorizationCodeSession) (string, error)
+	ExchangeCode(ctx context.Context, idp *protocolShared.IdentityProviderConfig, code string) (IdpAuthentication, error)
 }
 
 type TokenDecoder interface {
@@ -34,9 +76,13 @@ type TokenDecoder interface {
 
 type ClientCredentialsSessionRepository interface {
 	Save(ctx context.Context, sess *ClientCredentialsSession) error
+	FindById(ctx context.Context, id ids.SessionId) (*ClientCredentialsSession, error)
 }
 
-type TokenGenerator interface {
-	GenerateFromSession(ctx context.Context, sess *AuthorizationCodeSession, client *Client, protectedResourceId string) (string, error)
-	GenerateFromClientCredentials(ctx context.Context, sess *ClientCredentialsSession, protectedResourceId string) (string, error)
+type AccessTokenGenerator interface {
+	GenerateAccessToken(ctx context.Context, session *BaseSession, identity *UserIdentityProjection) (string, error)
+}
+
+type IDTokenGenerator interface {
+	GenerateIDToken(ctx context.Context, session *BaseSession, identity *UserIdentityProjection) (string, error)
 }

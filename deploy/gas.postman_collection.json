@@ -103,6 +103,41 @@
           ]
         },
         {
+          "name": "List Errors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/backoffice/errors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "backoffice",
+                "errors"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Users",
           "item": [
             {
@@ -940,7 +975,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_flows\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_grant_types\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1017,7 +1052,7 @@
               ]
             },
             {
-              "name": "Add Allowed Flow",
+              "name": "Add Allowed Grant Type",
               "request": {
                 "method": "POST",
                 "header": [
@@ -1031,7 +1066,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/flows",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/grant-types",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1043,7 +1078,7 @@
                     ":user_id",
                     "clients",
                     ":client_id",
-                    "flows"
+                    "grant-types"
                   ],
                   "variable": [
                     {
@@ -1084,7 +1119,7 @@
               ]
             },
             {
-              "name": "Remove Allowed Flow",
+              "name": "Remove Allowed Grant Type",
               "request": {
                 "method": "DELETE",
                 "header": [
@@ -1098,7 +1133,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/flows",
+                  "raw": "{{base_url}}/v1/backoffice/admins/users/:user_id/clients/:client_id/grant-types",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -1110,7 +1145,7 @@
                     ":user_id",
                     "clients",
                     ":client_id",
-                    "flows"
+                    "grant-types"
                   ],
                   "variable": [
                     {
@@ -1427,7 +1462,7 @@
           "name": "Users",
           "item": [
             {
-              "name": "Get Self",
+              "name": "List Users (admin-only)",
               "request": {
                 "method": "GET",
                 "header": [
@@ -1445,8 +1480,7 @@
                     "v1",
                     "backoffice",
                     "users"
-                  ],
-                  "variable": []
+                  ]
                 }
               },
               "response": [],
@@ -1456,9 +1490,43 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test(\"Status 200\", function() {",
-                      "    pm.expect(pm.response.code).to.be.oneOf([200]);",
-                      "});"
+                      "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Self",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/me",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
                     ]
                   }
                 }
@@ -1656,6 +1724,42 @@
         {
           "name": "Protected Resources",
           "item": [
+            {
+              "name": "List Protected Resources",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/protected-resources",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "protected-resources"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
             {
               "name": "Create Protected Resource",
               "request": {
@@ -2170,6 +2274,42 @@
           "name": "Clients",
           "item": [
             {
+              "name": "List Clients",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/v1/backoffice/users/clients",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "backoffice",
+                    "users",
+                    "clients"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
               "name": "Create Client",
               "request": {
                 "method": "PUT",
@@ -2205,7 +2345,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_flows\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
+                  "raw": "{\n  \"name\": \"My Client\",\n  \"allowed_grant_types\": [\"authorization_code\"],\n  \"redirect_uris\": [\"https://example.com/callback\"]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2275,7 +2415,7 @@
               ]
             },
             {
-              "name": "Add Allowed Flow",
+              "name": "Add Allowed Grant Type",
               "request": {
                 "method": "POST",
                 "header": [
@@ -2289,7 +2429,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/flows",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/grant-types",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -2299,7 +2439,7 @@
                     "users",
                     "clients",
                     ":client_id",
-                    "flows"
+                    "grant-types"
                   ],
                   "variable": [
                     {
@@ -2335,7 +2475,7 @@
               ]
             },
             {
-              "name": "Remove Allowed Flow",
+              "name": "Remove Allowed Grant Type",
               "request": {
                 "method": "DELETE",
                 "header": [
@@ -2349,7 +2489,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/flows",
+                  "raw": "{{base_url}}/v1/backoffice/users/clients/:client_id/grant-types",
                   "host": [
                     "{{base_url}}"
                   ],
@@ -2359,7 +2499,7 @@
                     "users",
                     "clients",
                     ":client_id",
-                    "flows"
+                    "grant-types"
                   ],
                   "variable": [
                     {
@@ -2730,7 +2870,7 @@
           ]
         },
         {
-          "name": "Add Allowed Flow",
+          "name": "Add Allowed Grant Type",
           "request": {
             "method": "POST",
             "header": [
@@ -2744,7 +2884,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/v1/backoffice/clients/flows",
+              "raw": "{{base_url}}/v1/backoffice/clients/grant-types",
               "host": [
                 "{{base_url}}"
               ],
@@ -2752,7 +2892,7 @@
                 "v1",
                 "backoffice",
                 "clients",
-                "flows"
+                "grant-types"
               ],
               "variable": []
             },
@@ -2905,6 +3045,83 @@
                   "pm.test(\"Status 200\", function() {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200]);",
                   "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "JWKS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/oidc/jwks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "oidc",
+                "jwks"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has keys\", () => pm.expect(pm.response.json().keys).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IDP Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1/oidc/callback/:idp_id?code=&state=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "oidc",
+                "callback",
+                ":idp_id"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": ""
+                },
+                {
+                  "key": "state",
+                  "value": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "idp_id",
+                  "value": "google",
+                  "description": "IDP reference name"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 302\", () => pm.expect(pm.response.code).to.eql(302));"
                 ]
               }
             }

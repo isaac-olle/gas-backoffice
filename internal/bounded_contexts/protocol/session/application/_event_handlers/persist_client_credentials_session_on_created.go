@@ -18,10 +18,12 @@ func NewPersistClientCredentialsSessionOnCreatedEventHandler(repository session.
 func (h *PersistClientCredentialsSessionOnCreatedEventHandler) Handle(ctx context.Context, evt protocolEvents.ClientCredentialsSessionCreated) error {
 	sess, err := session.ClientCredentialsSessionFromPrimitives(
 		&session.ClientCredentialsSessionPrimitives{
+			BaseSessionPrimitives: &session.BaseSessionPrimitives{
+				ClientID: evt.ClientID,
+				Scope:    evt.Scope,
+			},
 			ID:       evt.AggregateID(),
-			ClientID: evt.ClientID,
 			UserId:   evt.UserId,
-			Scope:    evt.Scope,
 			IssuedAt: evt.OccurredOn().Format("2006-01-02T15:04:05Z07:00"),
 		})
 	if err != nil {

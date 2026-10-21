@@ -45,7 +45,7 @@ func TestSoftDeleteClientHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := clients.NewSoftDeleteClientHandler(bus, tt.clientIdFn)
+			h := clients.NewSoftDeleteClientHandler(bus, tt.clientIdFn, handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 
 			_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 			result, err := h.Execute(c)
@@ -64,7 +64,7 @@ func TestSoftDeleteClientHandler(t *testing.T) {
 func TestSoftDeleteClientHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := clients.NewSoftDeleteClientHandler(bus, handlerstest.ValidClientIdExtractor())
+	h := clients.NewSoftDeleteClientHandler(bus, handlerstest.ValidClientIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

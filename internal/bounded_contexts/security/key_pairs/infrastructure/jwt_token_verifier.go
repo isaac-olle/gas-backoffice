@@ -2,36 +2,44 @@ package infrastructure
 
 import (
 	"context"
-	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/jwt"
-
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure/jwt_verifiers"
 )
 
 type JwtTokenVerifier struct {
-	verifier jwt.TokenVerifier
+	signatureVerifier     *jwt_verifiers.Signature
+	expectedClaimVerifier *jwt_verifiers.ExpectedClaim
+	expirationVerifier    *jwt_verifiers.ExpirationVerifier
 }
 
-func NewJwtTokenVerifier(verifier jwt.TokenVerifier) *JwtTokenVerifier {
-	return &JwtTokenVerifier{verifier: verifier}
+func NewJwtTokenVerifier() *JwtTokenVerifier {
+	return &JwtTokenVerifier{
+		signatureVerifier:     jwt_verifiers.NewSignatureVerifier(),
+		expectedClaimVerifier: jwt_verifiers.NewExpectedClaimVerifier(),
+		expirationVerifier:    jwt_verifiers.NewExpirationVerifier(),
+	}
 }
 
-func (v *JwtTokenVerifier) Verify(_ context.Context, token string, kp *key_pairs.KeyPair) (*key_pairs.TokenClaims, error) {
-	p := kp.ToPrimitives()
-
-	jwtKey, err := jwt.NewKey([]byte(p.PublicKey), p.Algorithm, p.Id)
+func (v *JwtTokenVerifier) Verify(
+	_ context.Context,
+	token string,
+	kp *key_pairs.KeyPair,
+	expectedClaims map[string]any,
+	verifyExpiration bool,
+) (map[string]any, error) {
+	claims, err := v.signatureVerifier.Verify(token, kp)
 	if err != nil {
-		return nil, fmt.Errorf("invalid public key in key pair: %w", err)
+		return nil, err
 	}
 
-	rawClaims, err := v.verifier.Verify(token, jwtKey)
-	if err != nil {
-		return nil, fmt.Errorf("token signature verification failed: %w", err)
+	if verifyExpiration {
+		if err := v.expirationVerifier.Verify(claims); err != nil {
+			return nil, err
+		}
 	}
 
-	claims, err := key_pairs.NewTokenClaims(rawClaims)
-	if err != nil {
-		return nil, fmt.Errorf("invalid token claims: %w", err)
+	if err := v.expectedClaimVerifier.Verify(claims, expectedClaims); err != nil {
+		return nil, err
 	}
 
 	return claims, nil

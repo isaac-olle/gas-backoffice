@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	userDomain "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	userDomain "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/ownership"
 	vo2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"

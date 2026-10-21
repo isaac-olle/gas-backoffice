@@ -12,13 +12,14 @@ import (
 )
 
 type ClientCredentialsSession struct {
-	BaseSession
-	id       ids2.ClientCredentialsSessionId
-	userId   ids2.UserId
-	issuedAt time.Time
+	*BaseSession
+	id                  ids2.SessionId
+	userId              ids2.UserId
+	issuedAt            time.Time
+	protectedResourceId string
 }
 
-func NewClientCredentialsSession(clientID, rawUserId, scope string) (*ClientCredentialsSession, error) {
+func NewClientCredentialsSession(sessionID ids2.SessionId, clientID, rawUserId, scope, protectedResourceId string) (*ClientCredentialsSession, error) {
 	errorArray := app_errors.NewEmptyErrorArray()
 
 	clientId, err := ids2.NewClientIdFromString(clientID)
@@ -41,10 +42,11 @@ func NewClientCredentialsSession(clientID, rawUserId, scope string) (*ClientCred
 	}
 
 	sess := &ClientCredentialsSession{
-		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsFlow, aggregate2.ClientCredentialsSession),
-		id:          ids2.NewClientCredentialsSessionId(),
-		userId:      userId,
-		issuedAt:    time.Now().UTC(),
+		BaseSession:         newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsGrantType, aggregate2.ClientCredentialsSession, protectedResourceId),
+		id:                  sessionID,
+		userId:              userId,
+		issuedAt:            time.Now().UTC(),
+		protectedResourceId: protectedResourceId,
 	}
 	sess.Record(protocoEvents.NewClientCredentialsSessionCreated(
 		sess.id.String(),
@@ -55,8 +57,21 @@ func NewClientCredentialsSession(clientID, rawUserId, scope string) (*ClientCred
 	return sess, nil
 }
 
+func (s *ClientCredentialsSession) ProtectedResourceId() string {
+	return s.protectedResourceId
+}
+
+func (s *ClientCredentialsSession) TokenClaims() TokenClaims {
+	return TokenClaims{
+		Scope:               s.scope.String(),
+		ClientID:            s.clientID.String(),
+		UserID:              s.userId.String(),
+		ProtectedResourceId: s.protectedResourceId,
+	}
+}
+
 func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitives) (*ClientCredentialsSession, error) {
-	id, err := ids2.NewClientCredentialsSessionIdFromString(p.ID)
+	id, err := ids2.NewSessionIdFromString(p.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,19 +97,19 @@ func ClientCredentialsSessionFromPrimitives(p *ClientCredentialsSessionPrimitive
 	}
 
 	return &ClientCredentialsSession{
-		BaseSession: newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsFlow, aggregate2.ClientCredentialsSession),
-		id:          id,
-		userId:      userId,
-		issuedAt:    issuedAt,
+		BaseSession:         newBaseSession(clientId, scopeVO, sessionvos.ClientCredentialsGrantType, aggregate2.ClientCredentialsSession, p.ProtectedResourceId),
+		id:                  id,
+		userId:              userId,
+		issuedAt:            issuedAt,
+		protectedResourceId: p.ProtectedResourceId,
 	}, nil
 }
 
 func (s *ClientCredentialsSession) ToPrimitives() *ClientCredentialsSessionPrimitives {
 	return &ClientCredentialsSessionPrimitives{
-		ID:       s.id.String(),
-		ClientID: s.clientID.String(),
-		UserId:   s.userId.String(),
-		Scope:    s.scope.String(),
-		IssuedAt: s.issuedAt.Format(time.RFC3339),
+		BaseSessionPrimitives: s.BaseSession.ToPrimitives(),
+		ID:                    s.id.String(),
+		UserId:                s.userId.String(),
+		IssuedAt:              s.issuedAt.Format(time.RFC3339),
 	}
 }

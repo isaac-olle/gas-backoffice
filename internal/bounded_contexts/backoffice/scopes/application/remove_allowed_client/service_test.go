@@ -8,6 +8,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +17,13 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/remove_allowed_client"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
 	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
+
+func newService(repo *scopemocks.MockRepository, bus *eventmocks.MockBus) *remove_allowed_client.Service {
+	return remove_allowed_client.NewService(domain_services.NewScopeFinder(repo), repo, bus)
+}
 
 func TestRemoveAllowedClient(t *testing.T) {
 	t.Parallel()
@@ -26,8 +32,10 @@ func TestRemoveAllowedClient(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
+		prId := ids.NewProtectedResourceId()
+		userId := ids.NewUserId()
 		clientId := ids.NewClientId()
-		scope, scopeId := aScopeWithClient(t, clientId)
+		scope, scopeId := aScopeWithClient(t, clientId, prId, userId)
 
 		var saved *scopes.Scope
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
@@ -41,12 +49,16 @@ func TestRemoveAllowedClient(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ScopeClientRemovedType
 			}))
 
-		svc := remove_allowed_client.NewService(repo, bus)
+		svc := newService(repo, bus)
 		require.NoError(t, svc.RemoveAllowedClient(context.Background(),
-			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()))))
+			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()),
+				withProtectedResourceId(prId.String()), withUserId(userId.String()))))
 
 		assert.Empty(t, saved.ToPrimitives().AllowedClientIds)
 	})
+
+	prId := ids.NewProtectedResourceId()
+	userId := ids.NewUserId()
 
 	errCases := []struct {
 		desc      string
@@ -76,10 +88,12 @@ func TestRemoveAllowedClient(t *testing.T) {
 		},
 		{
 			desc: "returns ErrScopeNotSaved when save fails",
-			cmd:  func(t *testing.T) *remove_allowed_client.Command { return aCommand(t) },
+			cmd: func(t *testing.T) *remove_allowed_client.Command {
+				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				clientId := ids.NewClientId()
-				scope, _ := aScopeWithClient(t, clientId)
+				scope, _ := aScopeWithClient(t, clientId, prId, userId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -88,6 +102,23 @@ func TestRemoveAllowedClient(t *testing.T) {
 					Return(fmt.Errorf("db error"))
 			},
 			wantCode: scopes.ErrScopeNotSaved,
+		},
+		{
+			desc: "returns conflict when repository reports concurrent modification",
+			cmd: func(t *testing.T) *remove_allowed_client.Command {
+				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				clientId := ids.NewClientId()
+				scope, _ := aScopeWithClient(t, clientId, prId, userId)
+				repo.EXPECT().
+					SearchById(mock.Anything, mock.Anything).
+					Return(scope, nil)
+				repo.EXPECT().
+					Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).
+					Return(persistance.ErrConcurrentModification)
+			},
+			wantCode: scopes.ErrScopeConcurrentModification,
 		},
 	}
 
@@ -101,7 +132,7 @@ func TestRemoveAllowedClient(t *testing.T) {
 				tc.setupRepo(repo)
 			}
 
-			svc := remove_allowed_client.NewService(repo, bus)
+			svc := newService(repo, bus)
 			err := svc.RemoveAllowedClient(context.Background(), tc.cmd(t))
 
 			assertErrCode(t, err, tc.wantCode)

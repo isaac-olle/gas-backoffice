@@ -18,13 +18,30 @@ type Scope struct {
 	ownership        Ownership
 	allowedClientIds *vo.SetVo[ids2.ClientId]
 	isSystem         bool
+	enabled          bool
+	version          int
 }
 
-func (s *Scope) CheckOwnership(o Ownership) bool {
-	return s.ownership == o
+// EnsureOwnership requires the scope to hang from protectedResourceId (its
+// structural parent) and to belong to one of subscriptionIds. Membership of
+// the caller in that subscription is validated earlier, at the subscription
+// path param middleware.
+func (s *Scope) EnsureOwnership(protectedResourceId ids2.ProtectedResourceId, subscriptionIds []ids2.SubscriptionId) error {
+	allowed := false
+	for _, id := range subscriptionIds {
+		if id == s.ownership.SubscriptionId {
+			allowed = true
+			break
+		}
+	}
+	if s.ownership.ProtectedResourceId != protectedResourceId || !allowed {
+		return app_errors.ForbiddenError(ErrInvalidOwnership).
+			WithDescription("scope does not belong to the provided protected resource")
+	}
+	return nil
 }
 
-func NewScope(id ids2.ScopeId, name string, ownership Ownership) (*Scope, error) {
+func NewScope(id ids2.ScopeId, name string, ownership Ownership, isSystem bool) (*Scope, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	scopeName, err := vos.NewScopeName(name)
@@ -42,6 +59,9 @@ func NewScope(id ids2.ScopeId, name string, ownership Ownership) (*Scope, error)
 		name:             scopeName,
 		ownership:        ownership,
 		allowedClientIds: vo.NewEmptySetVo[ids2.ClientId](),
+		isSystem:         isSystem,
+		enabled:          true,
+		version:          1,
 	}
 	s.Record(backoffice.NewScopeCreated(s.id.String(), s.name.String(), s.ownership.ProtectedResourceId.String()))
 	return s, nil
@@ -65,9 +85,12 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		errArr.AddError(err)
 	}
 
-	userId, err := ids2.NewUserIdFromString(p.UserId)
+	var ownership Ownership
+	subscriptionId, err := ids2.NewSubscriptionIdFromString(p.SubscriptionId)
 	if err != nil {
 		errArr.AddError(err)
+	} else {
+		ownership = NewOwnershipFromVos(protectedResourceId, subscriptionId)
 	}
 
 	allowedClientIds := vo.NewEmptySetVo[ids2.ClientId]()
@@ -84,18 +107,40 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		return nil, errArr
 	}
 
+	// A persisted scope always has version >= 1 (the table defaults new rows
+	// to 1, and Save always writes a positive version). A zero only ever
+	// comes from a hand-built ScopePrimitives{} in a test that didn't set it.
+	version := p.Version
+	if version == 0 {
+		version = 1
+	}
+
 	s := &Scope{
 		Root:             aggregate2.NewRoot(scopeAggregateName),
 		id:               id,
 		name:             name,
-		ownership:        newOwnership(protectedResourceId, userId),
+		ownership:        ownership,
 		allowedClientIds: allowedClientIds,
 		isSystem:         p.IsSystem,
+		enabled:          p.Enabled,
+		version:          version,
 	}
 	return s, nil
 }
 
 func (s *Scope) IsSystemResource() bool { return s.isSystem }
+
+func (s *Scope) IsEnabled() bool { return s.enabled }
+
+func (s *Scope) Enable() {
+	s.enabled = true
+	s.Record(backoffice.NewScopeEnabled(s.id.String()))
+}
+
+func (s *Scope) Disable() {
+	s.enabled = false
+	s.Record(backoffice.NewScopeDisabled(s.id.String()))
+}
 
 func (s *Scope) Delete() {
 	s.Record(backoffice.NewScopeDeleted(s.id.String(), s.ownership.ProtectedResourceId.String()))

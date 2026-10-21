@@ -33,7 +33,8 @@ func TestHardDelete(t *testing.T) {
 	t.Run("hard deletes the correct resource and publishes ProtectedResourceDeleted event", func(t *testing.T) {
 		t.Parallel()
 		svc, repo, bus := newService(t)
-		pr := aPR(t)
+		userId := ids.NewUserId()
+		pr := aPROwnedBy(t, userId)
 		primitives := pr.ToPrimitives()
 		prId, err := ids.NewProtectedResourceIdFromString(primitives.Id)
 		require.NoError(t, err)
@@ -46,42 +47,72 @@ func TestHardDelete(t *testing.T) {
 			})).
 			Return()
 
-		require.NoError(t, svc.HardDelete(context.Background(), hard_delete.NewCommand(prId)))
+		require.NoError(t, svc.HardDelete(context.Background(), hard_delete.NewCommand(prId, ids.NewUserId(), userId)))
 		assert.Equal(t, primitives.Id, prId.String())
 	})
 
 	errCases := []struct {
 		desc      string
-		setupRepo func(repo *prmocks.MockRepository) ids.ProtectedResourceId
+		setupRepo func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId)
 		wantCode  app_errors.ErrorCode
 	}{
 		{
 			desc: "returns internal error when resource search fails",
-			setupRepo: func(repo *prmocks.MockRepository) ids.ProtectedResourceId {
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
 				prId := ids.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, fmt.Errorf("db error"))
-				return prId
+				return prId, ids.NewUserId()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
 			desc: "returns not found error when resource is nil",
-			setupRepo: func(repo *prmocks.MockRepository) ids.ProtectedResourceId {
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
 				prId := ids.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, nil)
-				return prId
+				return prId, ids.NewUserId()
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
-			desc: "returns internal error when hard delete fails",
-			setupRepo: func(repo *prmocks.MockRepository) ids.ProtectedResourceId {
+			desc: "returns forbidden when caller does not own the protected resource",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
 				pr := aPR(t)
 				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 				require.NoError(t, err)
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				return prId, ids.NewUserId()
+			},
+			wantCode: protected_resources.ErrInvalidOwnership,
+		},
+		{
+			desc: "returns forbidden when protected resource is system resource",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
+				prId := ids.NewProtectedResourceId()
+				userId := ids.NewUserId()
+				pr, err := protected_resources.FromPrimitives(protected_resources.ProtectedResourcePrimitives{
+					Id:       prId.String(),
+					Name:     "system-resource",
+					AdminId:  ids.NewUserId().String(),
+					UserId:   userId.String(),
+					IsSystem: true,
+				})
+				require.NoError(t, err)
+				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				return prId, userId
+			},
+			wantCode: protected_resources.ErrSystemResource,
+		},
+		{
+			desc: "returns internal error when hard delete fails",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
+				userId := ids.NewUserId()
+				pr := aPROwnedBy(t, userId)
+				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
+				require.NoError(t, err)
+				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 				repo.EXPECT().HardDelete(mock.Anything, prId).Return(fmt.Errorf("db error"))
-				return prId
+				return prId, userId
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotSaved,
 		},
@@ -93,8 +124,8 @@ func TestHardDelete(t *testing.T) {
 			repo := prmocks.NewMockRepository(t)
 			bus := eventmocks.NewMockBus(t)
 			finder := domain_services.NewProtectedResourceFinder(repo)
-			prId := tc.setupRepo(repo)
-			err := hard_delete.NewService(finder, repo, bus).HardDelete(context.Background(), hard_delete.NewCommand(prId))
+			prId, userId := tc.setupRepo(repo)
+			err := hard_delete.NewService(finder, repo, bus).HardDelete(context.Background(), hard_delete.NewCommand(prId, ids.NewUserId(), userId))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

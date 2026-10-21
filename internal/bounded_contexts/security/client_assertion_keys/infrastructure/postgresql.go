@@ -28,18 +28,17 @@ func (r *PostgresClientAssertionKeyRepository) Save(ctx context.Context, cak *cl
 	p := cak.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO security.client_assertion_keys (id, client_id, algorithm, public_key, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO security.client_assertion_keys (id, client_id, subscription_id, algorithm, public_key, author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO UPDATE SET
-			client_id = EXCLUDED.client_id,
 			algorithm = EXCLUDED.algorithm,
 			public_key = EXCLUDED.public_key
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.Algorithm, p.PublicKey, authorId, authorRole)
+	return r.postgres.Save(ctx, query, p.Id, p.ClientId, p.SubscriptionId, p.Algorithm, p.PublicKey, authorId, authorRole)
 }
 
 func (r *PostgresClientAssertionKeyRepository) SearchById(ctx context.Context, id ids2.ClientAssertionKeyId) (*client_assertion_keys.ClientAssertionKey, error) {
-	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM security.client_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, subscription_id, algorithm, public_key FROM security.client_assertion_keys WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -58,7 +57,7 @@ func (r *PostgresClientAssertionKeyRepository) HardDelete(ctx context.Context, i
 }
 
 func (r *PostgresClientAssertionKeyRepository) FindByClientId(ctx context.Context, clientID ids2.ClientId) (*client_assertion_keys.ClientAssertionKey, error) {
-	query := `SELECT id, client_id, key_pair_id, algorithm, public_key FROM security.client_assertion_keys WHERE client_id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, client_id, subscription_id, algorithm, public_key FROM security.client_assertion_keys WHERE client_id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, clientID.String())
 }
 
@@ -73,7 +72,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 
 func (r *PostgresClientAssertionKeyRepository) fromRow(row pgx.Row) (*client_assertion_keys.ClientAssertionKey, error) {
 	var p client_assertion_keys.ClientAssertionKeyPrimitives
-	err := row.Scan(&p.Id, &p.ClientId, &p.Algorithm, &p.PublicKey)
+	err := row.Scan(&p.Id, &p.ClientId, &p.SubscriptionId, &p.Algorithm, &p.PublicKey)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

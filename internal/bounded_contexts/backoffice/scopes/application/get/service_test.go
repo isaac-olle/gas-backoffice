@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newService(repo *scopemocks.MockRepository) *get.Service {
+	return get.NewService(domain_services.NewScopeFinder(repo))
+}
+
 func TestGet(t *testing.T) {
 	t.Parallel()
 
@@ -22,12 +26,14 @@ func TestGet(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids.NewScopeId()
-		scope := aScope(t, scopeId)
+		prId := ids.NewProtectedResourceId()
+		userId := ids.NewUserId()
+		scope := aScope(t, scopeId, prId, userId)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 
-		svc := get.NewService(domain_services.NewScopeFinder(repo))
-		result, err := svc.Get(context.Background(), get.NewQuery(scopeId))
+		svc := newService(repo)
+		result, err := svc.Get(context.Background(), get.NewQuery(scopeId, prId, ids.NewUserId(), userId))
 		require.NoError(t, err)
 
 		s, ok := result.(*scopes.Scope)
@@ -39,11 +45,13 @@ func TestGet(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids.NewScopeId()
+		prId := ids.NewProtectedResourceId()
+		userId := ids.NewUserId()
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(nil, fmt.Errorf("db error"))
 
-		svc := get.NewService(domain_services.NewScopeFinder(repo))
-		_, err := svc.Get(context.Background(), get.NewQuery(scopeId))
+		svc := newService(repo)
+		_, err := svc.Get(context.Background(), get.NewQuery(scopeId, prId, ids.NewUserId(), userId))
 		assert.Error(t, err)
 	})
 }

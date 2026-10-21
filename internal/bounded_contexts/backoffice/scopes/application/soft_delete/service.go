@@ -6,28 +6,49 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
 )
 
 type Service struct {
-	repository scopes.Repository
+	scopeFinder *domain_services.ScopeFinder
+	repository  scopes.Repository
 }
 
-func NewService(repository scopes.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository) *Service {
+	return &Service{scopeFinder: scopeFinder, repository: repository}
 }
 
 func (s *Service) SoftDelete(ctx context.Context, cmd *Command) error {
 	scopeId, err := ids.NewScopeIdFromString(cmd.scopeId)
 	if err != nil {
 		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
-			WithDescription("invalid scope id").
-			WithCause(err)
+			WithDescription("invalid scope id").WithCause(err, false)
+	}
+
+	prId, err := ids.NewProtectedResourceIdFromString(cmd.protectedResourceId)
+	if err != nil {
+		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
+			WithDescription("invalid protected resource id").WithCause(err, false)
+	}
+
+	scope, err := s.scopeFinder.Find(ctx, scopeId)
+	if err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
+	if err = scope.EnsureOwnership(prId, []ids.SubscriptionId{subscriptionId}); err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	if scope.IsSystemResource() {
+		return app_errors.ForbiddenError(scopes.ErrSystemResource).
+			WithDescription("scope is a system resource and cannot be deleted")
 	}
 
 	if err = s.repository.SoftDelete(ctx, scopeId); err != nil {
 		return app_errors.InternalError(scopes.ErrScopeNotSaved).
-			WithDescription("failed to soft delete scope").
-			WithCause(err)
+			WithDescription("failed to soft delete scope").WithCause(err, false)
 	}
 	return nil
 }

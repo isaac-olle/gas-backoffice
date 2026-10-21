@@ -1,74 +1,100 @@
 package modules
 
 import (
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
-	sessionEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/_event_handlers"
-	authenticateWithIdp "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authenticate_with_idp"
-	buildAuthResponse "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/build_authorization_response"
-	createAuthSession "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_authorization_session"
-	createLoginSession "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_login_authorization_session"
-	exchangeCode "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/exchange_code"
-	issueCC "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/issue_client_credentials"
+	"time"
+
+	protocolSharedDS "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/_shared/domain_services"
+	protocolSharedInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/_shared/infrastructure"
+	getJwks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/jwks/application/get_jwks"
+	jwksDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/jwks/domain_services"
+	jwksInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/jwks/infrastructure"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authenticate_client"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/authorize"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/create_session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token/flows"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
 	sessionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure"
+	sessionHelpers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/helpers"
 	sessionPersistance "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/persistance"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	protocolEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/protocol"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// BackofficeLoginConfig identifies the backoffice frontend as a gas OAuth
-// client for the federated-login session (create_login_authorization_session).
-type BackofficeLoginConfig struct {
-	ClientId            string
-	RedirectUri         string
-	Scope               string
-	ProtectedResourceId string
-}
+// idpStateTTL bounds how long a client has to complete the Google login
+// flow before the encrypted idp_state sent to /oidc/authorize expires.
+const idpStateTTL = 10 * time.Minute
 
-func RegisterProtocol(pool *pgxpool.Pool, cmdBus command.Bus, qryBus query.Bus, evtBus event2.Bus, subsManager *SubscriptionManager, issuer string, login BackofficeLoginConfig, publicBaseURL string) {
-	sessionRepo := sessionPersistance.NewPostgresAuthorizationCodeSessionRepository(pool)
+func RegisterProtocol(
+	pool *pgxpool.Pool, qryBus query.Bus, evtBus event2.Bus,
+	subsManager *SubscriptionManager, encrypter persistance.Encrypter, uow persistance.UnitOfWork,
+) (*authorize.Service, *token.Service, *authenticate_client.Service, *create_session.Service, *getJwks.Service, *domain_services.AuthorizationCodeSessionFinder) {
+	sessionRepo := sessionPersistance.NewRequestCachedSessionRepository(
+		sessionPersistance.NewPostgresAuthorizationCodeSessionRepository(pool, encrypter),
+	)
 	ccSessionRepo := sessionPersistance.NewPostgresClientCredentialsSessionRepository(pool)
 	clientRepo := sessionInfra.NewPostgresClientRepository(pool)
+	idpRepo := protocolSharedInfra.NewPostgresIdentityProviderRepository(pool, encrypter)
+	idpFinder := protocolSharedDS.NewIdentityProviderFinder(idpRepo)
+	sessionIdpClient := sessionInfra.NewAuthorizationURLBuilder()
+	oidcTokenVerifier := sessionHelpers.NewOidcTokenVerifier()
+	idpClient := sessionInfra.NewOidcIdentityProviderClient(oidcTokenVerifier)
+	idpStateCodec := sessionInfra.NewIdpStateCodec(idpStateTTL, encrypter)
 	codeGenerator := sessionInfra.NewRandomCodeGenerator()
 	clientFinder := domain_services.NewClientFinder(clientRepo)
-	sessionFinder := domain_services.NewSessionFinder(sessionRepo)
-	sessionTokenGenerator := sessionInfra.NewBusSessionTokenGenerator(qryBus, issuer)
+	authSessionFinder := domain_services.NewAuthorizationCodeSessionFinder(sessionRepo)
+	ccSessionFinder := domain_services.NewClientCredentialsSessionFinder(ccSessionRepo)
+	accessTokenGenerator := sessionInfra.NewBusAccessTokenGenerator(qryBus)
+	idTokenGenerator := sessionInfra.NewBusIDTokenGenerator(qryBus)
+	authCodeTokenResponseGenerator := domain_services.NewAuthorizationCodeTokenResponseGenerator(accessTokenGenerator, idTokenGenerator)
+	ccTokenResponseGenerator := domain_services.NewClientCredentialsTokenResponseGenerator(accessTokenGenerator)
 
-	cmdBus.Register(createAuthSession.CommandType, createAuthSession.NewCommandHandler(
-		createAuthSession.NewService(sessionRepo, clientFinder, evtBus, codeGenerator),
-	))
+	authorizeService := authorize.NewService(
+		clientFinder,
+		idpFinder,
+		sessionIdpClient,
+		idpStateCodec,
+	)
 
-	cmdBus.Register(createLoginSession.CommandType, createLoginSession.NewCommandHandler(
-		createLoginSession.NewService(
-			sessionRepo, evtBus, codeGenerator,
-			login.ClientId, login.RedirectUri, login.Scope, login.ProtectedResourceId,
+	tokenService := token.NewService(
+		flows.NewAuthorizationCodeGrantHandler(
+			authSessionFinder,
+			clientFinder,
+			sessionRepo,
+			evtBus,
+			authCodeTokenResponseGenerator,
+			uow,
 		),
-	))
+		flows.NewClientCredentialsGrantHandler(
+			clientFinder,
+			ccSessionRepo,
+			evtBus,
+			ccSessionFinder,
+			ccTokenResponseGenerator,
+			uow,
+		),
+	)
 
-	// Federated login (gas as OIDC relying party). Only Google is registered.
-	idpFinder := domain_services.NewIdentityProviderFinder(sessionInfra.NewPostgresIdentityProviderRepository(pool))
-	idpClientFactory := domain_services.NewIdentityProviderClientFactory(map[string]session.IdentityProviderClient{
-		"google": sessionInfra.NewGoogleIdentityProviderClient(publicBaseURL),
-	})
-	qryBus.Register(authenticateWithIdp.QueryType, authenticateWithIdp.NewQueryHandler(
-		authenticateWithIdp.NewService(sessionFinder, idpFinder, idpClientFactory),
-	))
+	authClientService := authenticate_client.NewService(
+		authenticate_client.NewBasicMethod(sessionInfra.NewBusClientSecretVerifier(qryBus)),
+		authenticate_client.NewJWTAssertionMethod(sessionInfra.NewBusClientAssertionVerifier(qryBus)),
+		authenticate_client.NewBodyCredentialsMethod(sessionInfra.NewBusClientSecretVerifier(qryBus)),
+		authenticate_client.NewPublicClientMethod(clientFinder),
+	)
 
-	qryBus.Register(buildAuthResponse.QueryType, buildAuthResponse.NewQueryHandler(
-		buildAuthResponse.NewService(sessionFinder),
-	))
+	createSessionService := create_session.NewService(
+		idpStateCodec,
+		clientFinder,
+		idpFinder,
+		idpClient,
+		sessionRepo,
+		codeGenerator,
+		evtBus,
+	)
 
-	qryBus.Register(exchangeCode.QueryType, exchangeCode.NewQueryHandler(
-		exchangeCode.NewService(sessionFinder, clientFinder, sessionRepo, sessionTokenGenerator),
-	))
+	jwksService := getJwks.NewService(jwksDomainServices.NewSigningKeyFinder(jwksInfra.NewPostgresSigningKeyRepository(pool)))
 
-	qryBus.Register(issueCC.QueryType, issueCC.NewQueryHandler(
-		issueCC.NewService(clientFinder, sessionTokenGenerator, evtBus),
-	))
-
-	persistCCSession := sessionEventHandlers.NewPersistClientCredentialsSessionOnCreatedEventHandler(ccSessionRepo)
-	subsManager.AddInMemorySubscription(event2.NewInMemorySubscriber[protocolEvents.ClientCredentialsSessionCreated](persistCCSession.Handle))
+	return authorizeService, tokenService, authClientService, createSessionService, jwksService, authSessionFinder
 }

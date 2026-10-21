@@ -7,6 +7,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
@@ -28,17 +29,30 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 	p := client.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.clients (id, name, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO backoffice.clients (id, name, subscription_id, enabled, public, allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, author_id, author_role, version)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
-			allowed_flows = EXCLUDED.allowed_flows,
-			allowed_scopes = EXCLUDED.allowed_scopes,
+			enabled = EXCLUDED.enabled,
+			public = EXCLUDED.public,
+			allowed_grant_types = EXCLUDED.allowed_grant_types,
 			redirect_uris = EXCLUDED.redirect_uris,
-			key_ids = EXCLUDED.key_ids,
-			secret_ids = EXCLUDED.secret_ids
+			assertion_key_ids = EXCLUDED.assertion_key_ids,
+			secret_ids = EXCLUDED.secret_ids,
+			allowed_scopes = EXCLUDED.allowed_scopes,
+			version = EXCLUDED.version + 1
+		WHERE backoffice.clients.version = EXCLUDED.version
 	`
-	return r.postgres.Save(ctx, query, p.Id, p.Name, p.UserId, p.AllowedFlows, p.AllowedScopes, p.RedirectUris, p.KeyIds, p.SecretIds, authorId, authorRole)
+	tag, err := r.postgres.SaveWithResult(ctx, query,
+		p.Id, p.Name, p.SubscriptionId, p.Enabled, p.Public, p.AllowedGrantTypes,
+		p.RedirectUris, p.AssertionKeyIds, p.SecretIds, p.AllowedScopes, authorId, authorRole, p.Version)
+	if err != nil {
+		return fmt.Errorf("error saving client: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return persistance.ErrConcurrentModification
+	}
+	return nil
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
@@ -51,12 +65,24 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresClientRepository) SearchById(ctx context.Context, id ids.ClientId) (*clients.Client, error) {
-	query := `SELECT id, name, user_id, allowed_flows, allowed_scopes, redirect_uris, key_ids, secret_ids FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, enabled, public, is_system,
+		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version
+		FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
-func (r *PostgresClientRepository) Matching(ctx context.Context, _ criteria.Criteria) ([]*clients.Client, error) {
-	return nil, fmt.Errorf("not implemented")
+func (r *PostgresClientRepository) Matching(ctx context.Context, c criteria.Criteria) ([]*clients.Client, error) {
+	where, args, err := c.ToPostgresql(1)
+	if err != nil {
+		return nil, err
+	}
+	query := `SELECT id, name, subscription_id, enabled, public, is_system,
+		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version
+		FROM backoffice.clients WHERE deleted_at IS NULL`
+	if where != "" {
+		query += " AND " + where
+	}
+	return r.postgres.FindMany(ctx, query, r.fromRow, args...)
 }
 
 func (r *PostgresClientRepository) SoftDelete(ctx context.Context, id ids.ClientId) error {
@@ -71,7 +97,7 @@ func (r *PostgresClientRepository) HardDelete(ctx context.Context, id ids.Client
 
 func (r *PostgresClientRepository) fromRow(row pgx.Row) (*clients.Client, error) {
 	var p clients.ClientPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.UserId, &p.AllowedFlows, &p.AllowedScopes, &p.RedirectUris, &p.KeyIds, &p.SecretIds)
+	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.Enabled, &p.Public, &p.IsSystem, &p.AllowedGrantTypes, &p.RedirectUris, &p.AssertionKeyIds, &p.SecretIds, &p.AllowedScopes, &p.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

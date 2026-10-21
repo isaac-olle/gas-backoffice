@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func aScope(t *testing.T, scopeId ids2.ScopeId) *scopes.Scope {
+func aScope(t *testing.T, scopeId ids2.ScopeId, prId ids2.ProtectedResourceId, userId ids2.UserId) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId())
-	scope, err := scopes.NewScope(scopeId, "read:users", ownership)
+	ownership := scopes.NewOwnershipFromVos(prId, ids2.NewUserId(), userId)
+	scope, err := scopes.NewScope(scopeId, "read:users", ownership, false)
 	require.NoError(t, err)
 	scope.PullDomainEvents()
 	return scope

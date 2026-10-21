@@ -8,6 +8,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +17,13 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/add_allowed_client"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
 	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
+
+func newService(repo *scopemocks.MockRepository, bus *eventmocks.MockBus) *add_allowed_client.Service {
+	return add_allowed_client.NewService(domain_services.NewScopeFinder(repo), repo, bus)
+}
 
 func TestAddAllowedClient(t *testing.T) {
 	t.Parallel()
@@ -26,7 +32,9 @@ func TestAddAllowedClient(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
-		scope, scopeId := aScope(t)
+		prId := ids.NewProtectedResourceId()
+		userId := ids.NewUserId()
+		scope, scopeId := aScope(t, prId, userId)
 		clientId := ids.NewClientId()
 
 		var saved *scopes.Scope
@@ -41,12 +49,16 @@ func TestAddAllowedClient(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ScopeClientAddedType
 			}))
 
-		svc := add_allowed_client.NewService(repo, bus)
+		svc := newService(repo, bus)
 		require.NoError(t, svc.AddAllowedClient(context.Background(),
-			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()))))
+			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()),
+				withProtectedResourceId(prId.String()), withUserId(userId.String()))))
 
 		assert.Contains(t, saved.ToPrimitives().AllowedClientIds, clientId.String())
 	})
+
+	prId := ids.NewProtectedResourceId()
+	userId := ids.NewUserId()
 
 	errCases := []struct {
 		desc      string
@@ -76,9 +88,11 @@ func TestAddAllowedClient(t *testing.T) {
 		},
 		{
 			desc: "returns ErrScopeNotSaved when save fails",
-			cmd:  func(t *testing.T) *add_allowed_client.Command { return aCommand(t) },
+			cmd: func(t *testing.T) *add_allowed_client.Command {
+				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
-				scope, _ := aScope(t)
+				scope, _ := aScope(t, prId, userId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -87,6 +101,22 @@ func TestAddAllowedClient(t *testing.T) {
 					Return(fmt.Errorf("db error"))
 			},
 			wantCode: scopes.ErrScopeNotSaved,
+		},
+		{
+			desc: "returns conflict when repository reports concurrent modification",
+			cmd: func(t *testing.T) *add_allowed_client.Command {
+				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				scope, _ := aScope(t, prId, userId)
+				repo.EXPECT().
+					SearchById(mock.Anything, mock.Anything).
+					Return(scope, nil)
+				repo.EXPECT().
+					Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).
+					Return(persistance.ErrConcurrentModification)
+			},
+			wantCode: scopes.ErrScopeConcurrentModification,
 		},
 	}
 
@@ -100,7 +130,7 @@ func TestAddAllowedClient(t *testing.T) {
 				tc.setupRepo(repo)
 			}
 
-			svc := add_allowed_client.NewService(repo, bus)
+			svc := newService(repo, bus)
 			err := svc.AddAllowedClient(context.Background(), tc.cmd(t))
 
 			assertErrCode(t, err, tc.wantCode)

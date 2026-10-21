@@ -17,9 +17,10 @@ import (
 func aClient(t *testing.T) *clients.Client {
 	t.Helper()
 	c, err := clients.FromPrimitives(clients.ClientPrimitives{
-		Id:     ids.NewClientId().String(),
-		Name:   "Test Client",
-		UserId: ids.NewUserId().String(),
+		Id:      ids.NewClientId().String(),
+		Name:    "Test Client",
+		AdminId: ids.NewUserId().String(),
+		UserId:  ids.NewUserId().String(),
 	})
 	require.NoError(t, err)
 	return c

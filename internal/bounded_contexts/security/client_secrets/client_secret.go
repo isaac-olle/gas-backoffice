@@ -17,26 +17,32 @@ type ClientSecret struct {
 	secretHash string
 }
 
-func NewClientSecret(id string, clientId ids2.ClientId, secretHash string) (*ClientSecret, error) {
+func NewClientSecretForSubscription(id ids2.ClientSecretId, clientId ids2.ClientId, subscriptionId ids2.SubscriptionId, plainSecret string, hasher SecretHasher) (*ClientSecret, error) {
+	return newClientSecret(id, NewOwnershipFromVos(clientId, subscriptionId), plainSecret, hasher)
+}
+
+func newClientSecret(id ids2.ClientSecretId, ownership Ownership, plainSecret string, hasher SecretHasher) (*ClientSecret, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
-	csId, err := ids2.NewClientSecretIdFromString(id)
-	if err != nil {
-		errArr.AddError(err)
-	}
-
-	if secretHash == "" {
-		errArr.AddError(fmt.Errorf("secret hash cannot be empty"))
+	if plainSecret == "" {
+		errArr.AddError(fmt.Errorf("plain secret cannot be empty"))
 	}
 
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
 
+	secretHash, err := hasher.Hash(plainSecret)
+	if err != nil {
+		return nil, app_errors.InternalError(ErrClientSecretNotCreated).
+			WithDescription("failed to hash client secret").WithCause(
+			err, false)
+	}
+
 	cs := &ClientSecret{
 		Root:       aggregate2.NewRoot(clientSecretAggregateName),
-		id:         csId,
-		ownership:  NewOwnershipFromVos(clientId),
+		id:         id,
+		ownership:  ownership,
 		secretHash: secretHash,
 	}
 	cs.Record(securityevents.NewClientSecretCreated(cs.id.String(), cs.ownership.ClientId.String()))
@@ -51,7 +57,7 @@ func FromPrimitives(p ClientSecretPrimitives) (*ClientSecret, error) {
 		errArr.AddError(err)
 	}
 
-	ownership, err := NewOwnership(p.ClientId)
+	ownership, err := NewOwnership(p.ClientId, p.SubscriptionId)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -72,4 +78,20 @@ func FromPrimitives(p ClientSecretPrimitives) (*ClientSecret, error) {
 	}, nil
 }
 
-func (cs *ClientSecret) CheckOwnership(o Ownership) bool { return cs.ownership == o }
+// EnsureOwnership requires the secret to target clientId and to belong to one
+// of subscriptionIds. Membership of the caller in that subscription is
+// validated earlier, at the subscription path param middleware.
+func (cs *ClientSecret) EnsureOwnership(clientId ids2.ClientId, subscriptionIds []ids2.SubscriptionId) error {
+	allowed := false
+	for _, id := range subscriptionIds {
+		if id == cs.ownership.SubscriptionId {
+			allowed = true
+			break
+		}
+	}
+	if cs.ownership.ClientId != clientId || !allowed {
+		return app_errors.ForbiddenError(ErrInvalidOwnership).
+			WithDescription("client secret does not belong to the provided subscription")
+	}
+	return nil
+}

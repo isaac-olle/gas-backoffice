@@ -9,11 +9,12 @@ import (
 const CommandType command.Type = "command.backoffice.scope.hard_delete"
 
 type Command struct {
-	scopeId ids.ScopeId
+	scopeId             ids.ScopeId
+	protectedResourceId ids.ProtectedResourceId
 }
 
-func NewCommand(scopeId ids.ScopeId) *Command {
-	return &Command{scopeId: scopeId}
+func NewCommand(scopeId ids.ScopeId, protectedResourceId ids.ProtectedResourceId) *Command {
+	return &Command{scopeId: scopeId, protectedResourceId: protectedResourceId}
 }
 
 func (c *Command) Type() command.Type { return CommandType }
