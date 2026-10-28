@@ -5,13 +5,18 @@ import "fmt"
 type Role string
 
 const (
-	TenantRole Role = "tenant"
-	AdminRole  Role = "admin"
+	SystemAdministratorRole Role = "system_administrator"
+	SubscriptionUserRole    Role = "subscription_user"
+)
+
+const (
+	SystemAdministratorClaim = "system_administrator"
+	SubscriptionUserClaim    = "subscription_user"
 )
 
 var allowedRoles = map[string]Role{
-	string(TenantRole): TenantRole,
-	string(AdminRole):  AdminRole,
+	string(SubscriptionUserRole):    SubscriptionUserRole,
+	string(SystemAdministratorRole): SystemAdministratorRole,
 }
 
 func NewRole(s string) (Role, error) {
@@ -22,7 +27,26 @@ func NewRole(s string) (Role, error) {
 	return role, nil
 }
 
-func (r Role) IsAdmin() bool          { return r == AdminRole }
-func (r Role) IsTenant() bool         { return r == TenantRole }
-func (r Role) String() string         { return string(r) }
-func (r Role) Equals(other Role) bool { return r.String() == other.String() }
+func (r Role) IsSystemAdministrator() bool { return r == SystemAdministratorRole }
+func (r Role) IsSubscriptionUser() bool    { return r == SubscriptionUserRole }
+func (r Role) String() string              { return string(r) }
+func (r Role) Equals(other Role) bool      { return r.String() == other.String() }
+
+// SystemRoleClaim is the public JWT representation of the global system role.
+func (r Role) SystemRoleClaim() string {
+	if r.IsSystemAdministrator() {
+		return SystemAdministratorClaim
+	}
+	return SubscriptionUserClaim
+}
+
+func RoleFromSystemRoleClaim(s string) (Role, error) {
+	switch s {
+	case SystemAdministratorClaim:
+		return SystemAdministratorRole, nil
+	case SubscriptionUserClaim:
+		return SubscriptionUserRole, nil
+	default:
+		return "", fmt.Errorf("invalid system role: %s", s)
+	}
+}

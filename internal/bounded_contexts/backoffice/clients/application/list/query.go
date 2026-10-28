@@ -3,19 +3,18 @@ package list
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 const QueryType query.Type = "query.backoffice.client.list"
 
-// Query lists the clients belonging to a single subscription (the one in
-// the request path).
+// Query lists clients visible to the caller's allowed subscriptions.
 type Query struct {
-	subscriptionId ids.SubscriptionId
+	author *authors.UserAuthor
 }
 
-func NewQuery(subscriptionId ids.SubscriptionId) *Query {
-	return &Query{subscriptionId: subscriptionId}
+func NewQuery(author *authors.UserAuthor) *Query {
+	return &Query{author: author}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

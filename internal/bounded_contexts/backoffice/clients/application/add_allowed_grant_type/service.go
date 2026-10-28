@@ -5,22 +5,23 @@ import (
 	"errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 )
 
 type Service struct {
 	clientFinder *domain_services.ClientFinder
+	authorizer   *sharedDomainServices.SubscriptionAuthorizer
 	repository   clients.Repository
 	eventBus     event.Bus
 }
 
-func NewService(clientFinder *domain_services.ClientFinder, repository clients.Repository, eventBus event.Bus) *Service {
-	return &Service{clientFinder: clientFinder, repository: repository, eventBus: eventBus}
+func NewService(clientFinder *domain_services.ClientFinder, repository clients.Repository, eventBus event.Bus, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{clientFinder: clientFinder, repository: repository, eventBus: eventBus, authorizer: authorizer}
 }
 
 func (s *Service) Add(ctx context.Context, cmd *Command) error {
@@ -34,8 +35,7 @@ func (s *Service) Add(ctx context.Context, cmd *Command) error {
 		return app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = client.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(client, cmd.author); err != nil {
 		return app_errors.AddTrace(err)
 	}
 

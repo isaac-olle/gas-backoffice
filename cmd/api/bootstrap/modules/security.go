@@ -20,6 +20,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,17 +40,18 @@ func RegisterSecurity(
 	clientSecretRepo := clientSecretInfra.NewPostgresClientSecretRepository(pool)
 
 	clientFinder := infrastructure.NewClientProjectionRepository(pool)
+	subscriptionAuthorizer := sharedDomainServices.NewSubscriptionAuthorizer()
 
 	keyPairFinder := keyPairDomainServices.NewKeyPairFinder(keyPairRepo)
 
 	keyPairGenerator := keyPairInfra.NewPEMKeyGenerator()
 	createKeyPairService := keyPairCreate.NewService(keyPairRepo, evtBus, keyPairGenerator)
 	cmdBus.Register(keyPairCreate.CommandType, keyPairCreate.NewCommandHandler(createKeyPairService))
-	cmdBus.Register(clientAssertionKeyCreate.CommandType, clientAssertionKeyCreate.NewCommandHandler(clientAssertionKeyCreate.NewService(clientFinder, clientAssertionKeyRepo, evtBus)))
-	cmdBus.Register(clientAssertionKeyHardDelete.CommandType, clientAssertionKeyHardDelete.NewCommandHandler(clientAssertionKeyHardDelete.NewService(clientAssertionKeyFinder, clientAssertionKeyRepo)))
+	cmdBus.Register(clientAssertionKeyCreate.CommandType, clientAssertionKeyCreate.NewCommandHandler(clientAssertionKeyCreate.NewService(clientFinder, clientAssertionKeyRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientAssertionKeyHardDelete.CommandType, clientAssertionKeyHardDelete.NewCommandHandler(clientAssertionKeyHardDelete.NewService(clientAssertionKeyFinder, clientAssertionKeyRepo, subscriptionAuthorizer)))
 	clientSecretHasher := clientSecretInfra.NewArgon2SecretHasher()
-	cmdBus.Register(clientSecretCreate.CommandType, clientSecretCreate.NewCommandHandler(clientSecretCreate.NewService(clientFinder, clientSecretRepo, clientSecretHasher, evtBus)))
-	cmdBus.Register(clientSecretHardDelete.CommandType, clientSecretHardDelete.NewCommandHandler(clientSecretHardDelete.NewService(clientSecretRepo)))
+	cmdBus.Register(clientSecretCreate.CommandType, clientSecretCreate.NewCommandHandler(clientSecretCreate.NewService(clientFinder, clientSecretRepo, clientSecretHasher, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientSecretHardDelete.CommandType, clientSecretHardDelete.NewCommandHandler(clientSecretHardDelete.NewService(clientSecretRepo, subscriptionAuthorizer)))
 
 	clientSecretVerifier := clientSecretInfra.NewArgon2SecretVerifier(clientSecretRepo)
 	qryBus.Register(clientSecretVerify.QueryType, clientSecretVerify.NewQueryHandler(clientSecretVerify.NewService(clientSecretVerifier)))

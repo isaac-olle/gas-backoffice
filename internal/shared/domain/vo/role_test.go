@@ -15,8 +15,8 @@ func TestNewRole(t *testing.T) {
 		wantRole  Role
 		wantError bool
 	}{
-		{"admin role", "admin", AdminRole, false},
-		{"tenant role", "tenant", TenantRole, false},
+		{"system administrator role", "system_administrator", SystemAdministratorRole, false},
+		{"subscription user role", "subscription_user", SubscriptionUserRole, false},
 		{"invalid role", "superuser", "", true},
 		{"empty string", "", "", true},
 		{"mixed case", "Admin", "", true},
@@ -37,20 +37,20 @@ func TestNewRole(t *testing.T) {
 
 func TestRoleChecks(t *testing.T) {
 	t.Parallel()
-	assert.True(t, AdminRole.IsAdmin())
-	assert.False(t, AdminRole.IsTenant())
-	assert.True(t, TenantRole.IsTenant())
-	assert.False(t, TenantRole.IsAdmin())
+	assert.True(t, SystemAdministratorRole.IsSystemAdministrator())
+	assert.False(t, SystemAdministratorRole.IsSubscriptionUser())
+	assert.True(t, SubscriptionUserRole.IsSubscriptionUser())
+	assert.False(t, SubscriptionUserRole.IsSystemAdministrator())
 }
 
 func TestRoleString(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "admin", AdminRole.String())
-	assert.Equal(t, "tenant", TenantRole.String())
+	assert.Equal(t, "system_administrator", SystemAdministratorRole.String())
+	assert.Equal(t, "subscription_user", SubscriptionUserRole.String())
 }
 
 func TestRoleEquals(t *testing.T) {
 	t.Parallel()
-	assert.True(t, AdminRole.Equals(AdminRole))
-	assert.False(t, AdminRole.Equals(TenantRole))
+	assert.True(t, SystemAdministratorRole.Equals(SystemAdministratorRole))
+	assert.False(t, SystemAdministratorRole.Equals(SubscriptionUserRole))
 }

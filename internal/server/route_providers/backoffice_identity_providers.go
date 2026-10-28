@@ -12,7 +12,7 @@ func registerIdentityProviders(g *gin.RouterGroup, p *Backoffice) {
 	idp := g.Group("/identity-providers")
 	idp.Use(
 		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
-		middlewares.RoleMiddleware(vo.AdminRole),
+		middlewares.RoleMiddleware(vo.SystemAdministratorRole),
 	)
 
 	idp.POST("",

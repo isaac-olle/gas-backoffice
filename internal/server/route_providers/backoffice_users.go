@@ -18,12 +18,12 @@ func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	u := g.Group("/users")
 	u.Use(
 		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
-		middlewares.RoleMiddleware(vo.AdminRole, vo.TenantRole),
+		middlewares.RoleMiddleware(vo.SystemAdministratorRole, vo.SubscriptionUserRole),
 		path_params.UserIdFromAuthor(),
 	)
 
 	u.GET("",
-		middlewares.RoleMiddleware(vo.AdminRole),
+		middlewares.RoleMiddleware(vo.SystemAdministratorRole),
 		p.executor.Run(userHandlers.NewListUsersHandler(p.queryBus, ids.UserIdFromContext)),
 	)
 	u.GET("/me",

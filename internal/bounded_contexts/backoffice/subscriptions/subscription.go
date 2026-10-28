@@ -12,19 +12,19 @@ var subscriptionAggregateName aggregate.Name = aggregate.Name("backoffice.subscr
 
 type Subscription struct {
 	*aggregate.Root
-	id        ids.SubscriptionId
-	name      string
-	createdBy ids.UserId
-	memberIds *vo.SetVo[ids.UserId]
-	version   int
+	id      ids.SubscriptionId
+	name    string
+	ownerId ids.UserId
+	members map[ids.UserId]vo.SubscriptionRole
+	version int
 }
 
-func NewSubscription(id ids.SubscriptionId, name string, createdBy ids.UserId) (*Subscription, error) {
+func NewSubscription(id ids.SubscriptionId, name string, ownerId ids.UserId) (*Subscription, error) {
 	if name == "" {
 		return nil, app_errors.BadRequestError(ErrInvalidSubscriptionName)
 	}
-	s := &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: name, createdBy: createdBy, memberIds: vo.NewEmptySetVo[ids.UserId](), version: 1}
-	s.Record(backoffice.NewSubscriptionCreated(id.String(), name, createdBy.String()))
+	s := &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: name, ownerId: ownerId, members: make(map[ids.UserId]vo.SubscriptionRole), version: 1}
+	s.Record(backoffice.NewSubscriptionCreated(id.String(), name, ownerId.String()))
 	return s, nil
 }
 
@@ -33,39 +33,46 @@ func FromPrimitives(p SubscriptionPrimitives) (*Subscription, error) {
 	if err != nil {
 		return nil, err
 	}
-	creator, err := ids.NewUserIdFromString(p.CreatedBy)
+	creator, err := ids.NewUserIdFromString(p.OwnerId)
 	if err != nil {
 		return nil, err
 	}
-	members := vo.NewEmptySetVo[ids.UserId]()
-	for _, raw := range p.MemberIds {
-		member, e := ids.NewUserIdFromString(raw)
+	members := make(map[ids.UserId]vo.SubscriptionRole, len(p.Members))
+	for _, raw := range p.Members {
+		member, e := ids.NewUserIdFromString(raw.UserId)
 		if e != nil {
 			return nil, e
 		}
-		members.Add(member)
+		role, e := vo.NewSubscriptionRole(raw.SubscriptionRole)
+		if e != nil {
+			return nil, e
+		}
+		members[member] = role
 	}
 	version := p.Version
 	if version == 0 {
 		version = 1
 	}
-	return &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: p.Name, createdBy: creator, memberIds: members, version: version}, nil
+	return &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: p.Name, ownerId: creator, members: members, version: version}, nil
 }
 
-func (s *Subscription) AddMember(userId ids.UserId) {
-	if s.memberIds.Contains(userId) {
+func (s *Subscription) AddMember(userId ids.UserId, role vo.SubscriptionRole) {
+	if _, exists := s.members[userId]; exists {
 		return
 	}
-	s.memberIds.Add(userId)
-	s.Record(backoffice.NewSubscriptionMemberAdded(s.id.String(), userId.String()))
+	s.members[userId] = role
+	s.Record(backoffice.NewSubscriptionMemberAdded(s.id.String(), userId.String(), role.String()))
 }
 
 func (s *Subscription) RemoveMember(userId ids.UserId) {
-	if !s.memberIds.Contains(userId) {
+	if _, exists := s.members[userId]; !exists {
 		return
 	}
-	s.memberIds.Remove(userId)
+	delete(s.members, userId)
 	s.Record(backoffice.NewSubscriptionMemberRemoved(s.id.String(), userId.String()))
 }
 
-func (s *Subscription) HasMember(userId ids.UserId) bool { return s.memberIds.Contains(userId) }
+func (s *Subscription) HasMember(userId ids.UserId) bool {
+	_, exists := s.members[userId]
+	return exists
+}

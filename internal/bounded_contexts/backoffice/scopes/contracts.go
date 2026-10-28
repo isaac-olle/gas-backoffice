@@ -14,3 +14,7 @@ type Repository interface {
 	// client itself is deleted.
 	FindByAllowedClientId(ctx context.Context, clientId ids.ClientId) ([]*Scope, error)
 }
+
+type ClientProjectionRepository interface {
+	FindClientProjection(context.Context, ids.ClientId) (*ClientProjection, error)
+}

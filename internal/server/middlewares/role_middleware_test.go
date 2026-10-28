@@ -17,12 +17,12 @@ const testAdminID = "b1b2c3d4-e5f6-7890-abcd-ef1234567890"
 const testUserId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 func withAdminAuthor(c *gin.Context) {
-	author, _ := authors2.NewUserAuthorFromString(testAdminID, testAdminID, vo2.AdminRole)
+	author, _ := authors2.NewUserAuthorFromString(testAdminID, testAdminID, vo2.SystemAdministratorRole)
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
 func withTenantAuthor(c *gin.Context) {
-	author, _ := authors2.NewUserAuthorFromString(testUserId, testAdminID, vo2.TenantRole)
+	author, _ := authors2.NewUserAuthorFromString(testUserId, testAdminID, vo2.SubscriptionUserRole)
 	c.Request = c.Request.WithContext(vo2.WithAuthor(c.Request.Context(), author))
 }
 
@@ -37,25 +37,25 @@ func TestRoleMiddleware(t *testing.T) {
 		{
 			name:         "no_actor_aborts",
 			setupAuthor:  nil,
-			allowedRoles: []vo2.Role{vo2.AdminRole},
+			allowedRoles: []vo2.Role{vo2.SystemAdministratorRole},
 			wantNext:     false,
 		},
 		{
 			name:         "correct_role_admin_passes",
 			setupAuthor:  withAdminAuthor,
-			allowedRoles: []vo2.Role{vo2.AdminRole},
+			allowedRoles: []vo2.Role{vo2.SystemAdministratorRole},
 			wantNext:     true,
 		},
 		{
 			name:         "wrong_role_aborts",
 			setupAuthor:  withAdminAuthor,
-			allowedRoles: []vo2.Role{vo2.TenantRole},
+			allowedRoles: []vo2.Role{vo2.SubscriptionUserRole},
 			wantNext:     false,
 		},
 		{
 			name:         "multiple_allowed_user_in_list_passes",
 			setupAuthor:  withTenantAuthor,
-			allowedRoles: []vo2.Role{vo2.AdminRole, vo2.TenantRole},
+			allowedRoles: []vo2.Role{vo2.SystemAdministratorRole, vo2.SubscriptionUserRole},
 			wantNext:     true,
 		},
 	}

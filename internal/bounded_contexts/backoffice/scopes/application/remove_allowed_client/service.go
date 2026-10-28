@@ -10,16 +10,19 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 )
 
 type Service struct {
-	scopeFinder *domain_services.ScopeFinder
-	repository  scopes.Repository
-	eventBus    event.Bus
+	scopeFinder            *domain_services.ScopeFinder
+	repository             scopes.Repository
+	eventBus               event.Bus
+	clientProjectionFinder *domain_services.ClientProjectionFinder
+	authorizer             *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus) *Service {
-	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus}
+func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus, clientProjectionFinder *domain_services.ClientProjectionFinder, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus, clientProjectionFinder: clientProjectionFinder, authorizer: authorizer}
 }
 
 func (s *Service) RemoveAllowedClient(ctx context.Context, cmd *Command) error {
@@ -35,19 +38,20 @@ func (s *Service) RemoveAllowedClient(ctx context.Context, cmd *Command) error {
 			WithDescription("invalid client id").WithCause(err, false)
 	}
 
-	prId, err := ids2.NewProtectedResourceIdFromString(cmd.protectedResourceId)
-	if err != nil {
-		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
-			WithDescription("invalid protected resource id").WithCause(err, false)
-	}
-
 	scope, err := s.scopeFinder.Find(ctx, scopeId)
 	if err != nil {
 		return app_errors.AddTrace(err)
 	}
+	if err = s.authorizer.Check(scope, cmd.author); err != nil {
+		return app_errors.AddTrace(err)
+	}
 
-	subscriptionId, _ := ids2.SubscriptionIdFromContext(ctx)
-	if err = scope.EnsureOwnership(prId, []ids2.SubscriptionId{subscriptionId}); err != nil {
+	client, err := s.clientProjectionFinder.Find(ctx, clientId)
+	if err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	if err = scope.EnsureClientSubscription(client.SubscriptionId); err != nil {
 		return app_errors.AddTrace(err)
 	}
 

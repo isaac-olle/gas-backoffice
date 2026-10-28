@@ -3,18 +3,19 @@ package get
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const QueryType query.Type = "query.backoffice.scope.get"
 
 type Query struct {
-	scopeId             ids.ScopeId
-	protectedResourceId ids.ProtectedResourceId
+	scopeId ids.ScopeId
+	author  *authors.UserAuthor
 }
 
-func NewQuery(scopeId ids.ScopeId, protectedResourceId ids.ProtectedResourceId) *Query {
-	return &Query{scopeId: scopeId, protectedResourceId: protectedResourceId}
+func NewQuery(scopeId ids.ScopeId, author *authors.UserAuthor) *Query {
+	return &Query{scopeId: scopeId, author: author}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

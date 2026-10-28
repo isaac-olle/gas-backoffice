@@ -9,15 +9,9 @@ import (
 	authInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure/helpers/oidc"
 
-	adminChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/change_name"
-	adminCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/create"
-	adminGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/get"
-	adminDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/domain_services"
-	adminInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/infrastructure"
 	clientEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
 	clientAddAllowedGrantType "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_allowed_grant_type"
 	clientAddRedirectUri "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_redirect_uri"
-	clientCheckOwnership "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/check_ownership"
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
 	clientGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
 	clientHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/hard_delete"
@@ -57,19 +51,21 @@ import (
 	subscriptionEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/_event_handlers"
 	subscriptionAddMember "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/add_member"
 	subscriptionCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/create"
+	subscriptionList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/list"
 	subscriptionRemoveMember "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/remove_member"
 	subscriptionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/infrastructure"
-	userChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/change_name"
-	userCreateTenant "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/create_tenant"
-	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/get"
-	userHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/hard_delete"
-	userList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/list"
-	userSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/soft_delete"
-	userDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/domain_services"
-	userInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/infrastructure"
+	userChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/change_name"
+	userCreateTenant "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create_user"
+	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
+	userHardDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/hard_delete"
+	userList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/list"
+	userSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/soft_delete"
+	userDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/domain_services"
+	userInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
@@ -83,58 +79,55 @@ func RegisterBackoffice(
 	backofficeClientRedirectUri string, backofficeClientSecret string, tokenEndpoint string,
 	authorizeEndpoint string, jwksEndpoint string,
 ) {
-	userRepo := userInfra.NewPostgresTenantRepository(pool)
-	adminRepo := adminInfra.NewPostgresAdminRepository(pool)
+	userRepo := userInfra.NewPostgresUserRepository(pool)
 	subscriptionRepo := subscriptionInfra.NewPostgresRepository(pool)
 	prRepo := prInfra.NewPostgresProtectedResourceRepository(pool)
 	clientRepo := clientInfra.NewPostgresClientRepository(pool)
 	scopeRepo := scopeInfra.NewPostgresScopeRepository(pool)
+	clientProjectionRepo := scopeInfra.NewClientProjectionRepository(pool)
 	idpRepo := idpInfra.NewPostgresIdentityProviderRepository(pool)
 	errorLogRepo := errorLogInfra.NewPostgresErrorLogRepository(pool)
 
-	userFinder := userDomainServices.NewTenantFinder(userRepo)
+	userFinder := userDomainServices.NewUserFinder(userRepo)
 	prFinder := prDomainServices.NewProtectedResourceFinder(prRepo)
 	scopeFinder := scopeDomainServices.NewScopeFinder(scopeRepo)
+	clientProjectionFinder := scopeDomainServices.NewClientProjectionFinder(clientProjectionRepo)
 	clientFinder := clientDomainServices.NewClientFinder(clientRepo)
 	idpFinder := idpDomainServices.NewIdentityProviderFinder(idpRepo)
-	adminFinder := adminDomainServices.NewAdminFinder(adminRepo)
 
 	clientDuplicateChecker := clientDomainServices.NewDuplicateNameChecker(clientRepo)
 	prDuplicateChecker := prDomainServices.NewDuplicateNameChecker(prRepo)
 	scopeDuplicateChecker := scopeDomainServices.NewDuplicateNameChecker(scopeRepo)
 
 	// clients
+	subscriptionAuthorizer := sharedDomainServices.NewSubscriptionAuthorizer()
 	cmdBus.Register(clientCreate.CommandType, clientCreate.NewCommandHandler(clientCreate.NewService(clientDuplicateChecker, clientRepo, evtBus)))
-	cmdBus.Register(clientAddAllowedGrantType.CommandType, clientAddAllowedGrantType.NewCommandHandler(clientAddAllowedGrantType.NewService(clientFinder, clientRepo, evtBus)))
-	cmdBus.Register(clientRemoveAllowedGrantType.CommandType, clientRemoveAllowedGrantType.NewCommandHandler(clientRemoveAllowedGrantType.NewService(clientFinder, clientRepo, evtBus)))
-	cmdBus.Register(clientAddRedirectUri.CommandType, clientAddRedirectUri.NewCommandHandler(clientAddRedirectUri.NewService(clientFinder, clientRepo, evtBus)))
-	cmdBus.Register(clientSoftDelete.CommandType, clientSoftDelete.NewCommandHandler(clientSoftDelete.NewService(clientFinder, clientRepo, evtBus)))
-	cmdBus.Register(clientHardDelete.CommandType, clientHardDelete.NewCommandHandler(clientHardDelete.NewService(clientFinder, clientRepo)))
+	cmdBus.Register(clientAddAllowedGrantType.CommandType, clientAddAllowedGrantType.NewCommandHandler(clientAddAllowedGrantType.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientRemoveAllowedGrantType.CommandType, clientRemoveAllowedGrantType.NewCommandHandler(clientRemoveAllowedGrantType.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientAddRedirectUri.CommandType, clientAddRedirectUri.NewCommandHandler(clientAddRedirectUri.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientSoftDelete.CommandType, clientSoftDelete.NewCommandHandler(clientSoftDelete.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientHardDelete.CommandType, clientHardDelete.NewCommandHandler(clientHardDelete.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
 
 	// protected resources
 	cmdBus.Register(prCreate.CommandType, prCreate.NewCommandHandler(prCreate.NewService(prDuplicateChecker, prRepo, evtBus)))
-	cmdBus.Register(prUpdateName.CommandType, prUpdateName.NewCommandHandler(prUpdateName.NewService(prFinder, prDuplicateChecker, prRepo, evtBus)))
-	cmdBus.Register(prSoftDelete.CommandType, prSoftDelete.NewCommandHandler(prSoftDelete.NewService(prFinder, prRepo, evtBus)))
-	cmdBus.Register(prHardDelete.CommandType, prHardDelete.NewCommandHandler(prHardDelete.NewService(prFinder, prRepo, evtBus)))
+	cmdBus.Register(prUpdateName.CommandType, prUpdateName.NewCommandHandler(prUpdateName.NewService(prFinder, prDuplicateChecker, prRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(prSoftDelete.CommandType, prSoftDelete.NewCommandHandler(prSoftDelete.NewService(prFinder, prRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(prHardDelete.CommandType, prHardDelete.NewCommandHandler(prHardDelete.NewService(prFinder, prRepo, evtBus, subscriptionAuthorizer)))
 
 	// scopes
 	cmdBus.Register(scopeCreate.CommandType, scopeCreate.NewCommandHandler(scopeCreate.NewService(scopeDuplicateChecker, scopeRepo, evtBus)))
-	cmdBus.Register(scopeAddAllowedClient.CommandType, scopeAddAllowedClient.NewCommandHandler(scopeAddAllowedClient.NewService(scopeFinder, scopeRepo, evtBus)))
-	cmdBus.Register(scopeRemoveAllowedClient.CommandType, scopeRemoveAllowedClient.NewCommandHandler(scopeRemoveAllowedClient.NewService(scopeFinder, scopeRepo, evtBus)))
-	cmdBus.Register(scopeSoftDelete.CommandType, scopeSoftDelete.NewCommandHandler(scopeSoftDelete.NewService(scopeFinder, scopeRepo)))
-	cmdBus.Register(scopeHardDelete.CommandType, scopeHardDelete.NewCommandHandler(scopeHardDelete.NewService(scopeFinder, scopeRepo, evtBus)))
-	cmdBus.Register(scopeEnable.CommandType, scopeEnable.NewCommandHandler(scopeEnable.NewService(scopeFinder, scopeRepo, evtBus)))
-	cmdBus.Register(scopeDisable.CommandType, scopeDisable.NewCommandHandler(scopeDisable.NewService(scopeFinder, scopeRepo, evtBus)))
+	cmdBus.Register(scopeAddAllowedClient.CommandType, scopeAddAllowedClient.NewCommandHandler(scopeAddAllowedClient.NewService(scopeFinder, scopeRepo, evtBus, clientProjectionFinder, subscriptionAuthorizer)))
+	cmdBus.Register(scopeRemoveAllowedClient.CommandType, scopeRemoveAllowedClient.NewCommandHandler(scopeRemoveAllowedClient.NewService(scopeFinder, scopeRepo, evtBus, clientProjectionFinder, subscriptionAuthorizer)))
+	cmdBus.Register(scopeSoftDelete.CommandType, scopeSoftDelete.NewCommandHandler(scopeSoftDelete.NewService(scopeFinder, scopeRepo, subscriptionAuthorizer)))
+	cmdBus.Register(scopeHardDelete.CommandType, scopeHardDelete.NewCommandHandler(scopeHardDelete.NewService(scopeFinder, scopeRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(scopeEnable.CommandType, scopeEnable.NewCommandHandler(scopeEnable.NewService(scopeFinder, scopeRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(scopeDisable.CommandType, scopeDisable.NewCommandHandler(scopeDisable.NewService(scopeFinder, scopeRepo, evtBus, subscriptionAuthorizer)))
 
 	// tenants
 	cmdBus.Register(userCreateTenant.CommandType, userCreateTenant.NewCommandHandler(userCreateTenant.NewService(userRepo, evtBus)))
 	cmdBus.Register(userChangeName.CommandType, userChangeName.NewCommandHandler(userChangeName.NewService(userFinder, userRepo, evtBus)))
 	cmdBus.Register(userSoftDelete.CommandType, userSoftDelete.NewCommandHandler(userSoftDelete.NewService(userFinder, userRepo, evtBus)))
 	cmdBus.Register(userHardDelete.CommandType, userHardDelete.NewCommandHandler(userHardDelete.NewService(userFinder, userRepo, evtBus)))
-
-	// admins
-	cmdBus.Register(adminCreate.CommandType, adminCreate.NewCommandHandler(adminCreate.NewService(adminRepo, evtBus)))
-	cmdBus.Register(adminChangeName.CommandType, adminChangeName.NewCommandHandler(adminChangeName.NewService(adminFinder, adminRepo, evtBus)))
 
 	// subscriptions
 	cmdBus.Register(subscriptionCreate.CommandType, subscriptionCreate.NewCommandHandler(subscriptionCreate.NewService(subscriptionRepo, evtBus)))
@@ -149,17 +142,16 @@ func RegisterBackoffice(
 
 	// get queries
 	qryBus.Register(userGet.QueryType, userGet.NewQueryHandler(userGet.NewService(userFinder)))
-	qryBus.Register(prGet.QueryType, prGet.NewQueryHandler(prGet.NewService(prFinder)))
-	qryBus.Register(scopeGet.QueryType, scopeGet.NewQueryHandler(scopeGet.NewService(scopeFinder)))
-	qryBus.Register(clientGet.QueryType, clientGet.NewQueryHandler(clientGet.NewService(clientFinder)))
-	qryBus.Register(clientCheckOwnership.QueryType, clientCheckOwnership.NewQueryHandler(clientCheckOwnership.NewService(clientFinder)))
+	qryBus.Register(prGet.QueryType, prGet.NewQueryHandler(prGet.NewService(prFinder, subscriptionAuthorizer)))
+	qryBus.Register(scopeGet.QueryType, scopeGet.NewQueryHandler(scopeGet.NewService(scopeFinder, subscriptionAuthorizer)))
+	qryBus.Register(clientGet.QueryType, clientGet.NewQueryHandler(clientGet.NewService(clientFinder, subscriptionAuthorizer)))
 	qryBus.Register(prCheckOwnership.QueryType, prCheckOwnership.NewQueryHandler(prCheckOwnership.NewService(prFinder)))
 	qryBus.Register(idpGet.QueryType, idpGet.NewQueryHandler(idpGet.NewService(idpFinder)))
 	qryBus.Register(userList.QueryType, userList.NewQueryHandler(userList.NewService(userRepo)))
-	qryBus.Register(prList.QueryType, prList.NewQueryHandler(prList.NewService(prRepo)))
+	qryBus.Register(prList.QueryType, prList.NewQueryHandler(prList.NewService(prRepo, subscriptionAuthorizer)))
 	qryBus.Register(errorLogList.QueryType, errorLogList.NewQueryHandler(errorLogList.NewService(errorLogRepo)))
-	qryBus.Register(clientList.QueryType, clientList.NewQueryHandler(clientList.NewService(clientRepo)))
-	qryBus.Register(adminGet.QueryType, adminGet.NewQueryHandler(adminGet.NewService(adminFinder)))
+	qryBus.Register(clientList.QueryType, clientList.NewQueryHandler(clientList.NewService(clientRepo, subscriptionAuthorizer)))
+	qryBus.Register(subscriptionList.QueryType, subscriptionList.NewQueryHandler(subscriptionList.NewService(subscriptionRepo)))
 
 	// event handlers
 	addKeyHandler := clientEventHandlers.NewAddKeyOnClientAssertionKeyCreatedEventHandler(clientFinder, clientRepo)

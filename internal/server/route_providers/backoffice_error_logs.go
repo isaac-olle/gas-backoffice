@@ -13,7 +13,7 @@ func registerErrorLogs(g *gin.RouterGroup, p *Backoffice) {
 	e := g.Group("/errors")
 	e.Use(
 		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
-		middlewares.RoleMiddleware(vo.AdminRole),
+		middlewares.RoleMiddleware(vo.SystemAdministratorRole),
 	)
 
 	e.GET("",

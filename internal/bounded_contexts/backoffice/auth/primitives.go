@@ -2,6 +2,8 @@ package auth
 
 import "time"
 
+import "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+
 type SessionPrimitives struct {
 	SessionId       string
 	UserId          string
@@ -9,6 +11,7 @@ type SessionPrimitives struct {
 	Role            string
 	ExpiresAt       time.Time
 	SubscriptionIds []string
+	Memberships     []vo.SubscriptionMembership
 }
 
 func (s *Session) ToPrimitives() *SessionPrimitives {
@@ -23,5 +26,6 @@ func (s *Session) ToPrimitives() *SessionPrimitives {
 		Role:            s.role.String(),
 		ExpiresAt:       s.expiresAt,
 		SubscriptionIds: subscriptionIds,
+		Memberships:     s.memberships,
 	}
 }

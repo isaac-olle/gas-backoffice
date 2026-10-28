@@ -19,7 +19,7 @@ func NewSubscriptionMemberAddedBuilder() event2.PrimitiveEventBuilder {
 	return &subscriptionMemberAddedBuilder{}
 }
 func (b *subscriptionMemberAddedBuilder) Build(p *event2.Primitives) (event2.Event, error) {
-	return SubscriptionMemberAdded{UserId: str(p.Data, "user_id"), BaseEvent: event2.FromPrimitivesBase(p)}, nil
+	return SubscriptionMemberAdded{UserId: str(p.Data, "user_id"), SubscriptionRole: str(p.Data, "subscription_role"), BaseEvent: event2.FromPrimitivesBase(p)}, nil
 }
 
 type subscriptionMemberRemovedBuilder struct{}

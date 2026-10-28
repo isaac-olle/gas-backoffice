@@ -2,17 +2,20 @@ package get
 
 import (
 	"context"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 const QueryType query.Type = "query.backoffice.client.get"
 
 type Query struct {
 	clientId string
+	author   *authors.UserAuthor
 }
 
-func NewQuery(clientId string) *Query {
-	return &Query{clientId: clientId}
+func NewQuery(clientId string, author *authors.UserAuthor) *Query {
+	return &Query{clientId: clientId, author: author}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

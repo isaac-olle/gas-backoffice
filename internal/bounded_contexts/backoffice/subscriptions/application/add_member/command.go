@@ -3,6 +3,7 @@ package add_member
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -11,10 +12,11 @@ const CommandType command.Type = "command.backoffice.subscription.add_member"
 type Command struct {
 	id     ids.SubscriptionId
 	userId ids.UserId
+	role   vo.SubscriptionRole
 }
 
-func NewCommand(id ids.SubscriptionId, userId ids.UserId) *Command {
-	return &Command{id: id, userId: userId}
+func NewCommand(id ids.SubscriptionId, userId ids.UserId, role vo.SubscriptionRole) *Command {
+	return &Command{id: id, userId: userId, role: role}
 }
 func (c *Command) Type() command.Type { return CommandType }
 

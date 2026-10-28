@@ -16,7 +16,7 @@ func registerAdmins(g *gin.RouterGroup, p *Backoffice) {
 	a := g.Group("/users/:user_id")
 	a.Use(
 		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
-		middlewares.RoleMiddleware(vo.AdminRole),
+		middlewares.RoleMiddleware(vo.SystemAdministratorRole),
 		path_params.UserIdParam(),
 	)
 

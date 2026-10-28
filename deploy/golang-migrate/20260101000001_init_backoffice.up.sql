@@ -35,12 +35,12 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS backoffice.users (
     id                     TEXT        NOT NULL PRIMARY KEY,
-    admin_id               TEXT,
     name                   TEXT        NOT NULL,
     email                  TEXT,
-    role                   TEXT        NOT NULL DEFAULT 'tenant',
+    system_role            TEXT        NOT NULL DEFAULT 'subscription_user',
     is_system              BOOLEAN     NOT NULL DEFAULT FALSE,
     subscription_ids       TEXT[]      NOT NULL DEFAULT '{}',
+    memberships            JSONB       NOT NULL DEFAULT '[]'::jsonb,
     version                INTEGER     NOT NULL DEFAULT 1,
     author_id              TEXT        NOT NULL DEFAULT '',
     author_role            TEXT        NOT NULL DEFAULT '',
@@ -57,7 +57,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS backoffice.subscriptions (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
-    created_by TEXT        NOT NULL REFERENCES backoffice.users(id),
+    owner_id   TEXT        NOT NULL REFERENCES backoffice.users(id),
     version    INTEGER     NOT NULL DEFAULT 1,
     author_id  TEXT        NOT NULL DEFAULT '',
     author_role TEXT       NOT NULL DEFAULT '',
@@ -74,6 +74,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS backoffice.subscription_members (
     subscription_id TEXT NOT NULL REFERENCES backoffice.subscriptions(id) ON DELETE CASCADE,
     user_id         TEXT NOT NULL REFERENCES backoffice.users(id) ON DELETE CASCADE,
+    subscription_role TEXT NOT NULL DEFAULT 'user' CHECK (subscription_role IN ('user')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (subscription_id, user_id)
 );

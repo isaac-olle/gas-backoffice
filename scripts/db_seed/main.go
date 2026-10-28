@@ -82,7 +82,7 @@ func main() {
 	alreadyApplied := false
 	var existingAdminID string
 	if err = pool.QueryRow(ctx,
-		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND role = 'admin' LIMIT 1`,
+		`SELECT id FROM backoffice.users WHERE name = $1 AND is_system = TRUE AND system_role = 'system_administrator' LIMIT 1`,
 		"Gas Seed Admin",
 	).Scan(&existingAdminID); err == nil {
 		alreadyApplied = true
@@ -120,19 +120,21 @@ func main() {
 	}
 
 	exec_(`INSERT INTO security.user_assertion_keys (id, user_id, algorithm, public_key, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $2, 'admin')
+		VALUES ($1, $2, $3, $4, $2, 'system_administrator')
 		ON CONFLICT (id) DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		adminAssertionKeyID, adminID, "RS256", adminPubKeyPEM)
 
 	adminEmail := config.EnvOr("SEED_ADMIN_EMAIL", "admin@gas.local")
 
-	exec_(`INSERT INTO backoffice.users (id, name, role, email, is_system, subscription_ids)
-		VALUES ($1, 'Gas Seed Admin', 'admin', $2, TRUE, ARRAY[$3]::TEXT[])
-		ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, subscription_ids = EXCLUDED.subscription_ids`,
-		adminID, adminEmail, subscriptionID)
-	exec_(`INSERT INTO backoffice.subscriptions (id,name,created_by,author_id,author_role)
-		VALUES ($1,'Gas',$2,$2,'admin') ON CONFLICT(id) DO NOTHING`, subscriptionID, adminID)
-	exec_(`INSERT INTO backoffice.subscription_members(subscription_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, subscriptionID, adminID)
+	exec_(`INSERT INTO backoffice.users (id, name, system_role, email, is_system, subscription_ids, memberships)
+		VALUES ($1, 'Gas Seed Admin', 'system_administrator', $2, TRUE, '{}'::TEXT[], '[]'::jsonb)
+		ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, subscription_ids = EXCLUDED.subscription_ids, memberships = EXCLUDED.memberships`,
+		adminID, adminEmail)
+	// Keep the system administrator outside every subscription when the seed is
+	// rerun against an existing local database.
+	exec_(`DELETE FROM backoffice.subscription_members WHERE user_id = $1`, adminID)
+	exec_(`INSERT INTO backoffice.subscriptions (id,name,owner_id,author_id,author_role)
+		VALUES ($1,'Gas',$2,$2,'system_administrator') ON CONFLICT(id) DO NOTHING`, subscriptionID, adminID)
 
 	if err = tx.Commit(ctx); err != nil {
 		fatalf("commit transaction: %v", err)
@@ -166,14 +168,13 @@ func main() {
 
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"iss":              adminID,
-		"sub":              adminID,
-		"aud":              "gas",
-		"iat":              now.Unix(),
-		"exp":              now.Add(15 * time.Minute).Unix(),
-		"jti":              uuid.New().String(),
-		"role":             "admin",
-		"subscription_ids": []string{subscriptionID},
+		"iss":         adminID,
+		"sub":         adminID,
+		"aud":         "gas",
+		"iat":         now.Unix(),
+		"exp":         now.Add(15 * time.Minute).Unix(),
+		"jti":         uuid.New().String(),
+		"system_role": "system_administrator",
 	})
 	token.Header["kid"] = adminAssertionKeyID
 	assertion, err := token.SignedString(adminPrivKey)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys/domain_services"
@@ -13,10 +14,11 @@ import (
 type Service struct {
 	finder     *domain_services.ClientAssertionKeyFinder
 	repository client_assertion_keys.Repository
+	authorizer *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(finder *domain_services.ClientAssertionKeyFinder, repository client_assertion_keys.Repository) *Service {
-	return &Service{finder: finder, repository: repository}
+func NewService(finder *domain_services.ClientAssertionKeyFinder, repository client_assertion_keys.Repository, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{finder: finder, repository: repository, authorizer: authorizer}
 }
 
 func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
@@ -44,9 +46,11 @@ func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
 			WithDescription("failed to find client assertion key").WithCause(err, false)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = cak.EnsureOwnership(clientId, []ids.SubscriptionId{subscriptionId}); err != nil {
-		return err
+	if err = s.authorizer.Check(cak, cmd.author); err != nil {
+		return app_errors.AddTrace(err)
+	}
+	if err = cak.EnsureClientOwnership(clientId); err != nil {
+		return app_errors.AddTrace(err)
 	}
 
 	if err = s.repository.HardDelete(ctx, id); err != nil {

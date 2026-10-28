@@ -22,6 +22,18 @@ type ProtectedResource struct {
 	version   int
 }
 
+func (pr *ProtectedResource) SubscriptionId() ids2.SubscriptionId { return pr.ownership.SubscriptionId }
+
+func (pr *ProtectedResource) EnsureSubscriptionAccess(allowed []ids2.SubscriptionId) error {
+	for _, id := range allowed {
+		if id == pr.ownership.SubscriptionId {
+			return nil
+		}
+	}
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("resource does not belong to an accessible subscription")
+}
+
 func NewProtectedResource(prId ids2.ProtectedResourceId, name string, ownership Ownership, isSystem bool) (*ProtectedResource, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
@@ -136,12 +148,15 @@ func (pr *ProtectedResource) Delete() {
 // EnsureOwnership allows the caller when the protected resource belongs to
 // the given subscription. Membership of the caller in that subscription is
 // validated earlier, at the subscription path param middleware.
-func (pr *ProtectedResource) EnsureOwnership(subscriptionIds []ids2.SubscriptionId) error {
+func (pr *ProtectedResource) EnsureOwnership(subscriptionIds []ids2.SubscriptionId, allowAll ...bool) error {
+	if len(allowAll) > 0 && allowAll[0] {
+		return nil
+	}
 	for _, id := range subscriptionIds {
 		if id == pr.ownership.SubscriptionId {
 			return nil
 		}
 	}
 	return app_errors.ForbiddenError(ErrInvalidOwnership).
-		WithDescription("protected resource does not belong to the provided subscription")
+		WithDescription("resource does not belong to an accessible subscription")
 }

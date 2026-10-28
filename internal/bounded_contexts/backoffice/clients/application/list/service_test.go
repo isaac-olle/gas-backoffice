@@ -28,7 +28,7 @@ func TestList(t *testing.T) {
 
 		repo.EXPECT().Matching(mock.Anything, want).Return(expected, nil)
 
-		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(callerId, ids.NewUserId(), vo.TenantRole))
+		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(callerId, ids.NewUserId(), vo.SubscriptionUserRole))
 		require.NoError(t, err)
 		assert.Equal(t, expected, result)
 	})
@@ -42,7 +42,7 @@ func TestList(t *testing.T) {
 
 		repo.EXPECT().Matching(mock.Anything, want).Return(expected, nil)
 
-		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(adminId, adminId, vo.AdminRole))
+		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(adminId, adminId, vo.SystemAdministratorRole))
 		require.NoError(t, err)
 		assert.Equal(t, expected, result)
 	})
@@ -53,7 +53,7 @@ func TestList(t *testing.T) {
 
 		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
 
-		_, err := list.NewService(repo).List(context.Background(), list.NewQuery(ids.NewUserId(), ids.NewUserId(), vo.TenantRole))
+		_, err := list.NewService(repo).List(context.Background(), list.NewQuery(ids.NewUserId(), ids.NewUserId(), vo.SubscriptionUserRole))
 		assert.Error(t, err)
 	})
 }

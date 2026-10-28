@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -23,9 +24,8 @@ func NewUserProjectionRepository(db *pgxpool.Pool) *UserProjectionRepository {
 
 func (r *UserProjectionRepository) FindByEmail(ctx context.Context, email string) (*user_projection.UserProjection, error) {
 	query := `
-		SELECT u.id, u.email, u.role, CASE WHEN u.role = 'admin' THEN u.id ELSE tp.admin_id END AS admin_id, u.subscription_ids
+		SELECT u.id, u.email, u.system_role, CASE WHEN u.system_role = 'system_administrator' THEN u.id ELSE u.author_id END AS admin_id, u.subscription_ids, u.memberships
 		FROM backoffice.users u
-		LEFT JOIN backoffice.tenant_profiles tp ON tp.user_id = u.id
 		WHERE u.email = $1 AND u.deleted_at IS NULL
 	`
 	return r.postgres.Find(ctx, query, r.fromRow, email)
@@ -33,12 +33,16 @@ func (r *UserProjectionRepository) FindByEmail(ctx context.Context, email string
 
 func (r *UserProjectionRepository) fromRow(row pgx.Row) (*user_projection.UserProjection, error) {
 	var p user_projection.UserProjection
-	err := row.Scan(&p.UserId, &p.Email, &p.Role, &p.AdminId, &p.SubscriptionIds)
+	var memberships []byte
+	err := row.Scan(&p.UserId, &p.Email, &p.SystemRole, &p.AdminId, &p.SubscriptionIds, &memberships)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("no user found for that email")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error scanning user projection: %w", err)
+	}
+	if err = json.Unmarshal(memberships, &p.Memberships); err != nil {
+		return nil, fmt.Errorf("unmarshal memberships: %w", err)
 	}
 	return &p, nil
 }

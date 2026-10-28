@@ -11,17 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	userAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	userAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 )
 
 func TestGetUserHandler(t *testing.T) {
 	t.Parallel()
-	validUser, _ := userAggregate.FromPrimitives(userAggregate.TenantPrimitives{
-		Id:      handlerstest.UserId,
-		AdminId: handlerstest.UserId,
-		Name:    "Acme",
+	validUser, _ := userAggregate.FromPrimitives(userAggregate.UserPrimitives{
+		Id:         handlerstest.UserId,
+		Name:       "Acme",
+		SystemRole: "subscription_user",
 	})
 
 	tests := []struct {

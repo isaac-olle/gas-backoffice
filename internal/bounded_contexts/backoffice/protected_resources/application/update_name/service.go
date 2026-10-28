@@ -9,13 +9,14 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/vos"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 )
 
 type Service struct {
 	prFinder             *domain_services.ProtectedResourceFinder
 	duplicateNameChecker *domain_services.DuplicateNameChecker
+	authorizer           *sharedDomainServices.SubscriptionAuthorizer
 	repository           protected_resources.Repository
 	eventBus             event.Bus
 }
@@ -25,8 +26,9 @@ func NewService(
 	duplicateNameChecker *domain_services.DuplicateNameChecker,
 	repository protected_resources.Repository,
 	eventBus event.Bus,
+	authorizer *sharedDomainServices.SubscriptionAuthorizer,
 ) *Service {
-	return &Service{prFinder: prFinder, duplicateNameChecker: duplicateNameChecker, repository: repository, eventBus: eventBus}
+	return &Service{prFinder: prFinder, duplicateNameChecker: duplicateNameChecker, repository: repository, eventBus: eventBus, authorizer: authorizer}
 }
 
 func (s *Service) UpdateName(ctx context.Context, cmd *Command) error {
@@ -41,8 +43,7 @@ func (s *Service) UpdateName(ctx context.Context, cmd *Command) error {
 		return app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = pr.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(pr, cmd.author); err != nil {
 		return app_errors.AddTrace(err)
 	}
 

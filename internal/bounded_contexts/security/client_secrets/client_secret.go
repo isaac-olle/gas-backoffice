@@ -17,6 +17,16 @@ type ClientSecret struct {
 	secretHash string
 }
 
+func (cs *ClientSecret) EnsureSubscriptionAccess(allowed []ids2.SubscriptionId) error {
+	for _, id := range allowed {
+		if id == cs.ownership.SubscriptionId {
+			return nil
+		}
+	}
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("resource does not belong to an accessible subscription")
+}
+
 func NewClientSecretForSubscription(id ids2.ClientSecretId, clientId ids2.ClientId, subscriptionId ids2.SubscriptionId, plainSecret string, hasher SecretHasher) (*ClientSecret, error) {
 	return newClientSecret(id, NewOwnershipFromVos(clientId, subscriptionId), plainSecret, hasher)
 }
@@ -78,20 +88,10 @@ func FromPrimitives(p ClientSecretPrimitives) (*ClientSecret, error) {
 	}, nil
 }
 
-// EnsureOwnership requires the secret to target clientId and to belong to one
-// of subscriptionIds. Membership of the caller in that subscription is
-// validated earlier, at the subscription path param middleware.
-func (cs *ClientSecret) EnsureOwnership(clientId ids2.ClientId, subscriptionIds []ids2.SubscriptionId) error {
-	allowed := false
-	for _, id := range subscriptionIds {
-		if id == cs.ownership.SubscriptionId {
-			allowed = true
-			break
-		}
-	}
-	if cs.ownership.ClientId != clientId || !allowed {
+func (cs *ClientSecret) EnsureClientOwnership(clientId ids2.ClientId) error {
+	if cs.ownership.ClientId != clientId {
 		return app_errors.ForbiddenError(ErrInvalidOwnership).
-			WithDescription("client secret does not belong to the provided subscription")
+			WithDescription("client secret does not belong to the requested client")
 	}
 	return nil
 }

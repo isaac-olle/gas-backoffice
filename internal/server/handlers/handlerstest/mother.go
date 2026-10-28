@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -50,7 +49,7 @@ func ValidAuthorExtractor() func(context.Context) (*authors.UserAuthor, bool) {
 	return func(_ context.Context) (*authors.UserAuthor, bool) {
 		id, _ := ids.NewUserIdFromString(UserId)
 		adminId, _ := ids.NewUserIdFromString(AdminID)
-		return &authors.UserAuthor{Id: id, AdminId: adminId, Role: vo.TenantRole}, true
+		return &authors.UserAuthor{Id: id, AdminId: adminId, Role: vo.SubscriptionUserRole}, true
 	}
 }
 
@@ -115,19 +114,6 @@ func MissingSubscriptionIdExtractor() func(context.Context) (ids.SubscriptionId,
 func NewScopeIdExtractor() func(context.Context) (ids.ScopeId, bool) {
 	return func(_ context.Context) (ids.ScopeId, bool) {
 		return ids.NewScopeId(), true
-	}
-}
-
-func ValidUserOwnershipExtractor() func(context.Context) (tenants.Ownership, bool) {
-	return func(_ context.Context) (tenants.Ownership, bool) {
-		userId, _ := ids.NewUserIdFromString(UserId)
-		return tenants.NewOwnership(userId), true
-	}
-}
-
-func MissingUserOwnershipExtractor() func(context.Context) (tenants.Ownership, bool) {
-	return func(_ context.Context) (tenants.Ownership, bool) {
-		return tenants.Ownership{}, false
 	}
 }
 

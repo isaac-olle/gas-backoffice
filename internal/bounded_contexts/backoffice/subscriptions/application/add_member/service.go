@@ -25,7 +25,7 @@ func (s *Service) Add(ctx context.Context, cmd *Command) error {
 	if a == nil {
 		return app_errors.NotFoundError(subscriptions.ErrSubscriptionNotFound)
 	}
-	a.AddMember(cmd.userId)
+	a.AddMember(cmd.userId, cmd.role)
 	if err = s.repository.Save(ctx, a); err != nil {
 		if errors.Is(err, persistance.ErrConcurrentModification) {
 			return app_errors.ConflictError(subscriptions.ErrSubscriptionConcurrentModification).WithCause(err, false)

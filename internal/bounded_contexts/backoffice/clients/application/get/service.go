@@ -7,14 +7,16 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/domain_services"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 )
 
 type Service struct {
 	clientFinder *domain_services.ClientFinder
+	authorizer   *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(clientFinder *domain_services.ClientFinder) *Service {
-	return &Service{clientFinder: clientFinder}
+func NewService(clientFinder *domain_services.ClientFinder, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{clientFinder: clientFinder, authorizer: authorizer}
 }
 
 func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
@@ -29,8 +31,7 @@ func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
 		return nil, app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = client.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(client, qry.author); err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
 

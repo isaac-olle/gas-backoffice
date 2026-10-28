@@ -31,9 +31,24 @@ func (s *Service) Check(ctx context.Context, qry *Query) (any, error) {
 		return nil, app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = pr.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
-		return nil, app_errors.AddTrace(err)
+	allowedSubscriptions := make([]ids.SubscriptionId, 0, len(qry.allowedSubscriptions))
+	for _, raw := range qry.allowedSubscriptions {
+		subscriptionId, parseErr := ids.NewSubscriptionIdFromString(raw)
+		if parseErr != nil {
+			return nil, app_errors.BadRequestError(protected_resources.ErrProtectedResourceNotFound).
+				WithDescription("invalid allowed subscription id").WithCause(parseErr, false)
+		}
+		allowedSubscriptions = append(allowedSubscriptions, subscriptionId)
+	}
+	if len(qry.allowedSubscriptions) == 0 && !qry.allowAll {
+		if subscriptionId, ok := ids.SubscriptionIdFromContext(ctx); ok {
+			allowedSubscriptions = append(allowedSubscriptions, subscriptionId)
+		}
+	}
+	if !qry.allowAll {
+		if err = pr.EnsureOwnership(allowedSubscriptions); err != nil {
+			return nil, app_errors.AddTrace(err)
+		}
 	}
 
 	return pr.ToPrimitives().SubscriptionId, nil

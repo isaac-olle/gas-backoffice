@@ -20,7 +20,6 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 		SELECT
 			c.id,
 			c.name,
-			c.user_id,
 			c.allowed_grant_types,
 			c.redirect_uris,
 			c.public,
@@ -46,7 +45,6 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 		var (
 			id                string
 			name              string
-			userId            string
 			allowedGrantTypes []string
 			redirectURIs      []string
 			public            bool
@@ -56,12 +54,12 @@ func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string
 			prName            *string
 		)
 
-		if err = rows.Scan(&id, &name, &userId, &allowedGrantTypes, &redirectURIs, &public, &scopeID, &scopeName, &prID, &prName); err != nil {
+		if err = rows.Scan(&id, &name, &allowedGrantTypes, &redirectURIs, &public, &scopeID, &scopeName, &prID, &prName); err != nil {
 			return nil, err
 		}
 
 		if client == nil {
-			client = session.NewClient(id, name, userId, allowedGrantTypes, redirectURIs, nil, public)
+			client = session.NewClient(id, name, "", allowedGrantTypes, redirectURIs, nil, public)
 		}
 
 		// prName is nil when the scope's protected resource is missing or soft-deleted

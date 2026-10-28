@@ -20,10 +20,19 @@ type Session struct {
 	expiresAt       time.Time
 	role            vo.Role
 	subscriptionIds []ids.SubscriptionId
+	memberships     []vo.SubscriptionMembership
 	*aggregate.Root
 }
 
 func NewSession(userIdString, roleString, adminIdString string, rawSubscriptionIdArgs ...[]string) (*Session, error) {
+	return newSession(userIdString, roleString, adminIdString, nil, rawSubscriptionIdArgs...)
+}
+
+func NewSessionWithMemberships(userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership) (*Session, error) {
+	return newSession(userIdString, roleString, adminIdString, memberships)
+}
+
+func newSession(userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
 	sessionId := ids.NewSessionId()
 	expiresAt := time.Now().Add(SessionTTL)
 
@@ -56,6 +65,12 @@ func NewSession(userIdString, roleString, adminIdString string, rawSubscriptionI
 			subscriptionIds = append(subscriptionIds, sid)
 		}
 	}
+	if memberships != nil {
+		subscriptionIds = make([]ids.SubscriptionId, 0, len(memberships))
+		for _, membership := range memberships {
+			subscriptionIds = append(subscriptionIds, membership.SubscriptionId)
+		}
+	}
 
 	if errorArray.HasErrors() {
 		return nil, app_errors.BadRequestError(ErrCannotCreateLoginSession).
@@ -71,6 +86,7 @@ func NewSession(userIdString, roleString, adminIdString string, rawSubscriptionI
 		expiresAt:       expiresAt,
 		role:            role,
 		subscriptionIds: subscriptionIds,
+		memberships:     memberships,
 	}
 	s.Record(backoffice.NewSessionCreated(sessionId.String(), userIdString, roleString, expiresAt))
 	return s, nil

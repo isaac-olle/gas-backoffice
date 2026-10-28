@@ -9,16 +9,18 @@ import (
 	clientGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetClientHandler struct {
 	queryBus query.Bus
 	clientId func(context.Context) (ids.ClientId, bool)
+	author   func(context.Context) (*authors.UserAuthor, bool)
 }
 
-func NewGetClientHandler(queryBus query.Bus, clientId func(context.Context) (ids.ClientId, bool)) *GetClientHandler {
-	return &GetClientHandler{queryBus: queryBus, clientId: clientId}
+func NewGetClientHandler(queryBus query.Bus, clientId func(context.Context) (ids.ClientId, bool), author func(context.Context) (*authors.UserAuthor, bool)) *GetClientHandler {
+	return &GetClientHandler{queryBus: queryBus, clientId: clientId, author: author}
 }
 
 func (h *GetClientHandler) Execute(c *gin.Context) (any, error) {
@@ -27,7 +29,11 @@ func (h *GetClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	client, err := query.DispatchTyped[*clients.Client](c.Request.Context(), h.queryBus, clientGet.NewQuery(clientId.String()))
+	author, ok := h.author(c.Request.Context())
+	if !ok {
+		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
+	}
+	client, err := query.DispatchTyped[*clients.Client](c.Request.Context(), h.queryBus, clientGet.NewQuery(clientId.String(), author))
 	if err != nil {
 		return nil, err
 	}

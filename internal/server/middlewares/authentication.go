@@ -10,6 +10,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 // Authentication picks how the access token is read from the request origin:
@@ -41,10 +42,9 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 				WithExpectedClaim("aud", expectedIssuer).
 				WithVerifyExpiration().
 				WithClaimsToReturn(map[string]any{
-					"sub":              nil,
-					"role":             nil,
-					"admin_id":         nil,
-					"subscription_ids": nil,
+					"sub":         nil,
+					"system_role": nil,
+					"memberships": nil,
 				}),
 		)
 		if err != nil {
@@ -54,25 +54,50 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 		}
 
 		subject, _ := claims["sub"].(string)
-		roleStr, _ := claims["role"].(string)
-		adminIdStr, _ := claims["admin_id"].(string)
-		subscriptionIdStrings := make([]string, 0)
-		if values, ok := claims["subscription_ids"].([]any); ok {
-			for _, value := range values {
-				if id, ok := value.(string); ok {
-					subscriptionIdStrings = append(subscriptionIdStrings, id)
-				}
-			}
-		}
-
-		roleVO, err := vo.NewRole(roleStr)
-		if err != nil {
-			_ = c.Error(app_errors.UnauthorizedError("INVALID_ROLE").WithCause(err, false))
+		systemRole, ok := claims["system_role"].(string)
+		if !ok || systemRole == "" {
+			_ = c.Error(app_errors.UnauthorizedError("MISSING_SYSTEM_ROLE"))
 			c.Abort()
 			return
 		}
+		memberships := make([]vo.SubscriptionMembership, 0)
+		if values, ok := claims["memberships"].([]any); ok {
+			for _, value := range values {
+				membership, ok := value.(map[string]any)
+				if !ok {
+					_ = c.Error(app_errors.UnauthorizedError("INVALID_MEMBERSHIP"))
+					c.Abort()
+					return
+				}
+				rawID, idOK := membership["subscription_id"].(string)
+				rawRole, roleOK := membership["subscription_role"].(string)
+				if !idOK || !roleOK {
+					_ = c.Error(app_errors.UnauthorizedError("INVALID_MEMBERSHIP"))
+					c.Abort()
+					return
+				}
+				id, idErr := ids.NewSubscriptionIdFromString(rawID)
+				membershipRole, roleErr := vo.NewSubscriptionRole(rawRole)
+				if idErr != nil || roleErr != nil {
+					if idErr != nil {
+						_ = c.Error(app_errors.UnauthorizedError("INVALID_MEMBERSHIP").WithCause(idErr, false))
+					} else {
+						_ = c.Error(app_errors.UnauthorizedError("INVALID_MEMBERSHIP").WithCause(roleErr, false))
+					}
+					c.Abort()
+					return
+				}
+				memberships = append(memberships, vo.NewSubscriptionMembership(id, membershipRole))
+			}
+		}
 
-		author, err := authors.NewAuthorForRole(roleVO, subject, adminIdStr, subscriptionIdStrings)
+		roleVO, err := vo.RoleFromSystemRoleClaim(systemRole)
+		if err != nil {
+			_ = c.Error(app_errors.UnauthorizedError("INVALID_SYSTEM_ROLE").WithCause(err, false))
+			c.Abort()
+			return
+		}
+		author, err := authors.NewUserAuthorWithMemberships(subject, subject, roleVO, memberships)
 		if err != nil {
 			_ = c.Error(app_errors.UnauthorizedError("INVALID_AUTHOR").WithCause(err, false))
 			c.Abort()

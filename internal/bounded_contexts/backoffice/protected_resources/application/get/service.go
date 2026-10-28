@@ -4,15 +4,16 @@ import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 )
 
 type Service struct {
 	protectedResourceFinder *domain_services.ProtectedResourceFinder
+	authorizer              *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(protectedResourceFinder *domain_services.ProtectedResourceFinder) *Service {
-	return &Service{protectedResourceFinder: protectedResourceFinder}
+func NewService(protectedResourceFinder *domain_services.ProtectedResourceFinder, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{protectedResourceFinder: protectedResourceFinder, authorizer: authorizer}
 }
 
 func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
@@ -21,8 +22,7 @@ func (s *Service) Get(ctx context.Context, qry *Query) (any, error) {
 		return nil, app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = pr.EnsureOwnership([]ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(pr, qry.author); err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
 	return pr, nil

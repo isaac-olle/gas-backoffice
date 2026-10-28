@@ -42,7 +42,7 @@ func (b *recordingBus) Dispatch(_ context.Context, q query.Query) (any, error) {
 func (b *recordingBus) Register(query.Type, query.Handler) {}
 
 func validClaims() map[string]any {
-	return map[string]any{"sub": userSub, "role": vo.AdminRole.String(), "scope": "users:read", "admin_id": userSub}
+	return map[string]any{"sub": userSub, "system_role": vo.SystemAdministratorClaim, "scope": "users:read"}
 }
 
 func TestAuthentication(t *testing.T) {
@@ -66,8 +66,8 @@ func TestAuthentication(t *testing.T) {
 		{name: "no_origin_uses_bearer", bearer: "bearer-token", busResult: validClaims(), wantNext: true, wantVerify: true},
 		{name: "no_origin_without_bearer_aborts", wantNext: false},
 		{name: "verification_error_aborts", bearer: "bearer-token", busErr: errors.New("invalid token"), wantNext: false, wantVerify: true},
-		{name: "invalid_role_aborts", bearer: "bearer-token", busResult: map[string]any{"sub": userSub, "role": "nope", "admin_id": userSub}, wantNext: false, wantVerify: true},
-		{name: "missing_admin_id_aborts", bearer: "bearer-token", busResult: map[string]any{"sub": userSub, "role": vo.AdminRole.String()}, wantNext: false, wantVerify: true},
+		{name: "invalid_system_role_aborts", bearer: "bearer-token", busResult: map[string]any{"sub": userSub, "system_role": "nope"}, wantNext: false, wantVerify: true},
+		{name: "missing_system_role_aborts", bearer: "bearer-token", busResult: map[string]any{"sub": userSub}, wantNext: false, wantVerify: true},
 	}
 
 	for _, tt := range tests {

@@ -9,8 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	adminAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
-	userAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	userAggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
@@ -20,19 +19,19 @@ import (
 
 func adminAuthorExtractor(adminId ids.UserId) func(context.Context) (*authors.UserAuthor, bool) {
 	return func(_ context.Context) (*authors.UserAuthor, bool) {
-		return &authors.UserAuthor{Id: adminId, AdminId: adminId, Role: vo.AdminRole}, true
+		return &authors.UserAuthor{Id: adminId, AdminId: adminId, Role: vo.SystemAdministratorRole}, true
 	}
 }
 
 func TestGetCurrentUserHandler(t *testing.T) {
 	t.Parallel()
-	user, err := userAggregate.FromPrimitives(userAggregate.TenantPrimitives{
-		Id: handlerstest.UserId, AdminId: handlerstest.AdminID, Name: "Jane Doe", Email: "jane@example.com",
+	user, err := userAggregate.FromPrimitives(userAggregate.UserPrimitives{
+		Id: handlerstest.UserId, Name: "Jane Doe", Email: "jane@example.com", SystemRole: vo.SubscriptionUserRole.String(),
 	})
 	require.NoError(t, err)
 
 	adminId := ids.NewUserId()
-	admin, err := adminAggregate.NewAdmin(adminId, "Jane Admin", "jane.admin@example.com", false)
+	admin, err := userAggregate.NewSystemAdministrator(adminId, "Jane Admin", "jane.admin@example.com")
 	require.NoError(t, err)
 	admin.PullDomainEvents()
 
@@ -50,14 +49,14 @@ func TestGetCurrentUserHandler(t *testing.T) {
 			name: "success_returns_tenant_profile", authorFn: handlerstest.ValidAuthorExtractor(), busResult: user,
 			want: users.CurrentUserResponse{
 				Id: handlerstest.UserId, Email: "jane@example.com", DisplayName: "Jane Doe",
-				Role: "tenant", AdminId: handlerstest.AdminID,
+				Role: vo.SubscriptionUserRole.String(),
 			},
 		},
 		{
 			name: "success_returns_admin_profile", authorFn: adminAuthorExtractor(adminId), busResult: admin,
 			want: users.CurrentUserResponse{
 				Id: adminId.String(), Email: "jane.admin@example.com", DisplayName: "Jane Admin",
-				Role: "admin", AdminId: adminId.String(),
+				Role: vo.SystemAdministratorRole.String(),
 			},
 		},
 	}

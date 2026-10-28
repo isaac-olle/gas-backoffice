@@ -14,15 +14,13 @@ import (
 type SoftDeleteScopeHandler struct {
 	commandExecutor command.CommandExecutor
 	scopeId         func(context.Context) (ids.ScopeId, bool)
-	prId            func(context.Context) (ids.ProtectedResourceId, bool)
 }
 
 func NewSoftDeleteScopeHandler(
 	commandExecutor command.CommandExecutor,
 	scopeId func(context.Context) (ids.ScopeId, bool),
-	prId func(context.Context) (ids.ProtectedResourceId, bool),
 ) *SoftDeleteScopeHandler {
-	return &SoftDeleteScopeHandler{commandExecutor: commandExecutor, scopeId: scopeId, prId: prId}
+	return &SoftDeleteScopeHandler{commandExecutor: commandExecutor, scopeId: scopeId}
 }
 
 func (h *SoftDeleteScopeHandler) Execute(c *gin.Context) (any, error) {
@@ -30,13 +28,8 @@ func (h *SoftDeleteScopeHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_SCOPE_ID")
 	}
-	prId, ok := h.prId(c.Request.Context())
-	if !ok {
-		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
-	}
-
 	return nil, h.commandExecutor.SingleExecution(
-		c.Request.Context(), scopeSoftDelete.NewCommand(scopeId.String(), prId.String()),
+		c.Request.Context(), scopeSoftDelete.NewCommand(scopeId.String()),
 	)
 }
 

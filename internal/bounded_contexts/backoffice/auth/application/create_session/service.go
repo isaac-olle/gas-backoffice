@@ -56,7 +56,7 @@ func (s *Service) Exchange(ctx context.Context, qry *Query) (any, error) {
 			WithDescription("user is not part of the system").WithCause(err, false)
 	}
 
-	session, err := auth.NewSession(projection.UserId, projection.Role, projection.AdminId, projection.SubscriptionIds)
+	session, err := auth.NewSessionWithMemberships(projection.UserId, projection.SystemRole, projection.AdminId, projection.Memberships)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}

@@ -9,19 +9,22 @@ import (
 	prGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetProtectedResourceHandler struct {
 	queryBus query.Bus
 	prId     func(context.Context) (ids.ProtectedResourceId, bool)
+	author   func(context.Context) (*authors.UserAuthor, bool)
 }
 
 func NewGetProtectedResourceHandler(
 	queryBus query.Bus,
 	prId func(context.Context) (ids.ProtectedResourceId, bool),
+	author func(context.Context) (*authors.UserAuthor, bool),
 ) *GetProtectedResourceHandler {
-	return &GetProtectedResourceHandler{queryBus: queryBus, prId: prId}
+	return &GetProtectedResourceHandler{queryBus: queryBus, prId: prId, author: author}
 }
 
 func (h *GetProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
@@ -30,8 +33,12 @@ func (h *GetProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
 	}
 
+	author, ok := h.author(c.Request.Context())
+	if !ok {
+		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
+	}
 	pr, err := query.DispatchTyped[*protected_resources.ProtectedResource](
-		c.Request.Context(), h.queryBus, prGet.NewQuery(prId),
+		c.Request.Context(), h.queryBus, prGet.NewQuery(prId, author),
 	)
 	if err != nil {
 		return nil, err

@@ -80,7 +80,7 @@ func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, subscriptionID, 
 
 	if _, err = tx.Exec(ctx, `
 		INSERT INTO backoffice.protected_resources (id, name, subscription_id, is_system, author_id, author_role)
-		VALUES ($1, $2, $3, TRUE, $4, 'admin')
+		VALUES ($1, $2, $3, TRUE, $4, 'system_administrator')
 		ON CONFLICT (id) DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		prID, backofficePRName, subscriptionID, adminID); err != nil {
 		return fmt.Errorf("insert system protected resource: %w", err)
@@ -88,7 +88,7 @@ func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, subscriptionID, 
 
 	if _, err = tx.Exec(ctx, `
 		INSERT INTO security.key_pairs (id, protected_resource_id, algorithm, public_key, private_key, author_id, author_role)
-		VALUES ($1, $2, $3, $4, $5, $6, 'admin')
+		VALUES ($1, $2, $3, $4, $5, $6, 'system_administrator')
 		ON CONFLICT (id) DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 		keyPairID, prID, "RS256", pubKeyPEM, privKeyPEM, adminID); err != nil {
 		return fmt.Errorf("insert key pair: %w", err)
@@ -97,7 +97,7 @@ func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, subscriptionID, 
 	for _, s := range scopes {
 		if _, err = tx.Exec(ctx, `
 			INSERT INTO backoffice.scopes (id, name, protected_resource_id, subscription_id, is_system, author_id, author_role)
-			VALUES ($1, $2, $3, $4, TRUE, $5, 'admin')
+			VALUES ($1, $2, $3, $4, TRUE, $5, 'system_administrator')
 			ON CONFLICT (protected_resource_id, name) WHERE deleted_at IS NULL DO UPDATE SET author_id = EXCLUDED.author_id, author_role = EXCLUDED.author_role`,
 			s.id, s.name, prID, subscriptionID, adminID); err != nil {
 			return fmt.Errorf("insert scope %q: %w", s.name, err)

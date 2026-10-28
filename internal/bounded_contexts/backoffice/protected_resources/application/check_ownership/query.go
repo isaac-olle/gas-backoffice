@@ -9,16 +9,27 @@ import (
 const QueryType query.Type = "query.backoffice.protected_resource.check_ownership"
 
 // Query checks that the protected resource identified by protectedResourceId
-// belongs to the caller's active subscription (read from context). It
-// mutates no state; it exists purely so handlers in other modules can verify
-// ownership of a referenced protected resource without importing the
-// protected_resources domain directly.
+// belongs to one of the caller's allowed subscriptions. It mutates no state;
+// it exists so middleware and handlers in other modules can verify ownership
+// without importing the protected_resources domain directly.
 type Query struct {
-	protectedResourceId string
+	protectedResourceId  string
+	allowedSubscriptions []string
+	allowAll             bool
 }
 
 func NewQuery(protectedResourceId string) *Query {
 	return &Query{protectedResourceId: protectedResourceId}
+}
+
+func NewQueryForSubscriptions(protectedResourceId string, allowedSubscriptions []string, allowAll bool) *Query {
+	return &Query{protectedResourceId: protectedResourceId, allowedSubscriptions: allowedSubscriptions, allowAll: allowAll}
+}
+
+// NewQueryForResource resolves the resource ownership without authorizing the
+// caller. Authorization is performed by SubscriptionMiddleware.
+func NewQueryForResource(protectedResourceId string) *Query {
+	return &Query{protectedResourceId: protectedResourceId, allowAll: true}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

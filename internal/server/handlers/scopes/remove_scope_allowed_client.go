@@ -15,16 +15,14 @@ type RemoveScopeAllowedClientHandler struct {
 	commandExecutor command.CommandExecutor
 	scopeId         func(context.Context) (ids2.ScopeId, bool)
 	clientId        func(context.Context) (ids2.ClientId, bool)
-	prId            func(context.Context) (ids2.ProtectedResourceId, bool)
 }
 
 func NewRemoveScopeAllowedClientHandler(
 	commandExecutor command.CommandExecutor,
 	scopeId func(context.Context) (ids2.ScopeId, bool),
 	clientId func(context.Context) (ids2.ClientId, bool),
-	prId func(context.Context) (ids2.ProtectedResourceId, bool),
 ) *RemoveScopeAllowedClientHandler {
-	return &RemoveScopeAllowedClientHandler{commandExecutor: commandExecutor, scopeId: scopeId, clientId: clientId, prId: prId}
+	return &RemoveScopeAllowedClientHandler{commandExecutor: commandExecutor, scopeId: scopeId, clientId: clientId}
 }
 
 func (h *RemoveScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
@@ -38,13 +36,8 @@ func (h *RemoveScopeAllowedClientHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InternalError("MISSING_CLIENT_ID")
 	}
 
-	prId, ok := h.prId(c.Request.Context())
-	if !ok {
-		return nil, app_errors.InternalError("MISSING_PROTECTED_RESOURCE_ID")
-	}
-
 	return nil, h.commandExecutor.SingleExecution(
-		c.Request.Context(), scopeRemoveClient.NewCommand(scopeId.String(), clientId.String(), prId.String()),
+		c.Request.Context(), scopeRemoveClient.NewCommand(scopeId.String(), clientId.String()),
 	)
 }
 

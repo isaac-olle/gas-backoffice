@@ -3,6 +3,7 @@ package get
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -10,10 +11,11 @@ const QueryType query.Type = "query.backoffice.protected_resource.get"
 
 type Query struct {
 	protectedResourceId ids.ProtectedResourceId
+	author              *authors.UserAuthor
 }
 
-func NewQuery(protectedResourceId ids.ProtectedResourceId) *Query {
-	return &Query{protectedResourceId: protectedResourceId}
+func NewQuery(protectedResourceId ids.ProtectedResourceId, author *authors.UserAuthor) *Query {
+	return &Query{protectedResourceId: protectedResourceId, author: author}
 }
 
 func (q *Query) Type() query.Type { return QueryType }

@@ -6,6 +6,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_assertion_keys"
 )
@@ -14,14 +15,16 @@ type Service struct {
 	clientProjectionRepository client_projection.Repository
 	repository                 client_assertion_keys.Repository
 	eventBus                   event.Bus
+	authorizer                 *sharedDomainServices.SubscriptionAuthorizer
 }
 
 func NewService(
 	clientProjectionRepository client_projection.Repository,
 	repository client_assertion_keys.Repository,
 	eventBus event.Bus,
+	authorizer *sharedDomainServices.SubscriptionAuthorizer,
 ) *Service {
-	return &Service{clientProjectionRepository: clientProjectionRepository, repository: repository, eventBus: eventBus}
+	return &Service{clientProjectionRepository: clientProjectionRepository, repository: repository, eventBus: eventBus, authorizer: authorizer}
 }
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
@@ -31,10 +34,8 @@ func (s *Service) Create(ctx context.Context, cmd *Command) error {
 			WithDescription("client not found").WithCause(err, false)
 	}
 
-	pathSubscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if !projection.IsAccessibleBy([]string{pathSubscriptionId.String()}) {
-		return app_errors.ForbiddenError(client_assertion_keys.ErrInvalidOwnership).
-			WithDescription("client does not belong to the provided subscription")
+	if err = s.authorizer.Check(projection, cmd.author); err != nil {
+		return app_errors.AddTrace(err)
 	}
 
 	// The new key is owned by the CLIENT's owner (not necessarily the caller,

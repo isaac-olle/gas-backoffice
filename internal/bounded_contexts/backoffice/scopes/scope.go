@@ -22,23 +22,27 @@ type Scope struct {
 	version          int
 }
 
-// EnsureOwnership requires the scope to hang from protectedResourceId (its
-// structural parent) and to belong to one of subscriptionIds. Membership of
-// the caller in that subscription is validated earlier, at the subscription
-// path param middleware.
-func (s *Scope) EnsureOwnership(protectedResourceId ids2.ProtectedResourceId, subscriptionIds []ids2.SubscriptionId) error {
-	allowed := false
-	for _, id := range subscriptionIds {
+func (s *Scope) EnsureClientSubscription(clientSubscriptionId ids2.SubscriptionId) error {
+	if s.ownership.SubscriptionId == clientSubscriptionId {
+		return nil
+	}
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("client and scope do not belong to the same subscription")
+}
+
+func (s *Scope) SubscriptionId() ids2.SubscriptionId { return s.ownership.SubscriptionId }
+
+func (s *Scope) EnsureSubscriptionAccess(allowed []ids2.SubscriptionId) error {
+	for _, id := range allowed {
 		if id == s.ownership.SubscriptionId {
-			allowed = true
-			break
+			return nil
 		}
 	}
-	if s.ownership.ProtectedResourceId != protectedResourceId || !allowed {
-		return app_errors.ForbiddenError(ErrInvalidOwnership).
-			WithDescription("scope does not belong to the provided protected resource")
-	}
-	return nil
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("resource does not belong to an accessible subscription")
+}
+func (s *Scope) ParentProtectedResourceId() ids2.ProtectedResourceId {
+	return s.ownership.ProtectedResourceId
 }
 
 func NewScope(id ids2.ScopeId, name string, ownership Ownership, isSystem bool) (*Scope, error) {

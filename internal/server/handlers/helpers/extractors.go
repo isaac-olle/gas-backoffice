@@ -7,7 +7,6 @@ import (
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
 )
 
 func UserIdFromAuthor(ctx context.Context) (ids2.UserId, bool) {
@@ -20,18 +19,6 @@ func UserIdFromAuthor(ctx context.Context) (ids2.UserId, bool) {
 
 func AuthorFromContext(ctx context.Context) (*authors2.UserAuthor, bool) {
 	return vo2.AuthorFromContext[*authors2.UserAuthor](ctx)
-}
-
-func UserOwnershipFromContext(ctx context.Context) (tenants.Ownership, bool) {
-	return vo2.OwnershipFromContext[tenants.Ownership](ctx)
-}
-
-func UserOwnershipFromAuthor(ctx context.Context) (tenants.Ownership, bool) {
-	author, ok := vo2.AuthorFromContext[*authors2.UserAuthor](ctx)
-	if !ok {
-		return tenants.Ownership{}, false
-	}
-	return tenants.NewOwnership(author.Id), true
 }
 
 func ProtectedResourceOwnershipFromContext(ctx context.Context) (protected_resources.Ownership, bool) {

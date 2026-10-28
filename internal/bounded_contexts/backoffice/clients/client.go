@@ -222,18 +222,21 @@ func (c *Client) Delete() {
 	c.Record(backoffice.NewClientDeleted(c.id.String(), c.ownership.SubscriptionId.String()))
 }
 
-// EnsureOwnership allows the caller when the client belongs to the given
-// subscription. Membership of the caller in that subscription is validated
-// earlier, at the subscription path param middleware.
-func (c *Client) EnsureOwnership(subscriptionIds []ids.SubscriptionId) error {
-	for _, id := range subscriptionIds {
+func (c *Client) SubscriptionId() ids.SubscriptionId { return c.ownership.SubscriptionId }
+
+func (c *Client) EnsureSubscriptionAccess(allowed []ids.SubscriptionId) error {
+	for _, id := range allowed {
 		if id == c.ownership.SubscriptionId {
 			return nil
 		}
 	}
 	return app_errors.ForbiddenError(ErrInvalidOwnership).
-		WithDescription("client does not belong to the provided subscription")
+		WithDescription("resource does not belong to an accessible subscription")
 }
+
+// EnsureOwnership allows the caller when the client belongs to the given
+// subscription. Membership of the caller in that subscription is validated
+// earlier, at the subscription path param middleware.
 
 func (c *Client) AddAllowedGrantType(grantType vos.GrantType) {
 	c.allowedGrantTypes.Add(grantType)

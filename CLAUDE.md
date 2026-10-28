@@ -3,8 +3,8 @@
 ## Arquitectura general
 
 Projecte Go seguint DDD minimalista, sense Temporal. Tres bounded contexts principals:
-- **backoffice** — admins, tenants, protected_resources, endpoints, scopes, clients
-- **security** — client_assertion_keys, admin_assertion_keys, key_pairs, client_secrets
+- **backoffice** — users, subscriptions, protected_resources, endpoints, scopes, clients
+- **security** — client_assertion_keys, user_assertion_keys, key_pairs, client_secrets
 - **protocol** — session (OAuth2/PKCE)
 
 Flows cross-BC a `internal/flows/` (encara no implementat a `dev`; vegeu secció "Flows" més avall). Servidor HTTP amb Gin a `internal/server/`.
@@ -42,7 +42,7 @@ Estructura del servidor:
   - **`ProtectedResource.scopeIds`** (columna `backoffice.protected_resources.scope_ids`). Relació estructural pare→fill: cada `Scope` pertany a un sol PR via `Scope.ownership.ProtectedResourceId` (fixat a la creació, immutable), que és l'**única font de veritat**. Els event handlers `add_scope_id_on_scope_created.go` / `remove_scope_id_on_scope_deleted.go` de `protected_resources/application/_event_handlers/` la sincronitzen a partir de `ScopeCreated`/`ScopeDeleted`; la creació/esborrat del `Scope` és l'única manera que canviï aquesta llista. Benefici: el `GET` d'un PR mostra els seus scopes sense `JOIN` ni endpoint de llistat dedicat.
     - ⚠️ Forat conegut (preexistent, no resolt aquí): `scopes/application/soft_delete` no crida `scope.Delete()` ni publica cap event, així que un scope esborrat amb soft delete **continua apareixent** a `ProtectedResource.scopeIds`. Només `hard_delete` emet `ScopeDeleted`.
 
-- `Admin` (bc `backoffice/admins`) i `Tenant` (bc `backoffice/tenants`) comparteixen la taula base `backoffice.users`. `Tenant` afegeix `tenant_profiles`; ambdós tenen `subscription_ids TEXT[]` com a projecció de lectura sincronitzada pels events de membership. `admin_id` continua sent un `ids.UserId` per a la relació Admin/Tenant, però no forma part de l'ownership dels recursos.
+- `User` (bc `backoffice/users`) és l'agregat únic d'identitat. El seu `system_role` és `system_administrator` o `subscription_user`; l'accés a subscripcions es gestiona amb `subscription_members` i la projecció `subscription_ids`/`memberships` a `backoffice.users`. Els recursos tenen ownership per `subscription_id`.
 
 ### Value Objects
 - Un fitxer per VO dins `vos/`.
@@ -56,9 +56,12 @@ Estructura del servidor:
 - Actualment `clients`, `protected_resources`, `scopes`, `users` i `identity_providers` tenen tots un use case `create` (a `dev` ja no és cert que "la majoria no en tingui" — revisar aquest punt si torna a quedar desfasat).
 - `Client`, `ProtectedResource`, `Scope`, `ClientAssertionKey` i `ClientSecret` tenen ownership per `SubscriptionId`. `Scope` conserva també `ProtectedResourceId` com a relació estructural.
 - Els tokens del backoffice porten `subscription_ids`; el middleware els posa a `authors.UserAuthor`. Els serveis comproven que la subscripció del recurs hi sigui. Els tokens del BC `protocol` no inclouen aquest claim.
-- **On va cada comprovació d'ownership (servei vs. handler):** si el check es resol amb l'agregat que el servei ja carrega del seu propi mòdul (ex: `scope.EnsureOwnership(...)` després d'un `scopeFinder.Find`), es queda al **servei**. Si el check necessita consultar un agregat d'un **altre mòdul** (un altre `Finder`/`Repository`/domini), va al **handler**, com una query separada abans d'emetre el command — mai important el domini d'un altre mòdul dins del servei. Prova ràpida: si per fer el check el `service.go` hauria d'importar el paquet de domini d'un altre mòdul, el check no toca allà — puja'l al handler. El handler pot fer "dues coses" (dispatch query de check + dispatch command) sense que sigui un smell: la seva responsabilitat és precisament orquestrar, i és l'únic lloc que travessa mòduls de manera natural. Un cop existeixi `check_ownership`, el handler hi cridarà en lloc de reciclar una query `get` només per aprofitar-ne l'`EnsureOwnership`.
+- **On va cada comprovació d'autorització:** el use case carrega l'agregat o projecció que necessita i valida l'accés dins del servei. No es fa una query/middleware separat que torni a carregar el mateix agregat. Si cal consultar una dada petita d'un altre bounded context, s'injecta un finder/repository de projecció específic (per exemple, la projecció lleugera de `Client` usada per crear secrets i assertion keys).
+- **Author explícit a queries i commands protegits:** quan un use case necessita autorització de negoci, la seva `Query` o `Command` rep l'`Author` explícitament. El handler del bus l'extreu del context autenticat i el fixa a la query/command abans d'executar el servei; el servei no depèn implícitament d'un `Author` amagat al context. Això no és un middleware d'ownership: el use case invoca el domain service `Authorizer` per validar l'accés a la subscripció, i els agregats/domain services específics validen l'ownership estructural. El middleware d'autenticació només verifica el token i construeix l'`Author`; no carrega recursos per autoritzar-los.
+- **Motiu principal del refactor d'ownership:** no s'ha de carregar el mateix agregat dues o més vegades en una mateixa request — per exemple, una primera query/middleware per comprovar ownership i una segona càrrega dins del use case per executar l'operació. El use case ha de carregar l'agregat una sola vegada i validar-hi l'ownership amb el `Author` explícit i el domain service corresponent. Això redueix les consultes a la BBDD i evita duplicar el flux d'autorització entre middleware, handlers i serveis. Aquí "request" es refereix sobretot a peticions/queries a persistència, no a afegir endpoints HTTP nous.
+- **Accés global d'administrador i identificació de recursos:** l'`SubscriptionAuthorizer` compartit valida l'accés a la subscripció per a `Client`, `ProtectedResource`, `Scope`, `ClientSecret` i `ClientAssertionKey`. Els recursos existents s'identifiquen per la seva pròpia primary key; no es fa un `OwnershipChecker` genèric ni es repeteix el parent a la ruta. El `protected_resource_id` només forma part de la creació d'un scope i de les regles específiques d'associació que ho necessitin.
 - L'ownership de cada agregat es gestiona en dos fitxers al mateix nivell que l'aggregate root:
-  - `ownership.go`: `Ownership` (VO intern), `newOwnership(typed ids...)` (intern), `NewOwnership(raw strings...) (Ownership, error)` (públic, parseig intern). Per als recursos subscrits, `EnsureOwnership` compara l'`SubscriptionId` del recurs amb el conjunt de subscripcions del caller.
+  - `ownership.go`: `Ownership` (VO intern), `newOwnership(typed ids...)` (intern), `NewOwnership(raw strings...) (Ownership, error)` (públic, parseig intern). L'accés a la subscripció el valida `SubscriptionAuthorizer`; les regles estructurals addicionals són mètodes de domini específics, com `EnsureClientOwnership`.
   - `primitives.go`: `OwnershipPrimitives` (struct públic amb strings), `func (o Ownership) ToPrimitives() OwnershipPrimitives`.
 - La Postgres guarda els camps d'ownership flattened al mateix nivell que `id`, `name`, etc.
 
@@ -70,6 +73,21 @@ Estructura del servidor:
 ### Event handlers
 - A `application/_event_handlers/`, un fitxer per handler.
 - El handler té un mètode `Handle(ctx, TypedEvent) error`.
+
+### Rutes de recursos i identificació
+
+- Els endpoints `PUT` de creació inclouen el context de creació necessari als path params:
+  - `/subscriptions/:subscription_id/protected-resources/:protected_resource_id`
+  - `/subscriptions/:subscription_id/protected-resources/:protected_resource_id/scopes/:scope_id`
+  - `/subscriptions/:subscription_id/clients/:client_id`
+  - `/subscriptions/:subscription_id/clients/:client_id/secrets/:secret_id`
+  - `/subscriptions/:subscription_id/clients/:client_id/assertion-keys/:assertion_key_id`
+- Els endpoints sobre recursos existents s'adrecen directament per la seva primary key i no repeteixen els identificadors dels pares:
+  - `/protected-resources/:protected_resource_id`
+  - `/clients/:client_id`
+  - `/scopes/:scope_id`
+- Això s'aplica a `GET`, `PATCH` i `DELETE`, i també a les operacions específiques d'un recurs. Per exemple, les operacions sobre clients permesos d'un scope usen `/scopes/:scope_id/allowed-clients/:client_id`.
+- Els secrets i assertion keys només tenen actualment endpoint `PUT`; si s'hi afegeixen `GET`, `PATCH` o `DELETE`, s'han d'adreçar directament per `secret_id` o `assertion_key_id`, sense `subscription_id` ni `client_id`.
 - Es registra al bootstrap amb `event.NewInMemorySubscriber[EventType](handler.Handle)`.
 - Si un event handler ha de mutar un altre agregat com a reacció, ho fa pel cicle de domini estàndard: **Finder → mètode de mutació de l'agregat → `Repository.Save()`**, confiant en el check OCC de `version` del `Save` (mapeja `persistance.ErrConcurrentModification` a `app_errors.ConflictError(ErrXxxConcurrentModification)`). **Mai** un `UPDATE`/`array_append` SQL atòmic cru que salti el `Save()`. Això substitueix un patró anterior erroni (`AppendAssertionKeyId`/`AppendSecretId` al repositori de `clients`) que s'arriscava a *lost updates* en silenci perquè no participava gens en l'OCC (no incrementava `version` i el `Save` normal ni tan sols actualitzava aquelles columnes). No hi ha reintent: si hi ha conflicte, el handler retorna error i l'`InMemoryEventBus` el registra (limitació acceptada).
 

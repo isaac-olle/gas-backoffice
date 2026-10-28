@@ -14,6 +14,19 @@ type UserAuthor struct {
 	AdminId         ids2.UserId
 	Role            vo2.Role
 	SubscriptionIds []ids2.SubscriptionId
+	Memberships     []vo2.SubscriptionMembership
+}
+
+func (a *UserAuthor) MembershipFor(subscriptionId ids2.SubscriptionId) (vo2.SubscriptionMembership, bool) {
+	if a == nil {
+		return vo2.SubscriptionMembership{}, false
+	}
+	for _, membership := range a.Memberships {
+		if membership.SubscriptionId == subscriptionId {
+			return membership, true
+		}
+	}
+	return vo2.SubscriptionMembership{}, false
 }
 
 func SubscriptionIdsFromContext(ctx context.Context) []ids2.SubscriptionId {
@@ -53,6 +66,19 @@ func NewUserAuthorFromString(id, adminId string, role vo2.Role, rawSubscriptionI
 		subscriptions = append(subscriptions, sid)
 	}
 	return &UserAuthor{Id: userId, AdminId: adminUserId, Role: role, SubscriptionIds: subscriptions}, nil
+}
+
+func NewUserAuthorWithMemberships(id, adminId string, role vo2.Role, memberships []vo2.SubscriptionMembership) (*UserAuthor, error) {
+	author, err := NewUserAuthorFromString(id, adminId, role)
+	if err != nil {
+		return nil, err
+	}
+	author.Memberships = memberships
+	author.SubscriptionIds = make([]ids2.SubscriptionId, 0, len(memberships))
+	for _, membership := range memberships {
+		author.SubscriptionIds = append(author.SubscriptionIds, membership.SubscriptionId)
+	}
+	return author, nil
 }
 
 func (a *UserAuthor) EqualsRole(other vo2.Role) bool {

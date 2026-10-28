@@ -6,6 +6,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
@@ -16,10 +17,11 @@ type Service struct {
 	scopeFinder *domain_services.ScopeFinder
 	repository  scopes.Repository
 	eventBus    event.Bus
+	authorizer  *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus) *Service {
-	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus}
+func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus, authorizer: authorizer}
 }
 
 func (s *Service) Disable(ctx context.Context, cmd *Command) error {
@@ -29,19 +31,12 @@ func (s *Service) Disable(ctx context.Context, cmd *Command) error {
 			WithDescription("invalid scope id").WithCause(err, false)
 	}
 
-	prId, err := ids.NewProtectedResourceIdFromString(cmd.protectedResourceId)
-	if err != nil {
-		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
-			WithDescription("invalid protected resource id").WithCause(err, false)
-	}
-
 	scope, err := s.scopeFinder.Find(ctx, scopeId)
 	if err != nil {
 		return app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = scope.EnsureOwnership(prId, []ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(scope, cmd.author); err != nil {
 		return app_errors.AddTrace(err)
 	}
 

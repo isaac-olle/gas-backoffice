@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	createAdminCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/create"
 	clientCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients"
 	clientCreateCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/create"
 	idpCreateCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/application/create"
@@ -15,6 +14,7 @@ import (
 	scopeAddAllowedClientCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/add_allowed_client"
 	scopeCreateCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/create"
 	subscriptionCreateCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/create"
+	createAdminCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create_user"
 	clientSecretCreateCmd "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/application/create"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
@@ -26,6 +26,7 @@ import (
 
 type seedRequest struct {
 	Admin             seedAdmin              `json:"admin"              binding:"required"`
+	Subscription      seedSubscription       `json:"subscription"       binding:"required"`
 	ProtectedResource seedProtectedResource  `json:"protected_resource" binding:"required"`
 	Scopes            []seedScope            `json:"scopes"              binding:"required"`
 	Client            seedClient             `json:"client"             binding:"required"`
@@ -33,7 +34,12 @@ type seedRequest struct {
 }
 
 type seedAdmin struct {
+	Name  string `json:"name"  binding:"required"`
 	Email string `json:"email" binding:"required,email"`
+}
+
+type seedSubscription struct {
+	Name string `json:"name" binding:"required"`
 }
 
 type seedProtectedResource struct {
@@ -108,7 +114,9 @@ func (h *Handler) Execute(c *gin.Context) {
 		return
 	}
 
-	author, err := authors.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.AdminRole, []string{subscriptionId.String()})
+	// The seed actor is a system administrator. System administrators are
+	// global and therefore do not receive a subscription membership.
+	author, err := authors.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.SystemAdministratorRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build seed author"})
 		return
@@ -153,10 +161,12 @@ func (h *Handler) buildCommands(adminId ids.UserId, subscriptionId ids.Subscript
 	cmds := []command.Command{
 		createAdminCmd.NewCommand(
 			adminId,
-			"Gas Seed Admin",
+			adminId,
+			req.Admin.Name,
+			true,
 			req.Admin.Email,
 		),
-		subscriptionCreateCmd.NewCommand(subscriptionId, "Gas", adminId),
+		subscriptionCreateCmd.NewCommand(subscriptionId, req.Subscription.Name, adminId),
 		prCreateCmd.NewCommand(
 			prId,
 			req.ProtectedResource.Name,
@@ -197,7 +207,6 @@ func (h *Handler) buildCommands(adminId ids.UserId, subscriptionId ids.Subscript
 		cmds = append(cmds, scopeAddAllowedClientCmd.NewCommand(
 			scopeId.String(),
 			clientId.String(),
-			prId.String(),
 		))
 	}
 

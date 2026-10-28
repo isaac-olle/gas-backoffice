@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
-	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
 )
 
 type GetUserHandler struct {
@@ -36,7 +36,7 @@ func (h *GetUserHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
-	user, err := query.DispatchTyped[*tenants.Tenant](c.Request.Context(), h.queryBus, userGet.NewQuery(userId, author))
+	user, err := query.DispatchTyped[*users.User](c.Request.Context(), h.queryBus, userGet.NewQuery(userId, author))
 	if err != nil {
 		return nil, err
 	}

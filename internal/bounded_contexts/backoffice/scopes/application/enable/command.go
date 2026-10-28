@@ -3,17 +3,23 @@ package enable
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 const CommandType command.Type = "command.backoffice.scope.enable"
 
 type Command struct {
-	scopeId             string
-	protectedResourceId string
+	scopeId string
+	author  *authors.UserAuthor
 }
 
-func NewCommand(scopeId, protectedResourceId string) *Command {
-	return &Command{scopeId: scopeId, protectedResourceId: protectedResourceId}
+func NewCommand(scopeId string, author ...*authors.UserAuthor) *Command {
+	var a *authors.UserAuthor
+	if len(author) > 0 {
+		a = author[0]
+	}
+	return &Command{scopeId: scopeId, author: a}
 }
 
 func (c *Command) Type() command.Type { return CommandType }
@@ -25,5 +31,8 @@ func NewCommandHandler(service *Service) *CommandHandler {
 }
 
 func (h *CommandHandler) Handle(ctx context.Context, cmd command.Command) error {
+	if c, ok := cmd.(*Command); ok {
+		c.author, _ = vo.AuthorFromContext[*authors.UserAuthor](ctx)
+	}
 	return command.Process[*Command, context.Context](ctx, cmd, h.service.Enable)
 }

@@ -16,7 +16,7 @@ func TestNewSession(t *testing.T) {
 	t.Run("creates the session and records SessionCreated", func(t *testing.T) {
 		t.Parallel()
 		userId := ids.NewUserId().String()
-		s, err := auth.NewSession(userId, "admin", userId)
+		s, err := auth.NewSession(userId, "system_administrator", userId)
 		require.NoError(t, err)
 		assert.Equal(t, userId, s.ToPrimitives().AdminId)
 		assert.Len(t, s.PullDomainEvents(), 1)
@@ -24,13 +24,13 @@ func TestNewSession(t *testing.T) {
 
 	t.Run("returns error for an invalid user id", func(t *testing.T) {
 		t.Parallel()
-		_, err := auth.NewSession("not-a-uuid", "admin", ids.NewUserId().String())
+		_, err := auth.NewSession("not-a-uuid", "system_administrator", ids.NewUserId().String())
 		assert.Error(t, err)
 	})
 
 	t.Run("returns error for an invalid admin id", func(t *testing.T) {
 		t.Parallel()
-		_, err := auth.NewSession(ids.NewUserId().String(), "tenant", "not-a-uuid")
+		_, err := auth.NewSession(ids.NewUserId().String(), "subscription_user", "not-a-uuid")
 		assert.Error(t, err)
 	})
 

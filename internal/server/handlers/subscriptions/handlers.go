@@ -10,6 +10,7 @@ import (
 	removeMember "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/remove_member"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
@@ -56,7 +57,7 @@ func (h *Handler) changeMember(c *gin.Context, add bool) (any, error) {
 	}
 	var cmd command.Command
 	if add {
-		cmd = addMember.NewCommand(subscriptionId, userId)
+		cmd = addMember.NewCommand(subscriptionId, userId, vo.UserSubscriptionRole)
 	} else {
 		cmd = removeMember.NewCommand(subscriptionId, userId)
 	}

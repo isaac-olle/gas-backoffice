@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,25 +8,25 @@ import (
 	clientList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/list"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type ListClientsHandler struct {
-	queryBus       query.Bus
-	subscriptionId func(context.Context) (ids.SubscriptionId, bool)
+	queryBus query.Bus
 }
 
-func NewListClientsHandler(queryBus query.Bus, subscriptionId func(context.Context) (ids.SubscriptionId, bool)) *ListClientsHandler {
-	return &ListClientsHandler{queryBus: queryBus, subscriptionId: subscriptionId}
+func NewListClientsHandler(queryBus query.Bus) *ListClientsHandler {
+	return &ListClientsHandler{queryBus: queryBus}
 }
 
 func (h *ListClientsHandler) Execute(c *gin.Context) (any, error) {
-	subscriptionId, ok := h.subscriptionId(c.Request.Context())
+	author, ok := vo.AuthorFromContext[*authors.UserAuthor](c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_SUBSCRIPTION_ID")
+		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
-
-	result, err := query.DispatchTyped[[]*clients.Client](c.Request.Context(), h.queryBus, clientList.NewQuery(subscriptionId))
+	result, err := query.DispatchTyped[[]*clients.Client](c.Request.Context(), h.queryBus,
+		clientList.NewQuery(author))
 	if err != nil {
 		return nil, err
 	}

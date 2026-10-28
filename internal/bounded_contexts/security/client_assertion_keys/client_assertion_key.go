@@ -18,6 +18,16 @@ type ClientAssertionKey struct {
 	algorithm vo2.Algorithm
 }
 
+func (c *ClientAssertionKey) EnsureSubscriptionAccess(allowed []ids2.SubscriptionId) error {
+	for _, id := range allowed {
+		if id == c.ownership.SubscriptionId {
+			return nil
+		}
+	}
+	return app_errors.ForbiddenError(ErrInvalidOwnership).
+		WithDescription("resource does not belong to an accessible subscription")
+}
+
 func NewClientAssertionKeyForSubscription(cakId ids2.ClientAssertionKeyId, clientId ids2.ClientId, subscriptionId ids2.SubscriptionId, algorithmString, publicKey string) (*ClientAssertionKey, error) {
 	return newClientAssertionKey(cakId, NewOwnershipFromVos(clientId, subscriptionId), algorithmString, publicKey)
 }
@@ -86,20 +96,10 @@ func FromPrimitives(p ClientAssertionKeyPrimitives) (*ClientAssertionKey, error)
 	}, nil
 }
 
-// EnsureOwnership requires the key to target clientId and to belong to one of
-// subscriptionIds. Membership of the caller in that subscription is validated
-// earlier, at the subscription path param middleware.
-func (c *ClientAssertionKey) EnsureOwnership(clientId ids2.ClientId, subscriptionIds []ids2.SubscriptionId) error {
-	allowed := false
-	for _, id := range subscriptionIds {
-		if id == c.ownership.SubscriptionId {
-			allowed = true
-			break
-		}
-	}
-	if c.ownership.ClientId != clientId || !allowed {
+func (c *ClientAssertionKey) EnsureClientOwnership(clientId ids2.ClientId) error {
+	if c.ownership.ClientId != clientId {
 		return app_errors.ForbiddenError(ErrInvalidOwnership).
-			WithDescription("client assertion key does not belong to the provided subscription")
+			WithDescription("client assertion key does not belong to the requested client")
 	}
 	return nil
 }

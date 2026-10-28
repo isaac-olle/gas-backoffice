@@ -2,9 +2,10 @@ package hard_delete
 
 import (
 	"context"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/domain_services"
@@ -14,10 +15,11 @@ type Service struct {
 	scopeFinder *domain_services.ScopeFinder
 	repository  scopes.Repository
 	eventBus    event.Bus
+	authorizer  *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus) *Service {
-	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus}
+func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus, authorizer: authorizer}
 }
 
 func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
@@ -26,11 +28,9 @@ func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
 		return app_errors.AddTrace(err)
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = scope.EnsureOwnership(cmd.protectedResourceId, []ids.SubscriptionId{subscriptionId}); err != nil {
+	if err = s.authorizer.Check(scope, cmd.author); err != nil {
 		return app_errors.AddTrace(err)
 	}
-
 	if scope.IsSystemResource() {
 		return app_errors.ForbiddenError(scopes.ErrSystemResource).
 			WithDescription("scope is a system resource and cannot be deleted")

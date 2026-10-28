@@ -6,7 +6,11 @@ Authorization: Bearer {{$env.SEED_TOKEN}}
 
 {
   "admin": {
+    "name": "{{$env.SEED_ADMIN_NAME}}",
     "email": "{{$env.SEED_ADMIN_EMAIL}}"
+  },
+  "subscription": {
+    "name": "{{$env.SEED_SUBSCRIPTION_NAME}}"
   },
   "protected_resource": {
     "id": "{{$env.GAS_BACKOFFICE_PROTECTED_RESOURCE_ID}}",

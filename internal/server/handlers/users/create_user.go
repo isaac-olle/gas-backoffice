@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	createTenant "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/create_tenant"
+	createUser "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create_user"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -13,16 +13,16 @@ import (
 
 type CreateUserHandler struct {
 	commandExecutor command.CommandExecutor
-	tenantId        func(context.Context) (ids2.UserId, bool)
-	adminId         func(context.Context) (ids2.UserId, bool)
+	userId          func(context.Context) (ids2.UserId, bool)
+	authorId        func(context.Context) (ids2.UserId, bool)
 }
 
 func NewCreateUserHandler(
 	commandExecutor command.CommandExecutor,
-	tenantId func(context.Context) (ids2.UserId, bool),
-	adminId func(context.Context) (ids2.UserId, bool),
+	userId func(context.Context) (ids2.UserId, bool),
+	authorId func(context.Context) (ids2.UserId, bool),
 ) *CreateUserHandler {
-	return &CreateUserHandler{commandExecutor: commandExecutor, tenantId: tenantId, adminId: adminId}
+	return &CreateUserHandler{commandExecutor: commandExecutor, userId: userId, authorId: authorId}
 }
 
 type createUserRequest struct {
@@ -35,19 +35,19 @@ func (h *CreateUserHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.InvalidRequestBodyError(err)
 	}
 
-	tenantId, ok := h.tenantId(c.Request.Context())
+	userId, ok := h.userId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_TENANT_ID")
+		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
 
-	adminId, ok := h.adminId(c.Request.Context())
+	authorId, ok := h.authorId(c.Request.Context())
 	if !ok {
-		return nil, app_errors.InternalError("MISSING_ADMIN_ID")
+		return nil, app_errors.InternalError("MISSING_AUTHOR_ID")
 	}
 
 	return nil, h.commandExecutor.SingleExecution(
 		c.Request.Context(),
-		createTenant.NewCommand(tenantId, adminId, req.Name, false),
+		createUser.NewCommand(userId, authorId, req.Name, false),
 	)
 }
 

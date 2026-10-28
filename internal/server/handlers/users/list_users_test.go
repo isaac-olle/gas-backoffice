@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	aggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
+	aggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -17,7 +17,7 @@ import (
 
 func TestListUsersHandler(t *testing.T) {
 	t.Parallel()
-	item, err := aggregate.FromPrimitives(aggregate.TenantPrimitives{Id: handlerstest.UserId, AdminId: handlerstest.AdminID, Name: "Jane", Email: "jane@example.com"})
+	item, err := aggregate.FromPrimitives(aggregate.UserPrimitives{Id: handlerstest.UserId, Name: "Jane", Email: "jane@example.com", SystemRole: "subscription_user"})
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -30,8 +30,8 @@ func TestListUsersHandler(t *testing.T) {
 	}{
 		{name: "missing_user_id_returns_error", userIdFn: handlerstest.MissingUserIdExtractor(), wantErr: true},
 		{name: "bus_error_returns_error", userIdFn: handlerstest.ValidUserIdExtractor(), busErr: errors.New("db"), wantErr: true},
-		{name: "empty_list_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.Tenant{}, wantLen: 0},
-		{name: "success_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.Tenant{item}, wantLen: 1},
+		{name: "empty_list_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.User{}, wantLen: 0},
+		{name: "success_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.User{item}, wantLen: 1},
 	}
 
 	for _, tt := range tests {
@@ -47,7 +47,7 @@ func TestListUsersHandler(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			primitives, ok := result.([]aggregate.TenantPrimitives)
+			primitives, ok := result.([]aggregate.UserPrimitives)
 			require.True(t, ok)
 			assert.Len(t, primitives, tt.wantLen)
 			require.NoError(t, h.Success(c, result))

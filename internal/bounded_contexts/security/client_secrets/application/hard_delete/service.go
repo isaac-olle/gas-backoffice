@@ -5,16 +5,18 @@ import (
 	"errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets"
 )
 
 type Service struct {
 	repository client_secrets.Repository
+	authorizer *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(repository client_secrets.Repository) *Service {
-	return &Service{repository: repository}
+func NewService(repository client_secrets.Repository, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+	return &Service{repository: repository, authorizer: authorizer}
 }
 
 func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
@@ -46,9 +48,11 @@ func (s *Service) HardDelete(ctx context.Context, cmd *Command) error {
 			WithDescription("client secret not found")
 	}
 
-	subscriptionId, _ := ids.SubscriptionIdFromContext(ctx)
-	if err = cs.EnsureOwnership(clientId, []ids.SubscriptionId{subscriptionId}); err != nil {
-		return err
+	if err = s.authorizer.Check(cs, cmd.author); err != nil {
+		return app_errors.AddTrace(err)
+	}
+	if err = cs.EnsureClientOwnership(clientId); err != nil {
+		return app_errors.AddTrace(err)
 	}
 
 	if err = s.repository.HardDelete(ctx, id); err != nil {

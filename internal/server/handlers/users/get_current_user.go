@@ -5,10 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins"
-	adminGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/admins/application/get"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
-	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/get"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
@@ -21,7 +19,7 @@ type CurrentUserResponse struct {
 	Email       string `json:"email"`
 	DisplayName string `json:"display_name"`
 	Role        string `json:"role"`
-	AdminId     string `json:"admin_id,omitempty"`
+	AuthorId    string `json:"author_id,omitempty"`
 }
 
 type GetCurrentUserHandler struct {
@@ -36,42 +34,24 @@ func NewGetCurrentUserHandler(
 	return &GetCurrentUserHandler{queryBus: queryBus, author: author}
 }
 
-// Execute looks the caller up in whichever bounded context matches their
-// role: an Admin and a Tenant are now separate aggregates (see
-// backoffice/admins and backoffice/tenants), so "my profile" means something
-// different depending on who is asking.
+// Execute resolves every authenticated identity through the single User
+// aggregate. System administrators differ by system role, not by aggregate.
 func (h *GetCurrentUserHandler) Execute(c *gin.Context) (any, error) {
 	author, ok := h.author(c.Request.Context())
 	if !ok {
 		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
 
-	if author.Role.IsAdmin() {
-		admin, err := query.DispatchTyped[*admins.Admin](c.Request.Context(), h.queryBus, adminGet.NewQuery(author.Id, author.Id))
-		if err != nil {
-			return nil, err
-		}
-		p := admin.ToPrimitives()
-		return CurrentUserResponse{
-			Id:          p.Id,
-			Email:       p.Email,
-			DisplayName: p.Name,
-			Role:        author.Role.String(),
-			AdminId:     p.Id,
-		}, nil
-	}
-
-	tenant, err := query.DispatchTyped[*tenants.Tenant](c.Request.Context(), h.queryBus, userGet.NewQuery(author.Id, author))
+	user, err := query.DispatchTyped[*users.User](c.Request.Context(), h.queryBus, userGet.NewQuery(author.Id, author))
 	if err != nil {
 		return nil, err
 	}
-	p := tenant.ToPrimitives()
+	p := user.ToPrimitives()
 	return CurrentUserResponse{
 		Id:          p.Id,
 		Email:       p.Email,
 		DisplayName: p.Name,
 		Role:        author.Role.String(),
-		AdminId:     p.AdminId,
 	}, nil
 }
 

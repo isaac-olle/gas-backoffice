@@ -18,11 +18,10 @@ func NewService(r subscriptions.Repository, b event.Bus) *Service {
 	return &Service{repository: r, eventBus: b}
 }
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	aggregate, err := subscriptions.NewSubscription(cmd.id, cmd.name, cmd.createdBy)
+	aggregate, err := subscriptions.NewSubscription(cmd.id, cmd.name, cmd.ownerId)
 	if err != nil {
 		return app_errors.AddTrace(err)
 	}
-	aggregate.AddMember(cmd.createdBy)
 	if err = s.repository.Save(ctx, aggregate); err != nil {
 		if errors.Is(err, persistance.ErrConcurrentModification) {
 			return app_errors.ConflictError(subscriptions.ErrSubscriptionConcurrentModification).WithCause(err, false)

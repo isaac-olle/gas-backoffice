@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants"
-	userList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/tenants/application/list"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
+	userList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/list"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -26,11 +26,11 @@ func (h *ListUsersHandler) Execute(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, app_errors.InternalError("MISSING_USER_ID")
 	}
-	result, err := query.DispatchTyped[[]*tenants.Tenant](c.Request.Context(), h.queryBus, userList.NewQuery(userId))
+	result, err := query.DispatchTyped[[]*users.User](c.Request.Context(), h.queryBus, userList.NewQuery(userId))
 	if err != nil {
 		return nil, err
 	}
-	primitives := make([]tenants.TenantPrimitives, 0, len(result))
+	primitives := make([]users.UserPrimitives, 0, len(result))
 	for _, item := range result {
 		primitives = append(primitives, item.ToPrimitives())
 	}
