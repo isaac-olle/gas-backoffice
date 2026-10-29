@@ -1,5 +1,7 @@
 package clients
 
+import "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+
 type ClientPrimitives struct {
 	Id                string   `json:"id"`
 	Name              string   `json:"name"`
@@ -13,6 +15,8 @@ type ClientPrimitives struct {
 	SecretIds         []string `json:"secret_ids"`
 	AllowedScopes     []string `json:"allowed_scopes"`
 	Version           int      `json:"version"`
+	AuthorId          string   `json:"author_id"`
+	AuthorRole        string   `json:"author_role"`
 }
 
 type OwnershipPrimitives struct {
@@ -64,5 +68,14 @@ func (c *Client) ToPrimitives() ClientPrimitives {
 		SecretIds:         secretIds,
 		AllowedScopes:     allowedScopes,
 		Version:           c.version,
+		AuthorId:          authorIDString(c.authorId),
+		AuthorRole:        c.authorRole.String(),
 	}
+}
+
+func authorIDString(id ids.UserId) string {
+	if id == (ids.UserId{}) {
+		return ""
+	}
+	return id.String()
 }

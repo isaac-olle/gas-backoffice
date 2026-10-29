@@ -20,6 +20,8 @@ type Scope struct {
 	isSystem         bool
 	enabled          bool
 	version          int
+	authorId         ids2.UserId
+	authorRole       vo.Role
 }
 
 func (s *Scope) EnsureClientSubscription(clientSubscriptionId ids2.SubscriptionId) error {
@@ -110,6 +112,23 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
+	var authorId ids2.UserId
+	if p.AuthorId != "" {
+		authorId, err = ids2.NewUserIdFromString(p.AuthorId)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	authorRole := vo.Role("")
+	if p.AuthorRole != "" {
+		authorRole, err = vo.NewRole(p.AuthorRole)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	if errArr.HasErrors() {
+		return nil, errArr
+	}
 
 	// A persisted scope always has version >= 1 (the table defaults new rows
 	// to 1, and Save always writes a positive version). A zero only ever
@@ -128,6 +147,8 @@ func FromPrimitives(p ScopePrimitives) (*Scope, error) {
 		isSystem:         p.IsSystem,
 		enabled:          p.Enabled,
 		version:          version,
+		authorId:         authorId,
+		authorRole:       authorRole,
 	}
 	return s, nil
 }

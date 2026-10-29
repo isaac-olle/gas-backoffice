@@ -66,7 +66,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 
 func (r *PostgresClientRepository) SearchById(ctx context.Context, id ids.ClientId) (*clients.Client, error) {
 	query := `SELECT id, name, subscription_id, enabled, public, is_system,
-		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version
+		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version, author_id, author_role
 		FROM backoffice.clients WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
@@ -77,7 +77,7 @@ func (r *PostgresClientRepository) Matching(ctx context.Context, c criteria.Crit
 		return nil, err
 	}
 	query := `SELECT id, name, subscription_id, enabled, public, is_system,
-		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version
+		allowed_grant_types, redirect_uris, assertion_key_ids, secret_ids, allowed_scopes, version, author_id, author_role
 		FROM backoffice.clients WHERE deleted_at IS NULL`
 	if where != "" {
 		query += " AND " + where
@@ -97,7 +97,7 @@ func (r *PostgresClientRepository) HardDelete(ctx context.Context, id ids.Client
 
 func (r *PostgresClientRepository) fromRow(row pgx.Row) (*clients.Client, error) {
 	var p clients.ClientPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.Enabled, &p.Public, &p.IsSystem, &p.AllowedGrantTypes, &p.RedirectUris, &p.AssertionKeyIds, &p.SecretIds, &p.AllowedScopes, &p.Version)
+	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.Enabled, &p.Public, &p.IsSystem, &p.AllowedGrantTypes, &p.RedirectUris, &p.AssertionKeyIds, &p.SecretIds, &p.AllowedScopes, &p.Version, &p.AuthorId, &p.AuthorRole)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

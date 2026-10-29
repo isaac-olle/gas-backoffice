@@ -28,12 +28,15 @@ func (g *BusTokenGenerator) Generate(ctx context.Context, session *auth.Session)
 		WithAudience(g.protectedResourceId).
 		WithExtraClaim("sid", p.SessionId).
 		WithExtraClaim("system_role", roleClaim(p.Role))
-	if p.Role == vo.SystemAdministratorRole.String() {
-		// System administrators have global access. Keeping their memberships
-		// out of the token prevents its size growing with every subscription.
-	} else {
-		qry.WithExtraClaim("memberships", p.Memberships)
+
+	// The authentication middleware expects a stable token contract. System
+	// administrators have global access through their role, so they carry an
+	// empty memberships list rather than omitting the claim.
+	memberships := p.Memberships
+	if memberships == nil {
+		memberships = []vo.SubscriptionMembership{}
 	}
+	qry.WithExtraClaim("memberships", memberships)
 	result, err := g.queryBus.Dispatch(ctx, qry)
 	if err != nil {
 		return "", err

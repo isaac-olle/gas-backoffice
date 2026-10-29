@@ -25,6 +25,8 @@ type Client struct {
 	public            bool
 	isSystem          bool
 	version           int
+	authorId          ids.UserId
+	authorRole        vo.Role
 }
 
 func NewClient(id ids.ClientId, name string, ownership Ownership, redirectUris []string, allowedGrantTypes []string, public bool, isSystem bool) (*Client, error) {
@@ -157,6 +159,23 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
+	var authorId ids.UserId
+	if p.AuthorId != "" {
+		authorId, err = ids.NewUserIdFromString(p.AuthorId)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	authorRole := vo.Role("")
+	if p.AuthorRole != "" {
+		authorRole, err = vo.NewRole(p.AuthorRole)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	if errArr.HasErrors() {
+		return nil, errArr
+	}
 
 	// A persisted client always has version >= 1 (the table defaults new rows
 	// to 1, and Save always writes a positive version). A zero only ever comes
@@ -181,6 +200,8 @@ func FromPrimitives(p ClientPrimitives) (*Client, error) {
 		public:            p.Public,
 		isSystem:          p.IsSystem,
 		version:           version,
+		authorId:          authorId,
+		authorRole:        authorRole,
 	}
 
 	return c, nil

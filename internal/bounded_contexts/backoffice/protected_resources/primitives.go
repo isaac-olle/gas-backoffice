@@ -1,5 +1,7 @@
 package protected_resources
 
+import "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+
 type ProtectedResourcePrimitives struct {
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
@@ -8,6 +10,8 @@ type ProtectedResourcePrimitives struct {
 	Enabled        bool     `json:"enabled"`
 	ScopeIds       []string `json:"scope_ids"`
 	Version        int      `json:"version"`
+	AuthorId       string   `json:"author_id"`
+	AuthorRole     string   `json:"author_role"`
 }
 
 type OwnershipPrimitives struct {
@@ -32,5 +36,14 @@ func (pr *ProtectedResource) ToPrimitives() ProtectedResourcePrimitives {
 		Enabled:        pr.enabled,
 		ScopeIds:       scopeIds,
 		Version:        pr.version,
+		AuthorId:       authorIDString(pr.authorId),
+		AuthorRole:     pr.authorRole.String(),
 	}
+}
+
+func authorIDString(id ids.UserId) string {
+	if id == (ids.UserId{}) {
+		return ""
+	}
+	return id.String()
 }

@@ -13,13 +13,15 @@ var protectedResourceAggregateName aggregate2.Name = aggregate2.ProtectedResourc
 
 type ProtectedResource struct {
 	*aggregate2.Root
-	id        ids2.ProtectedResourceId
-	name      vos.ProtectedResourceName
-	ownership Ownership
-	isSystem  bool
-	enabled   bool
-	scopeIds  *vo.SetVo[ids2.ScopeId]
-	version   int
+	id         ids2.ProtectedResourceId
+	name       vos.ProtectedResourceName
+	ownership  Ownership
+	isSystem   bool
+	enabled    bool
+	scopeIds   *vo.SetVo[ids2.ScopeId]
+	version    int
+	authorId   ids2.UserId
+	authorRole vo.Role
 }
 
 func (pr *ProtectedResource) SubscriptionId() ids2.SubscriptionId { return pr.ownership.SubscriptionId }
@@ -93,6 +95,23 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 	if errArr.HasErrors() {
 		return nil, errArr
 	}
+	var authorId ids2.UserId
+	if p.AuthorId != "" {
+		authorId, err = ids2.NewUserIdFromString(p.AuthorId)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	authorRole := vo.Role("")
+	if p.AuthorRole != "" {
+		authorRole, err = vo.NewRole(p.AuthorRole)
+		if err != nil {
+			errArr.AddError(err)
+		}
+	}
+	if errArr.HasErrors() {
+		return nil, errArr
+	}
 
 	// A persisted protected resource always has version >= 1 (the table
 	// defaults new rows to 1, and Save always writes a positive version). A
@@ -104,14 +123,16 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 	}
 
 	pr := &ProtectedResource{
-		Root:      aggregate2.NewRoot(protectedResourceAggregateName),
-		id:        id,
-		name:      name,
-		ownership: ownership,
-		isSystem:  p.IsSystem,
-		enabled:   p.Enabled,
-		scopeIds:  scopeIds,
-		version:   version,
+		Root:       aggregate2.NewRoot(protectedResourceAggregateName),
+		id:         id,
+		name:       name,
+		ownership:  ownership,
+		isSystem:   p.IsSystem,
+		enabled:    p.Enabled,
+		scopeIds:   scopeIds,
+		version:    version,
+		authorId:   authorId,
+		authorRole: authorRole,
 	}
 	return pr, nil
 }

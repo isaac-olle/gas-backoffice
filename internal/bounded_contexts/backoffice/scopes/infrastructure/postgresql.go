@@ -60,7 +60,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version, author_id, author_role FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -69,7 +69,7 @@ func (r *PostgresScopeRepository) Matching(ctx context.Context, c criteria.Crite
 	if err != nil {
 		return nil, err
 	}
-	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version FROM backoffice.scopes WHERE deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version, author_id, author_role FROM backoffice.scopes WHERE deleted_at IS NULL`
 	if where != "" {
 		query += " AND " + where
 	}
@@ -77,7 +77,7 @@ func (r *PostgresScopeRepository) Matching(ctx context.Context, c criteria.Crite
 }
 
 func (r *PostgresScopeRepository) FindByAllowedClientId(ctx context.Context, clientId ids.ClientId) ([]*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version, author_id, author_role
 		FROM backoffice.scopes WHERE $1 = ANY(allowed_client_ids) AND deleted_at IS NULL`
 	return r.postgres.FindMany(ctx, query, r.fromRow, clientId.String())
 }
@@ -94,7 +94,7 @@ func (r *PostgresScopeRepository) HardDelete(ctx context.Context, id ids.ScopeId
 
 func (r *PostgresScopeRepository) fromRow(row pgx.Row) (*scopes.Scope, error) {
 	var p scopes.ScopePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.SubscriptionId, &p.AllowedClientIds, &p.IsSystem, &p.Enabled, &p.Version)
+	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.SubscriptionId, &p.AllowedClientIds, &p.IsSystem, &p.Enabled, &p.Version, &p.AuthorId, &p.AuthorRole)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, app_errors.NotFoundError(scopes.ErrScopeNotFound).WithDescription("scope not found")
 	}

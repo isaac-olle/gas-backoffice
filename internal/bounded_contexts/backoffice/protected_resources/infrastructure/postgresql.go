@@ -59,7 +59,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresProtectedResourceRepository) SearchById(ctx context.Context, id ids.ProtectedResourceId) (*protected_resources.ProtectedResource, error) {
-	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -68,7 +68,7 @@ func (r *PostgresProtectedResourceRepository) Matching(ctx context.Context, c cr
 	if err != nil {
 		return nil, err
 	}
-	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version FROM backoffice.protected_resources WHERE deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role FROM backoffice.protected_resources WHERE deleted_at IS NULL`
 	if where != "" {
 		query += " AND " + where
 	}
@@ -87,7 +87,7 @@ func (r *PostgresProtectedResourceRepository) HardDelete(ctx context.Context, id
 
 func (r *PostgresProtectedResourceRepository) fromRow(row pgx.Row) (*protected_resources.ProtectedResource, error) {
 	var p protected_resources.ProtectedResourcePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.IsSystem, &p.Enabled, &p.ScopeIds, &p.Version)
+	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.IsSystem, &p.Enabled, &p.ScopeIds, &p.Version, &p.AuthorId, &p.AuthorRole)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

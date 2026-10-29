@@ -1,5 +1,7 @@
 package scopes
 
+import "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+
 type ScopePrimitives struct {
 	Id                  string   `json:"id"`
 	Name                string   `json:"name"`
@@ -9,6 +11,8 @@ type ScopePrimitives struct {
 	IsSystem            bool     `json:"is_system"`
 	Enabled             bool     `json:"enabled"`
 	Version             int      `json:"version"`
+	AuthorId            string   `json:"author_id"`
+	AuthorRole          string   `json:"author_role"`
 }
 
 type OwnershipPrimitives struct {
@@ -37,5 +41,14 @@ func (s *Scope) ToPrimitives() ScopePrimitives {
 		IsSystem:            s.isSystem,
 		Enabled:             s.enabled,
 		Version:             s.version,
+		AuthorId:            authorIDString(s.authorId),
+		AuthorRole:          s.authorRole.String(),
 	}
+}
+
+func authorIDString(id ids.UserId) string {
+	if id == (ids.UserId{}) {
+		return ""
+	}
+	return id.String()
 }
