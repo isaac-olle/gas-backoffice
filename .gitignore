@@ -39,5 +39,4 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
-scripts/http-client.private.env.json
 scripts/google_idp.env
