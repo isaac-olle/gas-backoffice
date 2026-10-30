@@ -24,7 +24,7 @@ type AuthorizationCodeSessionPrimitives struct {
 }
 
 // UserIdentityPrimitives is the flattened persistence shape of
-// sessionvos.UserIdentity, stored on the same row as the session.
+// sessionvos.ExternalOidcUserIdentity, stored on the same row as the session.
 type UserIdentityPrimitives struct {
 	IdpId        string
 	IDToken      string
@@ -35,8 +35,9 @@ type UserIdentityPrimitives struct {
 }
 
 type IdpClaimsPrimitives struct {
-	Sub   string `json:"sub"`
-	Email string `json:"email"`
+	Sub     string `json:"sub"`
+	Email   string `json:"email"`
+	Picture string `json:"picture,omitempty"`
 }
 
 type PkcePrimitives struct {

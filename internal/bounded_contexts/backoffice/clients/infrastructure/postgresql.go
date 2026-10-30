@@ -56,7 +56,7 @@ func (r *PostgresClientRepository) Save(ctx context.Context, client *clients.Cli
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
-	author, ok := vo.AuthorFromContext[vo.Author](ctx)
+	author, ok := vo.AuthorFromContext(ctx)
 	if !ok {
 		return "", ""
 	}

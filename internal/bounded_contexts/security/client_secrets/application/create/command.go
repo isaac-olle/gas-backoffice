@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -14,11 +13,11 @@ type Command struct {
 	id          ids.ClientSecretId
 	clientId    ids.ClientId
 	plainSecret string
-	author      *authors.UserAuthor
+	author      *vo.UserAuthor
 }
 
-func NewCommand(id ids.ClientSecretId, clientId ids.ClientId, plainSecret string, author ...*authors.UserAuthor) *Command {
-	var a *authors.UserAuthor
+func NewCommand(id ids.ClientSecretId, clientId ids.ClientId, plainSecret string, author ...*vo.UserAuthor) *Command {
+	var a *vo.UserAuthor
 	if len(author) > 0 {
 		a = author[0]
 	}
@@ -37,7 +36,7 @@ func NewCommandHandler(service *Service) *CommandHandler {
 
 func (h *CommandHandler) Handle(ctx context.Context, cmd command.Command) error {
 	if c, ok := cmd.(*Command); ok {
-		c.author, _ = vo.AuthorFromContext[*authors.UserAuthor](ctx)
+		c.author, _ = vo.AuthorFromContext(ctx)
 	}
 	return command.Process[*Command, context.Context](ctx, cmd, h.service.Create)
 }

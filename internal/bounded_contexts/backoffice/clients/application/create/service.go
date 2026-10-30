@@ -25,7 +25,6 @@ func (s *Service) Create(ctx context.Context, cmd *Command) error {
 		return app_errors.BadRequestError(clients.ErrClientNotCreated).
 			WithDescription("failed to create client").WithCause(err, false)
 	}
-
 	if err = s.duplicateNameChecker.Check(ctx, cmd.name, cmd.ownership.SubscriptionId.String()); err != nil {
 		return app_errors.AddTrace(err)
 	}

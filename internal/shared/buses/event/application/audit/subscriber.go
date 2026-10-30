@@ -38,7 +38,7 @@ func (s *Subscriber) On(ctx context.Context, evt event.Event) error {
 		OccurredAt:    p.OccurredOn,
 	}
 
-	if author, ok := vo.AuthorFromContext[vo.Author](ctx); ok {
+	if author, ok := vo.AuthorFromContext(ctx); ok {
 		prims := author.ToPrimitives()
 		rec.AuthorID = &prims.Id
 		rec.AuthorRole = &prims.Role

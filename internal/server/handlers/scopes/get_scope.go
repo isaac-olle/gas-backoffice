@@ -9,20 +9,20 @@ import (
 	scopeGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetScopeHandler struct {
 	queryBus query.Bus
 	scopeId  func(context.Context) (ids.ScopeId, bool)
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
 func NewGetScopeHandler(
 	queryBus query.Bus,
 	scopeId func(context.Context) (ids.ScopeId, bool),
-	author func(context.Context) (*authors.UserAuthor, bool),
+	author func(context.Context) (*vo.UserAuthor, bool),
 ) *GetScopeHandler {
 	return &GetScopeHandler{queryBus: queryBus, scopeId: scopeId, author: author}
 }

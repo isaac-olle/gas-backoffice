@@ -31,19 +31,19 @@ func (s *Service) AddAllowedClient(ctx context.Context, cmd *Command) error {
 		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
 			WithDescription("invalid scope id").WithCause(err, false)
 	}
+	scope, err := s.scopeFinder.Find(ctx, scopeId)
+	if err != nil {
+		return app_errors.AddTrace(err)
+	}
+
+	if err = s.authorizer.Check(scope, cmd.author); err != nil {
+		return app_errors.AddTrace(err)
+	}
 
 	clientId, err := ids2.NewClientIdFromString(cmd.clientId)
 	if err != nil {
 		return app_errors.BadRequestError(scopes.ErrScopeNotFound).
 			WithDescription("invalid client id").WithCause(err, false)
-	}
-
-	scope, err := s.scopeFinder.Find(ctx, scopeId)
-	if err != nil {
-		return app_errors.AddTrace(err)
-	}
-	if err = s.authorizer.Check(scope, cmd.author); err != nil {
-		return app_errors.AddTrace(err)
 	}
 
 	client, err := s.clientProjectionFinder.Find(ctx, clientId)

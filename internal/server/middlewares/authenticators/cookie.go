@@ -8,6 +8,7 @@ import (
 // AccessTokenCookieName is the HttpOnly cookie the backoffice login callback
 // stores the access token in.
 const AccessTokenCookieName = "access_token"
+const RefreshTokenCookieName = "refresh_token"
 
 // CookieAuthenticator reads the access token from the HttpOnly cookie the
 // browser sends along with requests coming from the backoffice frontend.

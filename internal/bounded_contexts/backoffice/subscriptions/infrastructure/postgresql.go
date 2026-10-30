@@ -46,13 +46,13 @@ func (r *PostgresRepository) Save(ctx context.Context, aggregate *subscriptions.
 func (r *PostgresRepository) save(ctx context.Context, q pginfra.Querier, aggregate *subscriptions.Subscription) error {
 	p := aggregate.ToPrimitives()
 	authorId, authorRole := "", ""
-	if author, ok := vo.AuthorFromContext[vo.Author](ctx); ok {
+	if author, ok := vo.AuthorFromContext(ctx); ok {
 		a := author.ToPrimitives()
 		authorId, authorRole = a.Id, a.Role
 	}
-	err := q.QueryRow(ctx, `INSERT INTO backoffice.subscriptions (id,name,owner_id,version,author_id,author_role)
-		VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, version=EXCLUDED.version+1
-		WHERE backoffice.subscriptions.version=EXCLUDED.version RETURNING version`, p.Id, p.Name, p.OwnerId, p.Version, authorId, authorRole).Scan(new(int))
+	err := q.QueryRow(ctx, `INSERT INTO backoffice.subscriptions (id,name,owner_id,is_system,version,author_id,author_role)
+		VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, is_system=EXCLUDED.is_system, version=EXCLUDED.version+1
+		WHERE backoffice.subscriptions.version=EXCLUDED.version RETURNING version`, p.Id, p.Name, p.OwnerId, p.IsSystem, p.Version, authorId, authorRole).Scan(new(int))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return persistance.ErrConcurrentModification
 	}
@@ -73,11 +73,11 @@ func (r *PostgresRepository) save(ctx context.Context, q pginfra.Querier, aggreg
 func (r *PostgresRepository) SearchById(ctx context.Context, id ids.SubscriptionId) (*subscriptions.Subscription, error) {
 	var p subscriptions.SubscriptionPrimitives
 	var memberIds, memberRoles []string
-	err := r.db.QueryRow(ctx, `SELECT s.id,s.name,s.owner_id,
+	err := r.db.QueryRow(ctx, `SELECT s.id,s.name,s.owner_id,s.is_system,
 		COALESCE(array_agg(m.user_id) FILTER (WHERE m.user_id IS NOT NULL),'{}'),
 		COALESCE(array_agg(m.subscription_role) FILTER (WHERE m.user_id IS NOT NULL),'{}'),s.version
 		FROM backoffice.subscriptions s LEFT JOIN backoffice.subscription_members m ON m.subscription_id=s.id
-		WHERE s.id=$1 AND s.deleted_at IS NULL GROUP BY s.id`, id.String()).Scan(&p.Id, &p.Name, &p.OwnerId, &memberIds, &memberRoles, &p.Version)
+		WHERE s.id=$1 AND s.deleted_at IS NULL GROUP BY s.id`, id.String()).Scan(&p.Id, &p.Name, &p.OwnerId, &p.IsSystem, &memberIds, &memberRoles, &p.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -96,7 +96,7 @@ func (r *PostgresRepository) List(ctx context.Context, subscriptionIds []ids.Sub
 		return []subscriptions.Summary{}, nil
 	}
 
-	query := `SELECT id, name FROM backoffice.subscriptions WHERE deleted_at IS NULL`
+	query := `SELECT id, name, is_system FROM backoffice.subscriptions WHERE deleted_at IS NULL`
 	args := make([]any, 0, 1)
 	if !all {
 		rawIds := make([]string, 0, len(subscriptionIds))
@@ -117,7 +117,7 @@ func (r *PostgresRepository) List(ctx context.Context, subscriptionIds []ids.Sub
 	result := make([]subscriptions.Summary, 0)
 	for rows.Next() {
 		var item subscriptions.Summary
-		if err = rows.Scan(&item.Id, &item.Name); err != nil {
+		if err = rows.Scan(&item.Id, &item.Name, &item.IsSystem); err != nil {
 			return nil, fmt.Errorf("scan subscription summary: %w", err)
 		}
 		result = append(result, item)

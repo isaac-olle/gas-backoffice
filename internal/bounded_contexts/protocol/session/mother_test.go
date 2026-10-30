@@ -12,10 +12,10 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-// newUserIdentityMother builds a valid UserIdentity VO with sensible defaults.
-func newUserIdentityMother(t *testing.T) sessionvos.UserIdentity {
+// newUserIdentityMother builds a valid ExternalOidcUserIdentity VO with sensible defaults.
+func newUserIdentityMother(t *testing.T) sessionvos.ExternalOidcUserIdentity {
 	t.Helper()
-	identity, err := sessionvos.NewUserIdentity(
+	identity, err := sessionvos.NewExternalOidcUserIdentity(
 		ids.NewIdentityProviderId().String(),
 		"id-token",
 		"access-token",

@@ -21,6 +21,7 @@ type Session struct {
 	role            vo.Role
 	subscriptionIds []ids.SubscriptionId
 	memberships     []vo.SubscriptionMembership
+	picture         string
 	*aggregate.Root
 }
 
@@ -32,8 +33,27 @@ func NewSessionWithMemberships(userIdString, roleString, adminIdString string, m
 	return newSession(userIdString, roleString, adminIdString, memberships)
 }
 
+func NewSessionWithMembershipsAndPicture(userIdString, roleString, adminIdString, picture string, memberships []vo.SubscriptionMembership) (*Session, error) {
+	session, err := newSession(userIdString, roleString, adminIdString, memberships)
+	if err != nil {
+		return nil, err
+	}
+	session.picture = picture
+	return session, nil
+}
+
+func (s *Session) SetPicture(picture string) { s.picture = picture }
+
+func NewSessionWithIdAndMemberships(sessionId ids.SessionId, userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership) (*Session, error) {
+	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, memberships)
+}
+
 func newSession(userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
 	sessionId := ids.NewSessionId()
+	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, memberships, rawSubscriptionIdArgs...)
+}
+
+func newSessionWithId(sessionId ids.SessionId, userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
 	expiresAt := time.Now().Add(SessionTTL)
 
 	errorArray := app_errors.NewEmptyErrorArray()

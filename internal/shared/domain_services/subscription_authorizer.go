@@ -2,7 +2,7 @@ package domain_services
 
 import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -18,25 +18,25 @@ type SubscriptionOwned interface {
 
 func NewSubscriptionAuthorizer() *SubscriptionAuthorizer { return &SubscriptionAuthorizer{} }
 
-func (SubscriptionAuthorizer) Check(resource SubscriptionOwned, author *authors.UserAuthor) error {
+func (SubscriptionAuthorizer) Check(resource SubscriptionOwned, author *vo.UserAuthor) error {
 	if author == nil {
 		return app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
 	if author.Role.IsSystemAdministrator() {
 		return nil
 	}
-	return resource.EnsureSubscriptionAccess(author.SubscriptionIds)
+	return resource.EnsureSubscriptionAccess(author.SubscriptionIDs())
 }
 
-func (SubscriptionAuthorizer) AllowedSubscriptionIDs(author *authors.UserAuthor) ([]string, bool, error) {
+func (SubscriptionAuthorizer) AllowedSubscriptionIDs(author *vo.UserAuthor) ([]string, bool, error) {
 	if author == nil {
 		return nil, false, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
 	if author.Role.IsSystemAdministrator() {
 		return nil, true, nil
 	}
-	allowed := make([]string, 0, len(author.SubscriptionIds))
-	for _, subscriptionID := range author.SubscriptionIds {
+	allowed := make([]string, 0, len(author.Memberships))
+	for _, subscriptionID := range author.SubscriptionIDs() {
 		allowed = append(allowed, subscriptionID.String())
 	}
 	return allowed, false, nil

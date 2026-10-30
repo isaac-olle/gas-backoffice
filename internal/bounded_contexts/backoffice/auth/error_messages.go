@@ -13,4 +13,5 @@ var (
 	ErrCannotCreateLoginRequest app_errors.ErrorCode = "CANNOT_CREATE_LOGIN_REQUEST"
 	ErrInvalidIdpReferenceName  app_errors.ErrorCode = "INVALID_IDP_REFERENCE_NAME"
 	ErrCannotCreateLoginSession app_errors.ErrorCode = "CANNOT_CREATE_LOGIN_SESSION"
+	ErrCannotLogoutSession      app_errors.ErrorCode = "CANNOT_LOGOUT_SESSION"
 )

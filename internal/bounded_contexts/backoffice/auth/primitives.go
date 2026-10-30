@@ -12,6 +12,7 @@ type SessionPrimitives struct {
 	ExpiresAt       time.Time
 	SubscriptionIds []string
 	Memberships     []vo.SubscriptionMembership
+	Picture         string
 }
 
 func (s *Session) ToPrimitives() *SessionPrimitives {
@@ -27,5 +28,6 @@ func (s *Session) ToPrimitives() *SessionPrimitives {
 		ExpiresAt:       s.expiresAt,
 		SubscriptionIds: subscriptionIds,
 		Memberships:     s.memberships,
+		Picture:         s.picture,
 	}
 }

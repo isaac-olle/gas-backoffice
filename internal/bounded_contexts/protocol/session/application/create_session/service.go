@@ -88,7 +88,7 @@ func (s *Service) CreateSession(ctx context.Context, code, state, idpId string) 
 		refreshToken = &authentication.Tokens.RefreshToken
 	}
 
-	identity, err := sessionvos.NewUserIdentity(
+	identity, err := sessionvos.NewExternalOidcUserIdentity(
 		idp.ID,
 		authentication.Tokens.IDToken,
 		authentication.Tokens.AccessToken,

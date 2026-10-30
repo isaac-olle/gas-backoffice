@@ -24,6 +24,10 @@ Authorization: Bearer {{$env.SEED_TOKEN}}
     {
       "id": "{{$env.GAS_BACKOFFICE_EMAIL_SCOPE_ID}}",
       "name": "email"
+    },
+    {
+      "id": "{{$env.GAS_BACKOFFICE_PROFILE_SCOPE_ID}}",
+      "name": "profile"
     }
   ],
   "client": {

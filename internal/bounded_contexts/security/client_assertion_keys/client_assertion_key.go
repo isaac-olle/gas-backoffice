@@ -35,7 +35,7 @@ func NewClientAssertionKeyForSubscription(cakId ids2.ClientAssertionKeyId, clien
 func newClientAssertionKey(cakId ids2.ClientAssertionKeyId, ownership Ownership, algorithmString, publicKey string) (*ClientAssertionKey, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
-	key, err := vo2.NewPublicKeyFromHexString(publicKey)
+	key, err := vo2.NewPublicKeyFromPEMString(publicKey)
 	if err != nil {
 		errArr.AddError(err)
 	}

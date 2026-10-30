@@ -10,13 +10,14 @@ import (
 
 func registerSubscriptions(g *gin.RouterGroup, p *Backoffice) {
 	r := g.Group("/subscriptions")
-	r.Use(middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins))
+	r.Use(middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins, p.sessionRepository))
 	h := subscriptionHandlers.NewHandler(p.commandExecutor, helpers.AuthorFromContext)
 	// Kept as a server-side listing for consistency even though general users
 	// already carry their subscription memberships in the JWT.
 	r.GET("", p.executor.Run(subscriptionHandlers.NewListHandler(p.queryBus, helpers.AuthorFromContext)))
 	r.Use(middlewares.RoleMiddleware(vo.SystemAdministratorRole))
 	r.POST("", p.executor.Run(h))
+	r.PUT("/:subscription_id", p.executor.Run(subscriptionHandlers.NewUpdateNameHandler(p.commandExecutor, helpers.AuthorFromContext)))
 	r.POST("/:subscription_id/members/:user_id", p.executor.Run(h))
 	r.DELETE("/:subscription_id/members/:user_id", p.executor.Run(h))
 }

@@ -8,8 +8,13 @@ package session
 type UserIdentityProjection struct {
 	Subject string
 	Email   string
+	Picture string
 }
 
-func NewUserIdentityProjection(subject, email string) *UserIdentityProjection {
-	return &UserIdentityProjection{Subject: subject, Email: email}
+func NewUserIdentityProjection(subject, email string, picture ...string) *UserIdentityProjection {
+	var image string
+	if len(picture) > 0 {
+		image = picture[0]
+	}
+	return &UserIdentityProjection{Subject: subject, Email: email, Picture: image}
 }

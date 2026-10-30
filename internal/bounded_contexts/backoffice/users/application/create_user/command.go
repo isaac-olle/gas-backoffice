@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -13,16 +14,17 @@ type Command struct {
 	userId   ids.UserId
 	authorId ids.UserId
 	name     string
+	role     vo.Role
 	isSystem bool
 	email    string
 }
 
-func NewCommand(userId ids.UserId, authorId ids.UserId, name string, isSystem bool, email ...string) *Command {
+func NewCommand(userId ids.UserId, authorId ids.UserId, name string, role vo.Role, isSystem bool, email ...string) *Command {
 	var e string
 	if len(email) > 0 {
 		e = email[0]
 	}
-	return &Command{userId: userId, authorId: authorId, name: name, isSystem: isSystem, email: e}
+	return &Command{userId: userId, authorId: authorId, name: name, role: role, isSystem: isSystem, email: e}
 }
 
 func (c *Command) Type() command.Type { return CommandType }

@@ -69,7 +69,7 @@ func makeSessionWithScope(t *testing.T, scope string) *session.AuthorizationCode
 		[]*session.Scope{session.NewScope(uuid.New().String(), scope, prId, "Resource")},
 		false,
 	)
-	identity, err := sessionvos.NewUserIdentity(
+	identity, err := sessionvos.NewExternalOidcUserIdentity(
 		ids.NewIdentityProviderId().String(),
 		"id-token",
 		"access-token",

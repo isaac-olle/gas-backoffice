@@ -20,7 +20,7 @@ import (
 func registerSubscriptionResources(g *gin.RouterGroup, p *Backoffice) {
 	resources := g.Group("")
 	resources.Use(
-		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
+		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins, p.sessionRepository),
 		middlewares.RoleMiddleware(vo.SystemAdministratorRole, vo.SubscriptionUserRole),
 	)
 	resources.GET("/protected-resources", p.executor.Run(

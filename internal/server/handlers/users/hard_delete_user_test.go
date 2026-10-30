@@ -3,7 +3,7 @@ package users_test
 import (
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
@@ -20,7 +20,7 @@ func TestHardDeleteUserHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		userIdFn   func(context.Context) (ids.UserId, bool)
-		authorFn   func(context.Context) (*authors.UserAuthor, bool)
+		authorFn   func(context.Context) (*vo.UserAuthor, bool)
 		busErr     error
 		wantErr    bool
 		wantStatus int

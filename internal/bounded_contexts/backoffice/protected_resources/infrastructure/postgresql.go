@@ -50,7 +50,7 @@ func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *prot
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
-	author, ok := vo.AuthorFromContext[vo.Author](ctx)
+	author, ok := vo.AuthorFromContext(ctx)
 	if !ok {
 		return "", ""
 	}

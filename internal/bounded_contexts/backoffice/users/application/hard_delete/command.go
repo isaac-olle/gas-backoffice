@@ -3,17 +3,17 @@ package hard_delete
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 const CommandType command.Type = "command.backoffice.user.hard_delete"
 
 type Command struct {
 	userId string
-	author *authors.UserAuthor
+	author *vo.UserAuthor
 }
 
-func NewCommand(userId string, author *authors.UserAuthor) *Command {
+func NewCommand(userId string, author *vo.UserAuthor) *Command {
 	return &Command{userId: userId, author: author}
 }
 

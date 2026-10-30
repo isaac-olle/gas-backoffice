@@ -31,6 +31,9 @@ func (g *BusIDTokenGenerator) GenerateIDToken(
 	if sess.HasScope("email") {
 		qry = qry.WithExtraClaim("email", identity.Email)
 	}
+	if sess.HasScope("profile") && identity.Picture != "" {
+		qry = qry.WithExtraClaim("picture", identity.Picture)
+	}
 	result, err := g.queryBus.Dispatch(ctx, qry)
 	if err != nil {
 		return "", err

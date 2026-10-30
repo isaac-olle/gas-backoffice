@@ -87,7 +87,7 @@ func TestOutboxConsumer_Poll_InjectsAuthorFromPrimitives(t *testing.T) {
 	consumer.Poll(context.Background())
 
 	require.Len(t, bus.calls, 1)
-	author, ok := vo.AuthorFromContext[vo.Author](bus.calls[0].ctx)
+	author, ok := vo.AuthorFromContext(bus.calls[0].ctx)
 	require.True(t, ok, "expected author to be injected into published ctx")
 	prims := author.ToPrimitives()
 	assert.Equal(t, "00000000-0000-0000-0000-000000000001", prims.Id)
@@ -107,7 +107,7 @@ func TestOutboxConsumer_Poll_NoAuthorPassesCtxThrough(t *testing.T) {
 	consumer.Poll(ctx)
 
 	require.Len(t, bus.calls, 1)
-	_, ok := vo.AuthorFromContext[vo.Author](bus.calls[0].ctx)
+	_, ok := vo.AuthorFromContext(bus.calls[0].ctx)
 	assert.False(t, ok)
 }
 
@@ -123,7 +123,7 @@ func TestOutboxConsumer_Poll_InvalidRoleFallsBackToCtx(t *testing.T) {
 	consumer.Poll(context.Background())
 
 	require.Len(t, bus.calls, 1)
-	_, ok := vo.AuthorFromContext[vo.Author](bus.calls[0].ctx)
+	_, ok := vo.AuthorFromContext(bus.calls[0].ctx)
 	assert.False(t, ok)
 }
 

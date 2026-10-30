@@ -34,6 +34,8 @@ func (s *Scope) EnsureClientSubscription(clientSubscriptionId ids2.SubscriptionI
 
 func (s *Scope) SubscriptionId() ids2.SubscriptionId { return s.ownership.SubscriptionId }
 
+func (s *Scope) Id() ids2.ScopeId { return s.id }
+
 func (s *Scope) EnsureSubscriptionAccess(allowed []ids2.SubscriptionId) error {
 	for _, id := range allowed {
 		if id == s.ownership.SubscriptionId {

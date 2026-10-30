@@ -34,6 +34,8 @@ var systemScopes = []string{
 	vo.ScopeClientsRemoveFlow,
 	vo.ScopeClientsAddRedirectUri,
 	"openid",
+	"email",
+	"profile",
 }
 
 func runSetup(ctx context.Context, pool *pgxpool.Pool, adminID, subscriptionID, backofficePRName string) error {

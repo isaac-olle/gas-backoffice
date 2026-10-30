@@ -9,15 +9,15 @@ import (
 	listSubscriptions "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/list"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 type ListHandler struct {
 	queryBus query.Bus
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
-func NewListHandler(queryBus query.Bus, author func(context.Context) (*authors.UserAuthor, bool)) *ListHandler {
+func NewListHandler(queryBus query.Bus, author func(context.Context) (*vo.UserAuthor, bool)) *ListHandler {
 	return &ListHandler{queryBus: queryBus, author: author}
 }
 
@@ -27,7 +27,7 @@ func (h *ListHandler) Execute(c *gin.Context) (any, error) {
 		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}
 	return query.DispatchTyped[[]backofficeSubscriptions.Summary](c.Request.Context(), h.queryBus,
-		listSubscriptions.NewQuery(author.Role.IsSystemAdministrator(), author.SubscriptionIds))
+		listSubscriptions.NewQuery(author.Role.IsSystemAdministrator(), author.SubscriptionIDs()))
 }
 
 func (h *ListHandler) Success(c *gin.Context, result any) error {

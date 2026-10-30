@@ -9,7 +9,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 type ListProtectedResourcesHandler struct {
@@ -21,7 +20,7 @@ func NewListProtectedResourcesHandler(queryBus query.Bus) *ListProtectedResource
 }
 
 func (h *ListProtectedResourcesHandler) Execute(c *gin.Context) (any, error) {
-	author, ok := vo.AuthorFromContext[*authors.UserAuthor](c.Request.Context())
+	author, ok := vo.AuthorFromContext(c.Request.Context())
 	if !ok {
 		return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 	}

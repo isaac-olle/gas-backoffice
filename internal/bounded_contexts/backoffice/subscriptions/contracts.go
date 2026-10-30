@@ -12,6 +12,7 @@ type Repository interface {
 }
 
 type Summary struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	IsSystem bool   `json:"is_system"`
 }

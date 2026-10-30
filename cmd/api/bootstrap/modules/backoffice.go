@@ -3,12 +3,14 @@ package modules
 import (
 	"time"
 
-	userProjectionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/_shared/user_projection/infrastructure"
 	sessionExchangeToken "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/create_session"
 	sessionInitiate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/initiate_login"
+	sessionRefresh "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/refresh_session"
 	authInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure/helpers/oidc"
+	userProjectionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure/user_projection"
 
+	authLogout "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/logout"
 	clientEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/_event_handlers"
 	clientAddAllowedGrantType "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_allowed_grant_type"
 	clientAddRedirectUri "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/add_redirect_uri"
@@ -53,6 +55,7 @@ import (
 	subscriptionCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/create"
 	subscriptionList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/list"
 	subscriptionRemoveMember "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/remove_member"
+	subscriptionUpdateName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/application/update_name"
 	subscriptionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/subscriptions/infrastructure"
 	userChangeName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/change_name"
 	userCreateTenant "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/create_user"
@@ -81,6 +84,7 @@ func RegisterBackoffice(
 ) {
 	userRepo := userInfra.NewPostgresUserRepository(pool)
 	subscriptionRepo := subscriptionInfra.NewPostgresRepository(pool)
+	sessionRepo := authInfra.NewPostgresSessionRepository(pool)
 	prRepo := prInfra.NewPostgresProtectedResourceRepository(pool)
 	clientRepo := clientInfra.NewPostgresClientRepository(pool)
 	scopeRepo := scopeInfra.NewPostgresScopeRepository(pool)
@@ -133,6 +137,8 @@ func RegisterBackoffice(
 	cmdBus.Register(subscriptionCreate.CommandType, subscriptionCreate.NewCommandHandler(subscriptionCreate.NewService(subscriptionRepo, evtBus)))
 	cmdBus.Register(subscriptionAddMember.CommandType, subscriptionAddMember.NewCommandHandler(subscriptionAddMember.NewService(subscriptionRepo, evtBus)))
 	cmdBus.Register(subscriptionRemoveMember.CommandType, subscriptionRemoveMember.NewCommandHandler(subscriptionRemoveMember.NewService(subscriptionRepo, evtBus)))
+	cmdBus.Register(subscriptionUpdateName.CommandType, subscriptionUpdateName.NewCommandHandler(subscriptionUpdateName.NewService(subscriptionRepo, evtBus)))
+	cmdBus.Register(authLogout.CommandType, authLogout.NewCommandHandler(authLogout.NewService(sessionRepo)))
 
 	// identity providers
 	cmdBus.Register(idpCreate.CommandType, idpCreate.NewCommandHandler(idpCreate.NewService(idpRepo, evtBus, encrypter)))
@@ -189,7 +195,9 @@ func RegisterBackoffice(
 	tokenClient := authInfra.NewHttpTokenEndpointClient(tokenEndpoint, backofficeClientId, backofficeClientSecret, backofficeClientRedirectUri, idTokenVerifier)
 	userProjectionRepo := userProjectionInfra.NewUserProjectionRepository(pool)
 	tokenGenerator := authInfra.NewBusTokenGenerator(qryBus, backofficeProtectedResourceId)
-	qryBus.Register(sessionExchangeToken.QueryType, sessionExchangeToken.NewQueryHandler(sessionExchangeToken.NewService(tokenClient, stateEncoder, userProjectionRepo, tokenGenerator, evtBus)))
+	qryBus.Register(sessionExchangeToken.QueryType, sessionExchangeToken.NewQueryHandler(sessionExchangeToken.NewService(tokenClient, stateEncoder, userProjectionRepo, tokenGenerator, tokenGenerator, sessionRepo, evtBus)))
+	refreshTokenVerifier := authInfra.NewRefreshTokenVerifier(qryBus, backofficeProtectedResourceId)
+	qryBus.Register(sessionRefresh.QueryType, sessionRefresh.NewQueryHandler(sessionRefresh.NewService(refreshTokenVerifier, tokenGenerator, tokenGenerator, sessionRepo, evtBus)))
 
 	return
 }

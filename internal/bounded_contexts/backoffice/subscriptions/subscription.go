@@ -12,20 +12,31 @@ var subscriptionAggregateName aggregate.Name = aggregate.Name("backoffice.subscr
 
 type Subscription struct {
 	*aggregate.Root
-	id      ids.SubscriptionId
-	name    string
-	ownerId ids.UserId
-	members map[ids.UserId]vo.SubscriptionRole
-	version int
+	id       ids.SubscriptionId
+	name     string
+	ownerId  ids.UserId
+	isSystem bool
+	members  map[ids.UserId]vo.SubscriptionRole
+	version  int
 }
 
-func NewSubscription(id ids.SubscriptionId, name string, ownerId ids.UserId) (*Subscription, error) {
+func NewSubscription(id ids.SubscriptionId, name string, ownerId ids.UserId, isSystem bool) (*Subscription, error) {
 	if name == "" {
 		return nil, app_errors.BadRequestError(ErrInvalidSubscriptionName)
 	}
-	s := &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: name, ownerId: ownerId, members: make(map[ids.UserId]vo.SubscriptionRole), version: 1}
+	s := &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: name, ownerId: ownerId, isSystem: isSystem, members: make(map[ids.UserId]vo.SubscriptionRole), version: 1}
 	s.Record(backoffice.NewSubscriptionCreated(id.String(), name, ownerId.String()))
 	return s, nil
+}
+
+func (s *Subscription) IsSystemResource() bool { return s.isSystem }
+
+func (s *Subscription) ChangeName(name string) error {
+	if name == "" {
+		return app_errors.BadRequestError(ErrInvalidSubscriptionName)
+	}
+	s.name = name
+	return nil
 }
 
 func FromPrimitives(p SubscriptionPrimitives) (*Subscription, error) {
@@ -53,7 +64,7 @@ func FromPrimitives(p SubscriptionPrimitives) (*Subscription, error) {
 	if version == 0 {
 		version = 1
 	}
-	return &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: p.Name, ownerId: creator, members: members, version: version}, nil
+	return &Subscription{Root: aggregate.NewRoot(subscriptionAggregateName), id: id, name: p.Name, ownerId: creator, isSystem: p.IsSystem, members: members, version: version}, nil
 }
 
 func (s *Subscription) AddMember(userId ids.UserId, role vo.SubscriptionRole) {

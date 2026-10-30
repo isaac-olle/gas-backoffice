@@ -19,7 +19,7 @@ func validUserIdentityArgs() (string, string, string, sessionvos.IdpClaims, time
 		time.Now().Add(time.Hour)
 }
 
-func TestNewUserIdentity(t *testing.T) {
+func TestNewExternalOidcUserIdentity(t *testing.T) {
 	t.Parallel()
 
 	t.Run("builds a valid identity", func(t *testing.T) {
@@ -27,7 +27,7 @@ func TestNewUserIdentity(t *testing.T) {
 		idpId, idToken, accessToken, claims, expiresAt := validUserIdentityArgs()
 		refreshToken := "refresh-token"
 
-		identity, err := sessionvos.NewUserIdentity(idpId, idToken, accessToken, &refreshToken, claims, expiresAt)
+		identity, err := sessionvos.NewExternalOidcUserIdentity(idpId, idToken, accessToken, &refreshToken, claims, expiresAt)
 
 		require.NoError(t, err)
 		assert.Equal(t, idpId, identity.IdpId().String())
@@ -43,7 +43,7 @@ func TestNewUserIdentity(t *testing.T) {
 		t.Parallel()
 		idpId, idToken, accessToken, claims, expiresAt := validUserIdentityArgs()
 
-		identity, err := sessionvos.NewUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
+		identity, err := sessionvos.NewExternalOidcUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
 
 		require.NoError(t, err)
 		assert.Nil(t, identity.RefreshToken())
@@ -53,7 +53,7 @@ func TestNewUserIdentity(t *testing.T) {
 		t.Parallel()
 		_, idToken, accessToken, claims, expiresAt := validUserIdentityArgs()
 
-		_, err := sessionvos.NewUserIdentity("not-a-uuid", idToken, accessToken, nil, claims, expiresAt)
+		_, err := sessionvos.NewExternalOidcUserIdentity("not-a-uuid", idToken, accessToken, nil, claims, expiresAt)
 
 		assert.Error(t, err)
 	})
@@ -62,7 +62,7 @@ func TestNewUserIdentity(t *testing.T) {
 		t.Parallel()
 		idpId, _, accessToken, claims, expiresAt := validUserIdentityArgs()
 
-		_, err := sessionvos.NewUserIdentity(idpId, "", accessToken, nil, claims, expiresAt)
+		_, err := sessionvos.NewExternalOidcUserIdentity(idpId, "", accessToken, nil, claims, expiresAt)
 
 		assert.Error(t, err)
 	})
@@ -71,7 +71,7 @@ func TestNewUserIdentity(t *testing.T) {
 		t.Parallel()
 		idpId, idToken, _, claims, expiresAt := validUserIdentityArgs()
 
-		_, err := sessionvos.NewUserIdentity(idpId, idToken, "", nil, claims, expiresAt)
+		_, err := sessionvos.NewExternalOidcUserIdentity(idpId, idToken, "", nil, claims, expiresAt)
 
 		assert.Error(t, err)
 	})
@@ -81,7 +81,7 @@ func TestNewUserIdentity(t *testing.T) {
 		idpId, idToken, accessToken, claims, expiresAt := validUserIdentityArgs()
 		claims.Sub = ""
 
-		_, err := sessionvos.NewUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
+		_, err := sessionvos.NewExternalOidcUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
 
 		assert.Error(t, err)
 	})
@@ -91,7 +91,7 @@ func TestNewUserIdentity(t *testing.T) {
 		idpId, idToken, accessToken, claims, expiresAt := validUserIdentityArgs()
 		claims.Email = ""
 
-		_, err := sessionvos.NewUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
+		_, err := sessionvos.NewExternalOidcUserIdentity(idpId, idToken, accessToken, nil, claims, expiresAt)
 
 		assert.Error(t, err)
 	})

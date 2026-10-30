@@ -11,7 +11,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/application/audit"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	sharedtypes "github.com/isaac-olle/gas-backoffice/internal/shared/types"
 )
 
@@ -58,7 +58,7 @@ func TestSubscriber_On_ExtractsAuthorFromContext(t *testing.T) {
 	repo := &stubRepo{}
 	sub := audit.NewSubscriber(repo)
 
-	author, err := authors.NewUserAuthorFromString("00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000001", vo.SystemAdministratorRole)
+	author, err := vo.NewUserAuthorFromString("00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000001", vo.SystemAdministratorRole)
 	require.NoError(t, err)
 	ctx := vo.WithAuthor(context.Background(), author)
 

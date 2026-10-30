@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS backoffice.subscriptions (
     id         TEXT        NOT NULL PRIMARY KEY,
     name       TEXT        NOT NULL,
     owner_id   TEXT        NOT NULL REFERENCES backoffice.users(id),
+    is_system  BOOLEAN     NOT NULL DEFAULT FALSE,
     version    INTEGER     NOT NULL DEFAULT 1,
     author_id  TEXT        NOT NULL DEFAULT '',
     author_role TEXT       NOT NULL DEFAULT '',
@@ -153,8 +154,7 @@ CREATE INDEX IF NOT EXISTS clients_subscription_id_idx ON backoffice.clients (su
 CREATE TABLE IF NOT EXISTS backoffice.sessions (
     id             TEXT        NOT NULL PRIMARY KEY,
     user_id        TEXT        NOT NULL,
-    author_id      TEXT        NOT NULL DEFAULT '',
-    author_role    TEXT        NOT NULL DEFAULT '',
+    user_role      TEXT        NOT NULL DEFAULT '',
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     logged_out_at  TIMESTAMPTZ
 );

@@ -73,7 +73,7 @@ func (r *PostgresKeyPairRepository) HardDelete(ctx context.Context, id ids.KeyPa
 }
 
 func authorPrimitives(ctx context.Context) (string, string) {
-	author, ok := vo.AuthorFromContext[vo.Author](ctx)
+	author, ok := vo.AuthorFromContext(ctx)
 	if !ok {
 		return "", ""
 	}

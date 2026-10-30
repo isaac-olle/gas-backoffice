@@ -3,7 +3,7 @@ package list
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 const QueryType query.Type = "query.backoffice.protected_resource.list"
@@ -11,10 +11,10 @@ const QueryType query.Type = "query.backoffice.protected_resource.list"
 // Query lists protected resources visible to the caller's allowed
 // subscriptions.
 type Query struct {
-	author *authors.UserAuthor
+	author *vo.UserAuthor
 }
 
-func NewQuery(author *authors.UserAuthor) *Query {
+func NewQuery(author *vo.UserAuthor) *Query {
 	return &Query{author: author}
 }
 

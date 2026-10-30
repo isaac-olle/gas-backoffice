@@ -9,13 +9,14 @@ import (
 const CommandType command.Type = "command.backoffice.subscription.create"
 
 type Command struct {
-	id      ids.SubscriptionId
-	name    string
-	ownerId ids.UserId
+	id       ids.SubscriptionId
+	name     string
+	ownerId  ids.UserId
+	isSystem bool
 }
 
-func NewCommand(id ids.SubscriptionId, name string, ownerId ids.UserId) *Command {
-	return &Command{id: id, name: name, ownerId: ownerId}
+func NewCommand(id ids.SubscriptionId, name string, ownerId ids.UserId, isSystem bool) *Command {
+	return &Command{id: id, name: name, ownerId: ownerId, isSystem: isSystem}
 }
 func (c *Command) Type() command.Type { return CommandType }
 

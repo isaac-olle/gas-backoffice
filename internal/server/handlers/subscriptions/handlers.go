@@ -11,21 +11,22 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type Handler struct {
 	commands command.CommandExecutor
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
-func NewHandler(commands command.CommandExecutor, author func(context.Context) (*authors.UserAuthor, bool)) *Handler {
+func NewHandler(commands command.CommandExecutor, author func(context.Context) (*vo.UserAuthor, bool)) *Handler {
 	return &Handler{commands: commands, author: author}
 }
 
 type createRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name     string `json:"name" binding:"required"`
+	IsSystem bool   `json:"is_system"`
 }
 
 func (h *Handler) Execute(c *gin.Context) (any, error) {
@@ -39,7 +40,7 @@ func (h *Handler) Execute(c *gin.Context) (any, error) {
 			return nil, app_errors.UnauthorizedError("MISSING_AUTHOR")
 		}
 		id := ids.NewSubscriptionId()
-		if err := h.commands.SingleExecution(c.Request.Context(), createSubscription.NewCommand(id, req.Name, author.Id)); err != nil {
+		if err := h.commands.SingleExecution(c.Request.Context(), createSubscription.NewCommand(id, req.Name, author.Id, req.IsSystem)); err != nil {
 			return nil, err
 		}
 		return gin.H{"id": id.String()}, nil

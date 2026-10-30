@@ -6,7 +6,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 type Service struct {
@@ -19,11 +18,7 @@ func NewService(repository users.Repository, eventBus event.Bus) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	role := vo.SubscriptionUserRole
-	if cmd.isSystem {
-		role = vo.SystemAdministratorRole
-	}
-	user, err := users.NewUser(cmd.userId, cmd.name, cmd.email, role, cmd.isSystem)
+	user, err := users.NewUser(cmd.userId, cmd.name, cmd.email, cmd.role, cmd.isSystem)
 	if err != nil {
 		return app_errors.BadRequestError(users.ErrUserNotCreated).
 			WithDescription("failed to create user").WithCause(err, false)

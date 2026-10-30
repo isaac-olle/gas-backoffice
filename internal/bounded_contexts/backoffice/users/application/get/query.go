@@ -3,7 +3,7 @@ package get
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -11,10 +11,10 @@ const QueryType query.Type = "query.backoffice.user.get"
 
 type Query struct {
 	userId ids.UserId
-	author *authors.UserAuthor
+	author *vo.UserAuthor
 }
 
-func NewQuery(userId ids.UserId, author *authors.UserAuthor) *Query {
+func NewQuery(userId ids.UserId, author *vo.UserAuthor) *Query {
 	return &Query{userId: userId, author: author}
 }
 

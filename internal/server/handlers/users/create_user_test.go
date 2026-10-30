@@ -34,20 +34,20 @@ func TestCreateUserHandler(t *testing.T) {
 		},
 		{
 			name:     "missing_user_id_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:     handlerstest.JsonBody(map[string]any{"name": "My User", "email": "user@example.com", "role": "subscription_user", "is_system": false}),
 			userIdFn: handlerstest.MissingUserIdExtractor(),
 			wantErr:  true,
 		},
 		{
 			name:     "bus_error_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:     handlerstest.JsonBody(map[string]any{"name": "My User", "email": "user@example.com", "role": "subscription_user", "is_system": false}),
 			userIdFn: handlerstest.ValidUserIdExtractor(),
 			busErr:   errors.New("bus error"),
 			wantErr:  true,
 		},
 		{
 			name:       "success_returns_201",
-			body:       handlerstest.JsonBody(map[string]string{"name": "My User"}),
+			body:       handlerstest.JsonBody(map[string]any{"name": "My User", "email": "user@example.com", "role": "subscription_user", "is_system": false}),
 			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusCreated,

@@ -5,7 +5,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
@@ -126,14 +126,14 @@ func (u *User) RemoveMembership(id ids.SubscriptionId) {
 	}
 	u.subscriptionIds.Remove(id)
 }
-func (u *User) IsSelf(a *authors.UserAuthor) bool { return a != nil && u.id == a.Id }
+func (u *User) IsSelf(a *vo.UserAuthor) bool { return a != nil && u.id == a.Id }
 func (u *User) EnsureSelf(id ids.UserId) error {
 	if u.id != id {
 		return app_errors.ForbiddenError(ErrInvalidOwnership).WithDescription("caller does not have access to this user")
 	}
 	return nil
 }
-func (u *User) EnsureUserAccess(a *authors.UserAuthor) error {
+func (u *User) EnsureUserAccess(a *vo.UserAuthor) error {
 	if a == nil || (!a.Role.IsSystemAdministrator() && !u.IsSelf(a)) {
 		return app_errors.ForbiddenError(ErrInvalidOwnership).WithDescription("caller does not have access to this user")
 	}

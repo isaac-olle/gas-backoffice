@@ -19,7 +19,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	sharedSeed "github.com/isaac-olle/gas-backoffice/internal/shared/seed"
 )
@@ -116,7 +116,7 @@ func (h *Handler) Execute(c *gin.Context) {
 
 	// The seed actor is a system administrator. System administrators are
 	// global and therefore do not receive a subscription membership.
-	author, err := authors.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.SystemAdministratorRole)
+	author, err := vo.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.SystemAdministratorRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build seed author"})
 		return
@@ -163,10 +163,11 @@ func (h *Handler) buildCommands(adminId ids.UserId, subscriptionId ids.Subscript
 			adminId,
 			adminId,
 			req.Admin.Name,
+			vo.SystemAdministratorRole,
 			true,
 			req.Admin.Email,
 		),
-		subscriptionCreateCmd.NewCommand(subscriptionId, req.Subscription.Name, adminId),
+		subscriptionCreateCmd.NewCommand(subscriptionId, req.Subscription.Name, adminId, true),
 		prCreateCmd.NewCommand(
 			prId,
 			req.ProtectedResource.Name,

@@ -20,4 +20,10 @@ func registerAuth(g *gin.RouterGroup, p *Backoffice) {
 	auth.POST("/callback",
 		p.executor.Run(authHandlers.NewCallbackHandler(p.queryBus)),
 	)
+	auth.POST("/refresh",
+		p.executor.Run(authHandlers.NewRefreshHandler(p.queryBus)),
+	)
+	auth.POST("/logout",
+		p.executor.Run(authHandlers.NewLogoutHandler(p.commandExecutor, p.queryBus, p.jwtIssuer)),
+	)
 }

@@ -40,7 +40,7 @@ func (r *RequestBuilder) Build(
 	params.Set("response_type", "code")
 	params.Set("client_id", clientId)
 	params.Set("redirect_uri", redirectUri)
-	params.Set("scope", "openid email")
+	params.Set("scope", "openid email profile")
 	params.Set("state", state)
 	params.Set("idp_reference_name", idpReferenceName)
 	params.Set("code_challenge", challengeFromVerifier(codeVerifier.String()))

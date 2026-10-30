@@ -9,17 +9,17 @@ import (
 	clientGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetClientHandler struct {
 	queryBus query.Bus
 	clientId func(context.Context) (ids.ClientId, bool)
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
-func NewGetClientHandler(queryBus query.Bus, clientId func(context.Context) (ids.ClientId, bool), author func(context.Context) (*authors.UserAuthor, bool)) *GetClientHandler {
+func NewGetClientHandler(queryBus query.Bus, clientId func(context.Context) (ids.ClientId, bool), author func(context.Context) (*vo.UserAuthor, bool)) *GetClientHandler {
 	return &GetClientHandler{queryBus: queryBus, clientId: clientId, author: author}
 }
 

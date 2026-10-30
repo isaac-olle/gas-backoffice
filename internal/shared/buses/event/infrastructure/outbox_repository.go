@@ -29,7 +29,7 @@ func NewOutboxRepository(pool *pgxpool.Pool) *Repository {
 // The author is extracted from ctx if available.
 func (r *Repository) Save(ctx context.Context, events []event2.Event) error {
 	var authorId, authorRole *string
-	if author, ok := vo.AuthorFromContext[vo.Author](ctx); ok {
+	if author, ok := vo.AuthorFromContext(ctx); ok {
 		p := author.ToPrimitives()
 		authorId = &p.Id
 		authorRole = &p.Role

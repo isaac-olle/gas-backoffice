@@ -86,11 +86,13 @@ func (c *HttpTokenEndpointClient) ExchangeCode(ctx context.Context, code, codeVe
 
 	sub, _ := claims["sub"].(string)
 	email, _ := claims["email"].(string)
+	picture, _ := claims["picture"].(string)
 	emailVerified, _ := claims["email_verified"].(bool)
 
 	return auth.TokenExchangeResult{
 		Sub:           sub,
 		Email:         email,
+		Picture:       picture,
 		EmailVerified: emailVerified,
 	}, nil
 }

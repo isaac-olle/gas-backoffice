@@ -9,20 +9,20 @@ import (
 	prGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 type GetProtectedResourceHandler struct {
 	queryBus query.Bus
 	prId     func(context.Context) (ids.ProtectedResourceId, bool)
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
 func NewGetProtectedResourceHandler(
 	queryBus query.Bus,
 	prId func(context.Context) (ids.ProtectedResourceId, bool),
-	author func(context.Context) (*authors.UserAuthor, bool),
+	author func(context.Context) (*vo.UserAuthor, bool),
 ) *GetProtectedResourceHandler {
 	return &GetProtectedResourceHandler{queryBus: queryBus, prId: prId, author: author}
 }

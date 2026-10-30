@@ -9,7 +9,7 @@ import (
 	userGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/application/get"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 // CurrentUserResponse is the profile of the authenticated user, shaped for the
@@ -20,16 +20,17 @@ type CurrentUserResponse struct {
 	DisplayName string `json:"display_name"`
 	Role        string `json:"role"`
 	AuthorId    string `json:"author_id,omitempty"`
+	Picture     string `json:"picture,omitempty"`
 }
 
 type GetCurrentUserHandler struct {
 	queryBus query.Bus
-	author   func(context.Context) (*authors.UserAuthor, bool)
+	author   func(context.Context) (*vo.UserAuthor, bool)
 }
 
 func NewGetCurrentUserHandler(
 	queryBus query.Bus,
-	author func(context.Context) (*authors.UserAuthor, bool),
+	author func(context.Context) (*vo.UserAuthor, bool),
 ) *GetCurrentUserHandler {
 	return &GetCurrentUserHandler{queryBus: queryBus, author: author}
 }
@@ -47,11 +48,13 @@ func (h *GetCurrentUserHandler) Execute(c *gin.Context) (any, error) {
 		return nil, err
 	}
 	p := user.ToPrimitives()
+	picture, _ := vo.PictureFromContext(c.Request.Context())
 	return CurrentUserResponse{
 		Id:          p.Id,
 		Email:       p.Email,
 		DisplayName: p.Name,
 		Role:        author.Role.String(),
+		Picture:     picture,
 	}, nil
 }
 

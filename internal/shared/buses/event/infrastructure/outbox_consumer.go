@@ -4,7 +4,7 @@ import (
 	"context"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"time"
@@ -122,5 +122,5 @@ func (c *Consumer) withAuthor(ctx context.Context, p *event2.Primitives) context
 		)
 		return ctx
 	}
-	return vo.WithAuthor(ctx, &authors.UserAuthor{Id: authorId, Role: role})
+	return vo.WithAuthor(ctx, &vo.UserAuthor{Id: authorId, Role: role})
 }

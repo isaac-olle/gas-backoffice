@@ -17,6 +17,8 @@ type AddAllowedScopeOnScopeClientAddedEventHandler struct {
 	repository   clients.Repository
 }
 
+const maxAllowedScopeProjectionRetries = 3
+
 func NewAddAllowedScopeOnScopeClientAddedEventHandler(
 	clientFinder *domain_services.ClientFinder,
 	repository clients.Repository,
@@ -37,21 +39,22 @@ func (h *AddAllowedScopeOnScopeClientAddedEventHandler) Handle(ctx context.Conte
 			WithDescription("invalid scope id in ScopeClientAdded event").WithCause(err, false)
 	}
 
-	client, err := h.clientFinder.Find(ctx, clientId)
-	if err != nil {
-		return app_errors.AddTrace(err)
-	}
-
-	client.AddAllowedScope(scopeId)
-
-	if err = h.repository.Save(ctx, client); err != nil {
-		if errors.Is(err, persistance.ErrConcurrentModification) {
-			return app_errors.ConflictError(clients.ErrClientConcurrentModification).
-				WithDescription("client was modified concurrently; event will be logged as failed").WithCause(err, false)
+	for attempt := 0; attempt < maxAllowedScopeProjectionRetries; attempt++ {
+		client, err := h.clientFinder.Find(ctx, clientId)
+		if err != nil {
+			return app_errors.AddTrace(err)
 		}
-		return app_errors.InternalError(clients.ErrClientNotSaved).
-			WithDescription("failed to save client").WithCause(err, false)
+
+		client.AddAllowedScope(scopeId)
+
+		if err = h.repository.Save(ctx, client); err == nil {
+			return nil
+		} else if !errors.Is(err, persistance.ErrConcurrentModification) {
+			return app_errors.InternalError(clients.ErrClientNotSaved).
+				WithDescription("failed to save client").WithCause(err, false)
+		}
 	}
 
-	return nil
+	return app_errors.ConflictError(clients.ErrClientConcurrentModification).
+		WithDescription("client was modified concurrently; event will be retried").WithCause(persistance.ErrConcurrentModification, false)
 }

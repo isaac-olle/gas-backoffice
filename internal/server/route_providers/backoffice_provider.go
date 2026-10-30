@@ -2,6 +2,8 @@ package route_providers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
+	authInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
@@ -9,12 +11,13 @@ import (
 )
 
 type Backoffice struct {
-	executor        *middlewares.HandlerMiddleware
-	queryBus        query.Bus
-	commandExecutor command.CommandExecutor
-	pgxPool         *pgxpool.Pool
-	jwtIssuer       string
-	cookieOrigins   []string
+	executor          *middlewares.HandlerMiddleware
+	queryBus          query.Bus
+	commandExecutor   command.CommandExecutor
+	pgxPool           *pgxpool.Pool
+	jwtIssuer         string
+	cookieOrigins     []string
+	sessionRepository auth.SessionRepository
 }
 
 func NewBackoffice(
@@ -26,12 +29,13 @@ func NewBackoffice(
 	cookieOrigins []string,
 ) *Backoffice {
 	return &Backoffice{
-		executor:        executor,
-		queryBus:        queryBus,
-		commandExecutor: commandExecutor,
-		pgxPool:         pgxPool,
-		jwtIssuer:       jwtIssuer,
-		cookieOrigins:   cookieOrigins,
+		executor:          executor,
+		queryBus:          queryBus,
+		commandExecutor:   commandExecutor,
+		pgxPool:           pgxPool,
+		jwtIssuer:         jwtIssuer,
+		cookieOrigins:     cookieOrigins,
+		sessionRepository: authInfra.NewPostgresSessionRepository(pgxPool),
 	}
 }
 

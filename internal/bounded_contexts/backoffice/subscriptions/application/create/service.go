@@ -18,7 +18,7 @@ func NewService(r subscriptions.Repository, b event.Bus) *Service {
 	return &Service{repository: r, eventBus: b}
 }
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	aggregate, err := subscriptions.NewSubscription(cmd.id, cmd.name, cmd.ownerId)
+	aggregate, err := subscriptions.NewSubscription(cmd.id, cmd.name, cmd.ownerId, cmd.isSystem)
 	if err != nil {
 		return app_errors.AddTrace(err)
 	}

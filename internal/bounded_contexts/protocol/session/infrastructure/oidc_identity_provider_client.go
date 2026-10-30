@@ -108,7 +108,8 @@ func (c *OidcIdentityProviderClient) ExchangeCode(
 	if email == "" {
 		return session.IdpAuthentication{}, fmt.Errorf("id_token missing email claim")
 	}
-	claims := sessionvos.IdpClaims{Sub: sub, Email: email}
+	picture, _ := verifiedClaims["picture"].(string)
+	claims := sessionvos.IdpClaims{Sub: sub, Email: email, Picture: picture}
 
 	return session.IdpAuthentication{
 		Tokens: session.IdpTokens{

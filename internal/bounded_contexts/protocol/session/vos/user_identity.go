@@ -8,18 +8,19 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-var ErrInvalidUserIdentity app_errors.ErrorCode = "INVALID_USER_IDENTITY"
+var ErrInvalidExternalOidcUserIdentity app_errors.ErrorCode = "INVALID_EXTERNAL_OIDC_USER_IDENTITY"
 
 // IdpClaims holds the identity claims resolved from the identity provider.
 type IdpClaims struct {
-	Sub   string `json:"sub"`
-	Email string `json:"email"`
+	Sub     string `json:"sub"`
+	Email   string `json:"email"`
+	Picture string `json:"picture,omitempty"`
 }
 
-// UserIdentity is the resolved external identity (tokens + claims) for a
+// ExternalOidcUserIdentity is the resolved external identity (tokens + claims) for a
 // federated login. It lives embedded in AuthorizationCodeSession instead of
 // being its own aggregate, since the relationship is a true 1:1.
-type UserIdentity struct {
+type ExternalOidcUserIdentity struct {
 	idpId        ids.IdentityProviderId
 	idToken      string
 	accessToken  string
@@ -28,14 +29,14 @@ type UserIdentity struct {
 	expiresAt    time.Time
 }
 
-func NewUserIdentity(
+func NewExternalOidcUserIdentity(
 	idpIdString string,
 	idToken string,
 	accessToken string,
 	refreshToken *string,
 	claims IdpClaims,
 	expiresAt time.Time,
-) (UserIdentity, error) {
+) (ExternalOidcUserIdentity, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	idpId, err := ids.NewIdentityProviderIdFromString(idpIdString)
@@ -57,12 +58,12 @@ func NewUserIdentity(
 	}
 
 	if errArr.HasErrors() {
-		return UserIdentity{}, app_errors.BadRequestError(ErrInvalidUserIdentity).
+		return ExternalOidcUserIdentity{}, app_errors.BadRequestError(ErrInvalidExternalOidcUserIdentity).
 			WithDescription("several errors building user identity").
 			WithCause(errArr, true)
 	}
 
-	return UserIdentity{
+	return ExternalOidcUserIdentity{
 		idpId:        idpId,
 		idToken:      idToken,
 		accessToken:  accessToken,
@@ -72,9 +73,9 @@ func NewUserIdentity(
 	}, nil
 }
 
-func (i UserIdentity) IdpId() ids.IdentityProviderId { return i.idpId }
-func (i UserIdentity) IDToken() string               { return i.idToken }
-func (i UserIdentity) AccessToken() string           { return i.accessToken }
-func (i UserIdentity) RefreshToken() *string         { return i.refreshToken }
-func (i UserIdentity) Claims() IdpClaims             { return i.claims }
-func (i UserIdentity) ExpiresAt() time.Time          { return i.expiresAt }
+func (i ExternalOidcUserIdentity) IdpId() ids.IdentityProviderId { return i.idpId }
+func (i ExternalOidcUserIdentity) IDToken() string               { return i.idToken }
+func (i ExternalOidcUserIdentity) AccessToken() string           { return i.accessToken }
+func (i ExternalOidcUserIdentity) RefreshToken() *string         { return i.refreshToken }
+func (i ExternalOidcUserIdentity) Claims() IdpClaims             { return i.claims }
+func (i ExternalOidcUserIdentity) ExpiresAt() time.Time          { return i.expiresAt }

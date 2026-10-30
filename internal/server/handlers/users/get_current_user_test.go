@@ -13,13 +13,13 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/users"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func adminAuthorExtractor(adminId ids.UserId) func(context.Context) (*authors.UserAuthor, bool) {
-	return func(_ context.Context) (*authors.UserAuthor, bool) {
-		return &authors.UserAuthor{Id: adminId, AdminId: adminId, Role: vo.SystemAdministratorRole}, true
+func adminAuthorExtractor(adminId ids.UserId) func(context.Context) (*vo.UserAuthor, bool) {
+	return func(_ context.Context) (*vo.UserAuthor, bool) {
+		return &vo.UserAuthor{Id: adminId, AdminId: adminId, Role: vo.SystemAdministratorRole}, true
 	}
 }
 
@@ -37,7 +37,7 @@ func TestGetCurrentUserHandler(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		authorFn  func(context.Context) (*authors.UserAuthor, bool)
+		authorFn  func(context.Context) (*vo.UserAuthor, bool)
 		busResult any
 		busErr    error
 		wantErr   bool

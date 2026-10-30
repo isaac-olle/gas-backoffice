@@ -22,7 +22,7 @@ type AuthorizationCodeSession struct {
 	sessionState      sessionvos.SessionState
 	consumed          sessionvos.Consumed
 	clientOwnerUserId string
-	identity          sessionvos.UserIdentity
+	identity          sessionvos.ExternalOidcUserIdentity
 }
 
 func newAuthorizationCodeSession(
@@ -36,7 +36,7 @@ func newAuthorizationCodeSession(
 	pkce *sessionvos.Pkce,
 	protectedResourceId string,
 	clientOwnerUserId string,
-	identity sessionvos.UserIdentity,
+	identity sessionvos.ExternalOidcUserIdentity,
 ) *AuthorizationCodeSession {
 	sess := &AuthorizationCodeSession{
 		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, protectedResourceId),
@@ -71,7 +71,7 @@ func NewAuthorizationCodeSession(
 	pkceChallenge string,
 	pkceMethod string,
 	client *Client,
-	identity sessionvos.UserIdentity,
+	identity sessionvos.ExternalOidcUserIdentity,
 ) (*AuthorizationCodeSession, error) {
 	errorArray := app_errors.NewEmptyErrorArray()
 
@@ -210,12 +210,12 @@ func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitive
 		errorArray.AddError(err)
 	}
 
-	identity, err := sessionvos.NewUserIdentity(
+	identity, err := sessionvos.NewExternalOidcUserIdentity(
 		p.Identity.IdpId,
 		p.Identity.IDToken,
 		p.Identity.AccessToken,
 		p.Identity.RefreshToken,
-		sessionvos.IdpClaims{Sub: p.Identity.Claims.Sub, Email: p.Identity.Claims.Email},
+		sessionvos.IdpClaims{Sub: p.Identity.Claims.Sub, Email: p.Identity.Claims.Email, Picture: p.Identity.Claims.Picture},
 		p.Identity.ExpiresAt,
 	)
 	if err != nil {
@@ -293,8 +293,9 @@ func (s *AuthorizationCodeSession) ToPrimitives() *AuthorizationCodeSessionPrimi
 			AccessToken:  s.identity.AccessToken(),
 			RefreshToken: s.identity.RefreshToken(),
 			Claims: IdpClaimsPrimitives{
-				Sub:   s.identity.Claims().Sub,
-				Email: s.identity.Claims().Email,
+				Sub:     s.identity.Claims().Sub,
+				Email:   s.identity.Claims().Email,
+				Picture: s.identity.Claims().Picture,
 			},
 			ExpiresAt: s.identity.ExpiresAt(),
 		},
@@ -303,7 +304,7 @@ func (s *AuthorizationCodeSession) ToPrimitives() *AuthorizationCodeSessionPrimi
 
 // Identity returns the resolved external identity (tokens + claims) for this
 // session, as obtained from the identity provider during create_session.
-func (s *AuthorizationCodeSession) Identity() sessionvos.UserIdentity {
+func (s *AuthorizationCodeSession) Identity() sessionvos.ExternalOidcUserIdentity {
 	return s.identity
 }
 

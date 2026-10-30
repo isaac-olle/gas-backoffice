@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 
@@ -15,13 +15,13 @@ import (
 type SoftDeleteUserHandler struct {
 	commandExecutor command.CommandExecutor
 	userId          func(context.Context) (ids.UserId, bool)
-	author          func(context.Context) (*authors.UserAuthor, bool)
+	author          func(context.Context) (*vo.UserAuthor, bool)
 }
 
 func NewSoftDeleteUserHandler(
 	commandExecutor command.CommandExecutor,
 	userId func(context.Context) (ids.UserId, bool),
-	author func(context.Context) (*authors.UserAuthor, bool),
+	author func(context.Context) (*vo.UserAuthor, bool),
 ) *SoftDeleteUserHandler {
 	return &SoftDeleteUserHandler{commandExecutor: commandExecutor, userId: userId, author: author}
 }

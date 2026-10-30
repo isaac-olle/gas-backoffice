@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"io"
 	"net/http"
@@ -23,7 +23,7 @@ func TestChangeUserNameHandler(t *testing.T) {
 		name       string
 		body       io.Reader
 		userIdFn   func(context.Context) (ids.UserId, bool)
-		authorFn   func(context.Context) (*authors.UserAuthor, bool)
+		authorFn   func(context.Context) (*vo.UserAuthor, bool)
 		busErr     error
 		wantErr    bool
 		wantStatus int

@@ -5,7 +5,7 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -45,16 +45,16 @@ func MissingUserIdExtractor() func(context.Context) (ids.UserId, bool) {
 	}
 }
 
-func ValidAuthorExtractor() func(context.Context) (*authors.UserAuthor, bool) {
-	return func(_ context.Context) (*authors.UserAuthor, bool) {
+func ValidAuthorExtractor() func(context.Context) (*vo.UserAuthor, bool) {
+	return func(_ context.Context) (*vo.UserAuthor, bool) {
 		id, _ := ids.NewUserIdFromString(UserId)
 		adminId, _ := ids.NewUserIdFromString(AdminID)
-		return &authors.UserAuthor{Id: id, AdminId: adminId, Role: vo.SubscriptionUserRole}, true
+		return &vo.UserAuthor{Id: id, AdminId: adminId, Role: vo.SubscriptionUserRole}, true
 	}
 }
 
-func MissingAuthorExtractor() func(context.Context) (*authors.UserAuthor, bool) {
-	return func(_ context.Context) (*authors.UserAuthor, bool) {
+func MissingAuthorExtractor() func(context.Context) (*vo.UserAuthor, bool) {
+	return func(_ context.Context) (*vo.UserAuthor, bool) {
 		return nil, false
 	}
 }

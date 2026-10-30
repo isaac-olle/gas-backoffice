@@ -4,12 +4,13 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	verifyJwt "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/verify_jwt"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/authenticators"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -17,7 +18,7 @@ import (
 // requests from one of cookieOrigins (the backoffice frontend) are
 // authenticated with the HttpOnly cookie; any other request must carry a
 // Bearer token. Either way the token is then verified the same way.
-func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []string) gin.HandlerFunc {
+func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []string, sessionRepositories ...auth.SessionRepository) gin.HandlerFunc {
 	cookie := authenticators.NewCookieAuthenticator()
 	bearer := authenticators.NewBearerAuthenticator()
 
@@ -43,8 +44,10 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 				WithVerifyExpiration().
 				WithClaimsToReturn(map[string]any{
 					"sub":         nil,
+					"sid":         nil,
 					"system_role": nil,
 					"memberships": nil,
+					"picture":     nil,
 				}),
 		)
 		if err != nil {
@@ -54,6 +57,26 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 		}
 
 		subject, _ := claims["sub"].(string)
+		if len(sessionRepositories) > 0 && sessionRepositories[0] != nil {
+			sessionIDRaw, ok := claims["sid"].(string)
+			if !ok || sessionIDRaw == "" {
+				_ = c.Error(app_errors.UnauthorizedError("MISSING_SESSION_ID"))
+				c.Abort()
+				return
+			}
+			sessionID, err := ids.NewSessionIdFromString(sessionIDRaw)
+			if err != nil {
+				_ = c.Error(app_errors.UnauthorizedError("INVALID_SESSION_ID").WithCause(err, false))
+				c.Abort()
+				return
+			}
+			active, checkErr := sessionRepositories[0].IsActive(c.Request.Context(), sessionID)
+			if checkErr != nil || !active {
+				_ = c.Error(app_errors.UnauthorizedError("SESSION_REVOKED"))
+				c.Abort()
+				return
+			}
+		}
 		systemRole, ok := claims["system_role"].(string)
 		if !ok || systemRole == "" {
 			_ = c.Error(app_errors.UnauthorizedError("MISSING_SYSTEM_ROLE"))
@@ -97,7 +120,7 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 			c.Abort()
 			return
 		}
-		author, err := authors.NewUserAuthorWithMemberships(subject, subject, roleVO, memberships)
+		author, err := vo.NewUserAuthorWithMemberships(subject, subject, roleVO, memberships)
 		if err != nil {
 			_ = c.Error(app_errors.UnauthorizedError("INVALID_AUTHOR").WithCause(err, false))
 			c.Abort()
@@ -105,6 +128,9 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 		}
 
 		ctx := vo.WithAuthor(c.Request.Context(), author)
+		if picture, ok := claims["picture"].(string); ok && picture != "" {
+			ctx = vo.WithPicture(ctx, picture)
+		}
 		if rawScope, ok := claims["scope"].(string); ok {
 			if scopes := vo.ParseScopes(rawScope); len(scopes) > 0 {
 				ctx = vo.WithScopes(ctx, scopes)

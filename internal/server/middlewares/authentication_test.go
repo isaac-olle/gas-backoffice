@@ -16,7 +16,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/authenticators"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 )
 
 const (
@@ -77,11 +76,11 @@ func TestAuthentication(t *testing.T) {
 			bus := &recordingBus{result: tt.busResult, err: tt.busErr}
 
 			nextCalled := false
-			var gotAuthor *authors.UserAuthor
+			var gotAuthor *vo.UserAuthor
 			r := gin.New()
 			r.GET("/test", middlewares.Authentication(bus, "issuer", []string{frontendOrigin}), func(c *gin.Context) {
 				nextCalled = true
-				gotAuthor, _ = vo.AuthorFromContext[*authors.UserAuthor](c.Request.Context())
+				gotAuthor, _ = vo.AuthorFromContext(c.Request.Context())
 				c.Status(http.StatusOK)
 			})
 

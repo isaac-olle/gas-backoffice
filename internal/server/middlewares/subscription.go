@@ -1,13 +1,10 @@
 package middlewares
 
 import (
-	"slices"
-
 	"github.com/gin-gonic/gin"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/subscription"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -27,7 +24,7 @@ func SubscriptionMiddleware(resolve subscription.Resolver) gin.HandlerFunc {
 			return
 		}
 
-		author, ok := vo.AuthorFromContext[*authors.UserAuthor](c.Request.Context())
+		author, ok := vo.AuthorFromContext(c.Request.Context())
 		if !ok {
 			_ = c.Error(app_errors.ForbiddenError("FORBIDDEN_SUBSCRIPTION"))
 			c.Abort()
@@ -45,9 +42,7 @@ func SubscriptionMiddleware(resolve subscription.Resolver) gin.HandlerFunc {
 	}
 }
 
-func hasSubscriptionMembership(author *authors.UserAuthor, subscriptionId ids.SubscriptionId) bool {
-	if _, ok := author.MembershipFor(subscriptionId); ok {
-		return true
-	}
-	return slices.Contains(author.SubscriptionIds, subscriptionId)
+func hasSubscriptionMembership(author *vo.UserAuthor, subscriptionId ids.SubscriptionId) bool {
+	_, ok := author.MembershipFor(subscriptionId)
+	return ok
 }

@@ -6,6 +6,12 @@ import (
 	shared_logger "github.com/isaac-olle/gas-backoffice/internal/shared/logger"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
 	"sync"
+	"time"
+)
+
+const (
+	eventHandlerRetryDelay = 3 * time.Second
+	maxEventHandlerRetries = 3
 )
 
 type InMemoryEventBus struct {
@@ -38,12 +44,25 @@ func (b *InMemoryEventBus) Publish(ctx context.Context, events []event2.Event) {
 
 		for _, sub := range subs {
 			b.pool.Process(context.WithoutCancel(ctx), func(ctx context.Context) {
-				if err := sub.On(ctx, evt); err != nil {
-					b.logger.Error("event handler error",
-						shared_logger.Field{Key: "event_type", Value: evt.Type().String()},
-						shared_logger.Field{Key: "error", Value: err.Error()},
-					)
+				err := sub.On(ctx, evt)
+				for retry := 0; err != nil && retry < maxEventHandlerRetries; retry++ {
+					timer := time.NewTimer(eventHandlerRetryDelay)
+					select {
+					case <-ctx.Done():
+						timer.Stop()
+						return
+					case <-timer.C:
+					}
+					err = sub.On(ctx, evt)
 				}
+				if err == nil {
+					return
+				}
+				b.logger.Error("event handler error after retries",
+					shared_logger.Field{Key: "event_type", Value: evt.Type().String()},
+					shared_logger.Field{Key: "error", Value: err.Error()},
+					shared_logger.Field{Key: "retries", Value: maxEventHandlerRetries},
+				)
 			})
 		}
 	}

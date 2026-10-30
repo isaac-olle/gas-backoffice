@@ -3,7 +3,7 @@ package soft_delete
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/authors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
@@ -11,10 +11,10 @@ const CommandType command.Type = "command.backoffice.user.soft_delete"
 
 type Command struct {
 	userId ids.UserId
-	author *authors.UserAuthor
+	author *vo.UserAuthor
 }
 
-func NewCommand(userId ids.UserId, author *authors.UserAuthor) *Command {
+func NewCommand(userId ids.UserId, author *vo.UserAuthor) *Command {
 	return &Command{userId: userId, author: author}
 }
 
