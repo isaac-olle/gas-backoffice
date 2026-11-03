@@ -1,4 +1,14 @@
-.PHONY: local-deploy local-undeploy up down migrate-local migrate-dev seed local-token dev-token run build test lint
+.PHONY: env terraform-plan terraform-apply up down migrate seed local-token dev-token run build test lint coverage
+
+env:
+	@test -n "$(ENV)" || (echo 'Usage: make env ENV=dev' >&2; exit 1)
+	@bash ./scripts/create-env.sh "$(ENV)"
+
+terraform-plan:
+	@bash ./scripts/terraform-plan.sh "$(ENV)" plan
+
+terraform-apply:
+	@bash ./scripts/terraform-plan.sh "$(ENV)" apply
 
 up:
 	docker compose -f deploy/docker-compose.yml up -d --remove-orphans
@@ -7,26 +17,15 @@ up:
 down:
 	docker compose -f deploy/docker-compose.yml down -v --remove-orphans
 
-migrate-local:
-	go run ./scripts/migrate --env-file .env.local
-
-migrate-dev:
-	go run ./scripts/migrate --env-file .env.dev
-
-
-local-token:
-	go run ./scripts/generate_admin_token --env .env.local
-
-dev-token:
-	go run ./scripts/generate_admin_token --env .env.dev
-
+migrate:
+	@test -n "$(ENV)" || (echo 'Usage: make migrate ENV=dev' >&2; exit 1)
+	go run ./scripts/migrate --env-file .env.$(ENV)
 
 seed:
 	./scripts/seed.sh
 
-
 run:
-	ENV=local go run ./cmd/api
+	ENV=$(or $(ENV),local) go run ./cmd/api
 
 build:
 	go build -o build/gas ./cmd/api
