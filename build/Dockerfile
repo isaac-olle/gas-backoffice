@@ -8,8 +8,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /gas ./cmd/api/main.go && \
-    CGO_ENABLED=0 GOOS=linux go build -o /db-seed ./cmd/db_seed && \
-    CGO_ENABLED=0 GOOS=linux go build -o /migrate ./cmd/migrate
+    CGO_ENABLED=0 GOOS=linux go build -o /migrate ./scripts/migrate
 
 # ---
 
@@ -18,7 +17,6 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /gas /gas
-COPY --from=builder /db-seed /db-seed
 COPY --from=builder /migrate /migrate
 COPY --from=builder /app/config/config.yaml /config/config.yaml
 COPY --from=builder /app/deploy/golang-migrate /golang-migrate

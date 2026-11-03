@@ -35,13 +35,66 @@ resource "digitalocean_app" "backoffice" {
       }
 
       env {
-        key   = "GAS_SEED_ADMIN_NAME"
-        value = "Gas Seed Admin"
+        key   = "ALLOWED_ORIGINS"
+        value = var.allowed_origins
       }
 
       env {
-        key   = "GAS_BACKOFFICE_PR_NAME"
-        value = "Gas Backoffice"
+        key   = "COOKIE_ORIGINS"
+        value = var.cookie_origins
+      }
+
+      env {
+        key   = "SEED_TOKEN"
+        value = var.seed_token
+        type  = "SECRET"
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_PROTECTED_RESOURCE_ID"
+        value = var.backoffice_protected_resource_id
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_OPENID_SCOPE_ID"
+        value = var.backoffice_openid_scope_id
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_EMAIL_SCOPE_ID"
+        value = var.backoffice_email_scope_id
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_PROFILE_SCOPE_ID"
+        value = var.backoffice_profile_scope_id
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_CLIENT_ID"
+        value = var.backoffice_client_id
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_CLIENT_SECRET"
+        value = var.backoffice_client_secret
+        type  = "SECRET"
+      }
+
+      env {
+        key   = "GAS_BACKOFFICE_CLIENT_REDIRECT_URI"
+        value = var.backoffice_client_redirect_uri
+      }
+
+      env {
+        key   = "GAS_PROTOCOL_URL"
+        value = var.gas_protocol_url
+      }
+
+      env {
+        key   = "ENCRYPTION_KEY"
+        value = var.encryption_key
+        type  = "SECRET"
       }
 
       env {
@@ -87,22 +140,7 @@ resource "digitalocean_app" "backoffice" {
       }
 
       env {
-        key   = "GAS_SEED_ADMIN_NAME"
-        value = var.gas_seed_admin_name
-      }
-
-      env {
-        key   = "GAS_BACKOFFICE_PR_NAME"
-        value = var.gas_backoffice_pr_name
-      }
-
-      env {
         key   = "RUN_MIGRATIONS"
-        value = "true"
-      }
-
-      env {
-        key   = "RUN_SEED"
         value = "true"
       }
 
