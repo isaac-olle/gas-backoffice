@@ -62,6 +62,7 @@ jobs:
     name: Docker
     runs-on: ubuntu-latest
     needs: [test, lint]
+    if: github.event_name != 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
@@ -95,20 +96,26 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: [docker]
+    if: github.event_name != 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Detect pre-deploy job changes
         id: changes
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "run_migrations=true" >> $GITHUB_OUTPUT
-            echo "run_seed=true" >> $GITHUB_OUTPUT
           else
-            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+            if [ -z "$BEFORE_SHA" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+              echo "run_migrations=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            CHANGED=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA")
             echo "Changed files: $CHANGED"
             if echo "$CHANGED" | grep -q "^deploy/golang-migrate/"; then
               echo "run_migrations=true" >> $GITHUB_OUTPUT
@@ -122,11 +129,17 @@ jobs:
         with:
           token: ${{ secrets.DO_TOKEN }}
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: python -m pip install --disable-pip-version-check PyYAML
+
       - name: Update app spec
         env:
           DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', inputs.environment)] }}
           RUN_MIGRATIONS: ${{ steps.changes.outputs.run_migrations }}
-          RUN_SEED: ${{ steps.changes.outputs.run_seed }}
           IMAGE_TAG: sha-${{ github.sha }}
         run: |
           doctl apps spec get $DO_APP_ID > /tmp/spec.yaml
@@ -138,7 +151,6 @@ jobs:
 
           tag = os.environ['IMAGE_TAG']
           run_migrations = os.environ['RUN_MIGRATIONS']
-          run_seed = os.environ['RUN_SEED']
 
           for svc in spec.get('services', []):
               svc['image']['tag'] = tag
@@ -149,8 +161,6 @@ jobs:
                   for env in job.get('envs', []):
                       if env['key'] == 'RUN_MIGRATIONS':
                           env['value'] = run_migrations
-                      if env['key'] == 'RUN_SEED':
-                          env['value'] = run_seed
 
           with open('/tmp/spec.yaml', 'w') as f:
               yaml.dump(spec, f, default_flow_style=False, allow_unicode=True)
@@ -161,6 +171,7 @@ jobs:
     name: Cleanup
     runs-on: ubuntu-latest
     needs: [deploy]
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Install doctl

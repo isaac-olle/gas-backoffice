@@ -1,6 +1,6 @@
 ### Seed system (only executable once)
 
-POST http://{{$env.API_HOST}}:{{$env.API_PORT}}/v1/seed
+POST {{$env.API_BASE_URL}}/v1/seed
 Content-Type: application/json
 Authorization: Bearer {{$env.SEED_TOKEN}}
 

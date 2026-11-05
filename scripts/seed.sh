@@ -3,8 +3,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+ENV="${ENV:-local}"
+ENV_FILE="../.env.${ENV}"
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "Missing environment file: .env.${ENV}" >&2
+  exit 1
+fi
+
 set -a
-source ../.env.local
+source "$ENV_FILE"
 source google_idp.env
 set +a
 
