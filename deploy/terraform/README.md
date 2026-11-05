@@ -1,10 +1,29 @@
-# Terraform database resources
+# Terraform application resources
 
-Terraform manages the DigitalOcean PostgreSQL cluster users and database. Database
-object privileges are managed by the application's SQL migrations, which run in
-the app's pre-deploy job using the cluster administrator credentials supplied by
-DigitalOcean. That account is required to grant privileges on the database and
-`public` schema. Terraform does not need a PostgreSQL provider connection.
+Terraform manages the DigitalOcean App Platform application and its runtime
+database user. The database and the `gas_admin` permissions are managed centrally
+in the `gas` repository. Database object privileges are applied by the
+application's SQL migrations, which run in the app's pre-deploy job.
+
+This module must not perform an automatic `destroy` of the existing database.
+
+## One-time database state transition
+
+Before running the plan, remove only the database resource from Terraform state:
+
+```sh
+terraform state rm digitalocean_database_db.gas_backoffice
+```
+
+This removes the resource from state without deleting the database from
+DigitalOcean. Then validate the configuration with:
+
+```sh
+terragrunt plan
+```
+
+The database and `gas_admin` permissions remain centralized in the `gas`
+repository; `gas-backoffice` manages only the runtime user and the application.
 
 ## One-time transition from `postgresql_grant`
 
@@ -17,8 +36,8 @@ For dev:
 ```sh
 cd gas/terragrunt/base/backoffice
 ENV=dev terragrunt state rm \
-  'postgresql_grant.gas_backoffice_admin_database_privileges' \
-  'postgresql_grant.gas_backoffice_admin_schema_privileges' \
+  'postgresql_grant.gas_backoffice_database_privileges' \
+  'postgresql_grant.gas_backoffice_schema_privileges' \
   'postgresql_grant.gas_backoffice_service_database_privileges' \
   'postgresql_grant.gas_backoffice_service_tables_privileges' \
   'postgresql_grant.gas_backoffice_service_sequences_privileges'
@@ -36,18 +55,3 @@ existing grants are already present. The migration gives the externally managed
 the app user the existing CRUD and sequence access. Default table privileges are
 configured for objects created by `doadmin`, the account used by the pre-deploy
 job.
-
-## One-time database-user transition
-
-The old `gas_backoffice_admin` DigitalOcean user is no longer managed here. If it
-is still in this Terraform state, forget it without deleting it; object ownership
-may still depend on that role. The service user resource keeps its Terraform
-address and is replaced with `gas-backoffice-user` using create-before-destroy.
-Run this from `deploy/terraform` against the same workspace/backend before
-planning:
-
-```sh
-terraform state rm 'digitalocean_database_user.gas_backoffice_admin'
-```
-
-The old admin user will remain in DigitalOcean until it is deliberately retired.
