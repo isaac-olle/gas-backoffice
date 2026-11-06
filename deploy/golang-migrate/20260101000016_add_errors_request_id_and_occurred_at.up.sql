@@ -1,3 +1,0 @@
-ALTER TABLE public.errors
-    ADD COLUMN IF NOT EXISTS request_id TEXT,
-    ADD COLUMN IF NOT EXISTS occurred_at TIMESTAMPTZ;

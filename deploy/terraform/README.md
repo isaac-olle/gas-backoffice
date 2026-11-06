@@ -52,6 +52,6 @@ modify the users or database in Terraform state.
 The first deployment applies the new permissions migration. It is safe if the
 existing grants are already present. The migration gives the externally managed
 `gas_admin` role the migration-level database and schema privileges, and grants
-the app user the existing CRUD and sequence access. Default table privileges are
-configured for objects created by `doadmin`, the account used by the pre-deploy
-job.
+the app user the existing CRUD and sequence access. Default privileges are
+configured for objects created by `gas_admin`, the account used by the
+pre-deploy job.

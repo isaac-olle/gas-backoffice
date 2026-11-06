@@ -1,2 +1,0 @@
-ALTER TABLE protocol.protocol_authorization_code_sessions RENAME TO authorization_code_sessions;
-ALTER TABLE protocol.protocol_client_credentials_sessions RENAME TO client_credentials_sessions;

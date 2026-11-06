@@ -9,4 +9,4 @@ CREATE TABLE events.outbox_event_bus (
     inserted_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx__outbox_event_bus__inserted_at ON events.outbox_event_bus(inserted_at);
+CREATE INDEX idx__outbox_event_bus__inserted_at ON events.outbox_event_bus (inserted_at);

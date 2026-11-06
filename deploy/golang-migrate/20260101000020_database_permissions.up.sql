@@ -7,6 +7,7 @@ GRANT USAGE, CREATE ON SCHEMA backoffice, protocol, security, events TO gas_admi
 GRANT CONNECT ON DATABASE gas_backoffice TO "gas-backoffice-user";
 
 GRANT USAGE ON SCHEMA backoffice, protocol, security, events, public TO "gas-backoffice-user";
+GRANT EXECUTE ON FUNCTION backoffice.update_updated_at() TO "gas-backoffice-user";
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA backoffice TO "gas-backoffice-user";
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA protocol TO "gas-backoffice-user";
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA security TO "gas-backoffice-user";
@@ -14,14 +15,25 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA events TO "gas-back
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "gas-backoffice-user";
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA backoffice, protocol, security, events, public TO "gas-backoffice-user";
 
-ALTER DEFAULT PRIVILEGES FOR ROLE doadmin IN SCHEMA backoffice
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA backoffice
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "gas-backoffice-user";
-ALTER DEFAULT PRIVILEGES FOR ROLE doadmin IN SCHEMA protocol
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA protocol
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "gas-backoffice-user";
-ALTER DEFAULT PRIVILEGES FOR ROLE doadmin IN SCHEMA security
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA security
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "gas-backoffice-user";
-ALTER DEFAULT PRIVILEGES FOR ROLE doadmin IN SCHEMA events
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA events
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "gas-backoffice-user";
-ALTER DEFAULT PRIVILEGES FOR ROLE doadmin IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA public
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "gas-backoffice-user";
+
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA backoffice
+    GRANT USAGE ON SEQUENCES TO "gas-backoffice-user";
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA protocol
+    GRANT USAGE ON SEQUENCES TO "gas-backoffice-user";
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA security
+    GRANT USAGE ON SEQUENCES TO "gas-backoffice-user";
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA events
+    GRANT USAGE ON SEQUENCES TO "gas-backoffice-user";
+ALTER DEFAULT PRIVILEGES FOR ROLE gas_admin IN SCHEMA public
+    GRANT USAGE ON SEQUENCES TO "gas-backoffice-user";
 

@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS protocol;
+CREATE SCHEMA protocol;
 
-CREATE TABLE IF NOT EXISTS protocol.protocol_sessions (
+CREATE TABLE protocol.authorization_code_sessions (
     session_id     TEXT        NOT NULL PRIMARY KEY,
     client_id      TEXT        NOT NULL,
     redirect_uri   TEXT        NOT NULL,
@@ -10,29 +10,31 @@ CREATE TABLE IF NOT EXISTS protocol.protocol_sessions (
     code           TEXT        NOT NULL DEFAULT '',
     pkce           JSONB,
     session_state  TEXT        NOT NULL DEFAULT '',
-    flow           TEXT        NOT NULL DEFAULT '',
+    grant_type     TEXT        NOT NULL DEFAULT '',
+    client_owner_user_id  TEXT NOT NULL DEFAULT '',
+    protected_resource_id TEXT NOT NULL DEFAULT '',
+    idp_id         TEXT        NOT NULL DEFAULT '' REFERENCES backoffice.identity_providers(id),
+    id_token       TEXT        NOT NULL DEFAULT '',
+    access_token   TEXT        NOT NULL DEFAULT '',
+    refresh_token  TEXT,
+    claims         JSONB       NOT NULL DEFAULT '{}',
+    identity_expires_at TIMESTAMPTZ,
     consumed       BOOLEAN     NOT NULL DEFAULT FALSE,
     expires_at     TIMESTAMPTZ NOT NULL,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at     TIMESTAMPTZ
 );
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_updated_at' AND tgrelid = 'protocol.protocol_sessions'::regclass) THEN
-    CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol.protocol_sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-  END IF;
-END $$;
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON protocol.authorization_code_sessions FOR EACH ROW EXECUTE FUNCTION backoffice.update_updated_at();
 
-CREATE TABLE IF NOT EXISTS protocol.protocol_client_credentials_sessions (
-    session_id TEXT        NOT NULL PRIMARY KEY,
+CREATE TABLE protocol.client_credentials_sessions (
+    id         TEXT        NOT NULL PRIMARY KEY,
     -- ownership
     client_id  TEXT        NOT NULL,
     user_id    TEXT        NOT NULL,
     -- data
     scope      TEXT        NOT NULL,
     issued_at  TIMESTAMPTZ NOT NULL,
+    protected_resource_id TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-GRANT USAGE ON SCHEMA protocol TO gas_backoffice_service;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA protocol TO gas_backoffice_service;
