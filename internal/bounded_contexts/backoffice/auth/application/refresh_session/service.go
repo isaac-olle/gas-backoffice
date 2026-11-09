@@ -41,10 +41,10 @@ func (s *Service) Refresh(ctx context.Context, qry *Query) (any, error) {
 	}
 
 	session, err := auth.NewSessionWithIdAndMemberships(claims.SessionID, claims.UserID, claims.SystemRole, claims.UserID, claims.Memberships)
-	session.SetPicture(claims.Picture)
 	if err != nil {
 		return nil, app_errors.UnauthorizedError("INVALID_REFRESH_TOKEN").WithCause(err, false)
 	}
+	session.SetPicture(claims.Picture)
 	accessToken, err := s.accessTokenGenerator.Generate(ctx, session)
 	if err != nil {
 		return nil, app_errors.InternalError(auth.ErrCannotCreateLoginSession).WithCause(err, false)

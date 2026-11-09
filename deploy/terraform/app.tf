@@ -172,6 +172,11 @@ resource "digitalocean_database_firewall" "gas_postgres" {
     type  = "app"
     value = digitalocean_app.backoffice.id
   }
+
+  rule {
+    type  = "ip_addr"
+    value = "85.87.1.216"
+  }
 }
 
 resource "digitalocean_project_resources" "backoffice" {

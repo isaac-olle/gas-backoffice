@@ -16,6 +16,8 @@ func NewCommandBus(err error) *commandmocks.MockCommandBus {
 func NewCommandExecutor(err error) *commandmocks.MockCommandExecutor {
 	e := &commandmocks.MockCommandExecutor{}
 	e.On("SingleExecution", mock.Anything, mock.Anything).Return(err)
+	e.On("MultipleExecution", mock.Anything, mock.Anything, mock.Anything).Return(err)
+	e.On("MultipleExecution", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(err)
 	return e
 }
 

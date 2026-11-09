@@ -1,4 +1,4 @@
-resource "digitalocean_database_user" "gas_backoffice_service" {
+resource "digitalocean_database_user" "gas_backoffice_user" {
   cluster_id = data.digitalocean_database_cluster.postgres.id
   name       = "gas-backoffice-user"
 
@@ -17,8 +17,13 @@ data "digitalocean_database_user" "gas_admin" {
 }
 
 locals {
-  postgres_dsn   = "postgresql://${digitalocean_database_user.gas_backoffice_service.name}:${urlencode(digitalocean_database_user.gas_backoffice_service.password)}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/gas_backoffice?sslmode=require"
+  postgres_dsn   = "postgresql://${digitalocean_database_user.gas_backoffice_user.name}:${urlencode(digitalocean_database_user.gas_backoffice_user.password)}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/gas_backoffice?sslmode=require"
   # gas_admin is created by the parent infrastructure project and is used for
   # schema migrations; the application itself uses the restricted service user.
   migrations_dsn = "postgresql://${data.digitalocean_database_user.gas_admin.name}:${urlencode(data.digitalocean_database_user.gas_admin.password)}@${data.digitalocean_database_cluster.postgres.host}:${data.digitalocean_database_cluster.postgres.port}/gas_backoffice?sslmode=require"
+}
+
+moved {
+  from = digitalocean_database_user.gas_backoffice_service
+  to   = digitalocean_database_user.gas_backoffice_user
 }
