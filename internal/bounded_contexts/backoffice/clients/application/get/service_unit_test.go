@@ -2,9 +2,12 @@ package get_test
 
 import (
 	"context"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
+
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,11 +25,14 @@ func TestGet(t *testing.T) {
 	t.Run("returns client primitives when found", func(t *testing.T) {
 		t.Parallel()
 		repo := clientmocks.NewMockRepository(t)
-		userId := ids2.NewUserId()
-		c, clientId := aClientWithId(t, "my-get-client", userId)
+		subscriptionId := ids2.NewSubscriptionId()
+		c, clientId := aClientWithId(t, "my-get-client", subscriptionId)
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
+		author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+			[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+		require.NoError(t, err)
 
-		result, err := newService(t, repo).Get(context.Background(), get.NewQuery(clientId.String(), ids2.NewUserId().String(), userId.String()))
+		result, err := newService(t, repo).Get(context.Background(), get.NewQuery(clientId.String(), author))
 		require.NoError(t, err)
 		c, ok := result.(*clients.Client)
 		require.True(t, ok)
@@ -35,16 +41,18 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, clientId.String(), p.Id)
 	})
 
-	t.Run("returns the client when the caller is its owning admin", func(t *testing.T) {
+	t.Run("returns the client when the caller is a system administrator", func(t *testing.T) {
 		t.Parallel()
 		repo := clientmocks.NewMockRepository(t)
-		adminId := ids2.NewUserId()
 		clientId := ids2.NewClientId()
-		c, err := clients.NewClient(clientId, "tenant-client", clients.NewOwnership(adminId, ids2.NewUserId()), nil, nil, false, false)
+		c, err := clients.NewClient(clientId, "tenant-client", clients.NewOwnership(ids2.NewSubscriptionId()), nil, nil, false, false)
 		require.NoError(t, err)
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
+		adminId := ids2.NewUserId()
+		author, err := vo.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.SystemAdministratorRole)
+		require.NoError(t, err)
 
-		_, err = newService(t, repo).Get(context.Background(), get.NewQuery(clientId.String(), adminId.String(), adminId.String()))
+		_, err = newService(t, repo).Get(context.Background(), get.NewQuery(clientId.String(), author))
 		require.NoError(t, err)
 	})
 
@@ -60,11 +68,6 @@ func TestGet(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc:     "rejects invalid user id format",
-			query:    func(t *testing.T) *get.Query { return aQuery(t, withUserId("bad-id")) },
-			wantCode: clients.ErrClientNotFound,
-		},
-		{
 			desc:  "returns not found when client does not exist",
 			query: func(t *testing.T) *get.Query { return aQuery(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
@@ -73,12 +76,14 @@ func TestGet(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "returns forbidden when ownership does not match",
+			desc: "returns forbidden when author lacks subscription access",
 			query: func(t *testing.T) *get.Query {
-				return aQuery(t)
+				unauthorized, err := vo.NewUserAuthorFromString(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole)
+				require.NoError(t, err)
+				return aQuery(t, withAuthor(unauthorized))
 			},
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := aClientWithId(t, "other-client", ids2.NewUserId())
+				c, _ := aClientWithId(t, "other-client", ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrInvalidOwnership,
@@ -103,7 +108,7 @@ func TestGet(t *testing.T) {
 func newService(t *testing.T, repo *clientmocks.MockRepository) *get.Service {
 	t.Helper()
 	finder := domain_services.NewClientFinder(repo)
-	return get.NewService(finder)
+	return get.NewService(finder, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

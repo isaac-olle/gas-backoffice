@@ -17,9 +17,9 @@ import (
 	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
-func aScopeForEventHandlers(t *testing.T, prId ids2.ProtectedResourceId, userId ids2.UserId) *scopes.Scope {
+func aScopeForEventHandlers(t *testing.T, prId ids2.ProtectedResourceId, subscriptionId ids2.SubscriptionId) *scopes.Scope {
 	t.Helper()
-	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:things", scopes.NewOwnershipFromVos(prId, ids2.NewUserId(), userId), false)
+	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:things", scopes.NewOwnershipFromVos(prId, subscriptionId), false)
 	require.NoError(t, err)
 	scope.PullDomainEvents()
 	return scope
@@ -28,66 +28,76 @@ func aScopeForEventHandlers(t *testing.T, prId ids2.ProtectedResourceId, userId 
 func TestRemoveClientFromScopesOnClientDeleted(t *testing.T) {
 	t.Parallel()
 
-	t.Run("removes the deleted client from every affected scope", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		clientId := ids2.NewClientId()
-		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientId ids2.ClientId) (backofficeevents.ClientDeleted, *scopes.Scope)
+		wantErr bool
+	}{
+		{
+			name: "removes the deleted client from every affected scope",
+			setup: func(t *testing.T, repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientId ids2.ClientId) (backofficeevents.ClientDeleted, *scopes.Scope) {
+				prId := ids2.NewProtectedResourceId()
+				subscriptionId := ids2.NewSubscriptionId()
+				scope := aScopeForEventHandlers(t, prId, subscriptionId)
+				scope.AddAllowedClient(clientId)
+				scope.PullDomainEvents()
 
-		scope := aScopeForEventHandlers(t, prId, userId)
-		scope.AddAllowedClient(clientId)
-		scope.PullDomainEvents()
+				repo.EXPECT().FindByAllowedClientId(mock.Anything, clientId).Return([]*scopes.Scope{scope}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).Return(nil)
+				bus.EXPECT().Publish(mock.Anything, mock.Anything)
 
-		repo.EXPECT().FindByAllowedClientId(mock.Anything, clientId).Return([]*scopes.Scope{scope}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).Return(nil)
-		bus.EXPECT().Publish(mock.Anything, mock.Anything)
+				return backofficeevents.NewClientDeleted(clientId.String(), ids2.NewUserId().String()), scope
+			},
+		},
+		{
+			name: "rejects invalid client id in event",
+			setup: func(t *testing.T, repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientId ids2.ClientId) (backofficeevents.ClientDeleted, *scopes.Scope) {
+				return backofficeevents.NewClientDeleted("not-a-uuid", ids2.NewUserId().String()), nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "wraps repository search failure",
+			setup: func(t *testing.T, repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientId ids2.ClientId) (backofficeevents.ClientDeleted, *scopes.Scope) {
+				repo.EXPECT().FindByAllowedClientId(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
+				return backofficeevents.NewClientDeleted(ids2.NewClientId().String(), ids2.NewUserId().String()), nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "wraps repository save failure",
+			setup: func(t *testing.T, repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientId ids2.ClientId) (backofficeevents.ClientDeleted, *scopes.Scope) {
+				prId := ids2.NewProtectedResourceId()
+				subscriptionId := ids2.NewSubscriptionId()
+				scope := aScopeForEventHandlers(t, prId, subscriptionId)
+				scope.AddAllowedClient(clientId)
+				scope.PullDomainEvents()
 
-		handler := event_handlers.NewRemoveClientFromScopesOnClientDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewClientDeleted(clientId.String(), userId.String())
-		require.NoError(t, handler.Handle(context.Background(), evt))
+				repo.EXPECT().FindByAllowedClientId(mock.Anything, clientId).Return([]*scopes.Scope{scope}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).Return(fmt.Errorf("db error"))
 
-		assert.NotContains(t, scope.ToPrimitives().AllowedClientIds, clientId.String())
-	})
+				return backofficeevents.NewClientDeleted(clientId.String(), ids2.NewUserId().String()), scope
+			},
+			wantErr: true,
+		},
+	}
 
-	t.Run("rejects invalid client id in event", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		handler := event_handlers.NewRemoveClientFromScopesOnClientDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewClientDeleted("not-a-uuid", ids2.NewUserId().String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := scopemocks.NewMockRepository(t)
+			bus := eventmocks.NewMockBus(t)
+			clientId := ids2.NewClientId()
 
-	t.Run("wraps repository search failure", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		repo.EXPECT().FindByAllowedClientId(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
+			evt, scope := tt.setup(t, repo, bus, clientId)
+			err := event_handlers.NewRemoveClientFromScopesOnClientDeletedEventHandler(repo, bus).Handle(context.Background(), evt)
 
-		handler := event_handlers.NewRemoveClientFromScopesOnClientDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewClientDeleted(ids2.NewClientId().String(), ids2.NewUserId().String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
-
-	t.Run("wraps repository save failure", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		clientId := ids2.NewClientId()
-		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
-
-		scope := aScopeForEventHandlers(t, prId, userId)
-		scope.AddAllowedClient(clientId)
-		scope.PullDomainEvents()
-
-		repo.EXPECT().FindByAllowedClientId(mock.Anything, clientId).Return([]*scopes.Scope{scope}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*scopes.Scope")).Return(fmt.Errorf("db error"))
-
-		handler := event_handlers.NewRemoveClientFromScopesOnClientDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewClientDeleted(clientId.String(), userId.String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.NotContains(t, scope.ToPrimitives().AllowedClientIds, clientId.String())
+		})
+	}
 }

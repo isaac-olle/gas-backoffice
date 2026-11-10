@@ -3,13 +3,16 @@ package add_redirect_uri_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,8 +31,11 @@ func TestAddRedirectUri(t *testing.T) {
 	t.Run("adds redirect uri to client and publishes ClientRedirectUriAdded event", func(t *testing.T) {
 		t.Parallel()
 		repo, bus := newMocks(t)
-		userId := ids2.NewUserId()
-		c, clientId := aClient(t, userId)
+		subscriptionId := ids2.NewSubscriptionId()
+		c, clientId := aClient(t, subscriptionId)
+		author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+			[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+		require.NoError(t, err)
 
 		var saved *clients.Client
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
@@ -44,7 +50,7 @@ func TestAddRedirectUri(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientRedirectUriAddedType
 			}))
 
-		cmd := add_redirect_uri.NewCommand(clientId, ids2.NewUserId(), userId, "https://example.com/callback")
+		cmd := add_redirect_uri.NewCommand(clientId, "https://example.com/callback", author)
 		require.NoError(t, newService(t, repo, bus).Add(context.Background(), cmd))
 
 		assert.Contains(t, saved.ToPrimitives().RedirectUris, "https://example.com/callback")
@@ -78,39 +84,34 @@ func TestAddRedirectUri(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "returns forbidden when ownership does not match",
-			cmd:  func(t *testing.T) *add_redirect_uri.Command { return aCommand(t) },
+			desc: "returns forbidden when author lacks subscription access",
+			cmd: func(t *testing.T) *add_redirect_uri.Command {
+				unauthorized, err := vo.NewUserAuthorFromString(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole)
+				require.NoError(t, err)
+				return aCommand(t, withAuthor(unauthorized))
+			},
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := aClient(t, ids2.NewUserId())
+				c, _ := aClient(t, ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrInvalidOwnership,
 		},
 		{
 			desc: "returns forbidden when client is system resource",
-			cmd: func(t *testing.T) *add_redirect_uri.Command {
-				return aCommand(t, withUserId(systemResourceUserId))
-			},
+			cmd:  func(t *testing.T) *add_redirect_uri.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.FromPrimitives(clients.ClientPrimitives{
-					Id:       ids2.NewClientId().String(),
-					Name:     "system-client",
-					AdminId:  ids2.NewUserId().String(),
-					UserId:   systemResourceUserId.String(),
-					IsSystem: true,
-				})
+				c, err := clients.NewClient(ids2.NewClientId(), "system-client", clients.NewOwnership(ids2.NewSubscriptionId()), nil, nil, false, true)
+				require.NoError(t, err)
+				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrSystemResource,
 		},
 		{
 			desc: "wraps repository save failure",
-			cmd: func(t *testing.T) *add_redirect_uri.Command {
-				return aCommand(t, withUserId(saveFailureUserId))
-			},
+			cmd:  func(t *testing.T) *add_redirect_uri.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), saveFailureUserId), nil, nil, false, false)
-				c.PullDomainEvents()
+				c, _ := aClient(t, ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))
 			},
@@ -118,12 +119,9 @@ func TestAddRedirectUri(t *testing.T) {
 		},
 		{
 			desc: "returns conflict when repository reports concurrent modification",
-			cmd: func(t *testing.T) *add_redirect_uri.Command {
-				return aCommand(t, withUserId(concurrentModificationUserId))
-			},
+			cmd:  func(t *testing.T) *add_redirect_uri.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), concurrentModificationUserId), nil, nil, false, false)
-				c.PullDomainEvents()
+				c, _ := aClient(t, ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(persistance.ErrConcurrentModification)
 			},
@@ -145,12 +143,6 @@ func TestAddRedirectUri(t *testing.T) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-var (
-	systemResourceUserId         = ids2.NewUserId()
-	saveFailureUserId            = ids2.NewUserId()
-	concurrentModificationUserId = ids2.NewUserId()
-)
-
 func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
 	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
@@ -159,7 +151,7 @@ func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *add_redirect_uri.Service {
 	t.Helper()
 	finder := domain_services.NewClientFinder(repo)
-	return add_redirect_uri.NewService(finder, repo, bus)
+	return add_redirect_uri.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

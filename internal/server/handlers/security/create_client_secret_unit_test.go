@@ -80,7 +80,7 @@ func TestCreateClientSecretHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := security.NewCreateClientSecretHandler(bus, tt.clientIdFn, tt.secretIdFn, handlerstest.ValidAuthorExtractor())
+			h := security.NewCreateClientSecretHandler(bus, tt.clientIdFn, tt.secretIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPut, tt.body)
 			result, err := h.Execute(c)
@@ -99,17 +99,8 @@ func TestCreateClientSecretHandler(t *testing.T) {
 func TestCreateClientSecretHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := security.NewCreateClientSecretHandler(bus, handlerstest.ValidClientIdExtractor(), validSecretIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := security.NewCreateClientSecretHandler(bus, handlerstest.ValidClientIdExtractor(), validSecretIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPut, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())
-}
-
-func TestCreateClientSecretHandler_MissingAuthor(t *testing.T) {
-	t.Parallel()
-	bus := handlerstest.NewCommandExecutor(nil)
-	h := security.NewCreateClientSecretHandler(bus, handlerstest.ValidClientIdExtractor(), validSecretIdExtractor(), handlerstest.MissingAuthorExtractor())
-	_, c := handlerstest.NewCtx(http.MethodPut, handlerstest.JsonBody(map[string]string{"plaintext_secret": "s3cr3t"}))
-	_, err := h.Execute(c)
-	assert.Error(t, err)
 }

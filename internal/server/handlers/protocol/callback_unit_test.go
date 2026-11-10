@@ -35,49 +35,67 @@ func TestCallbackHandler(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
-	t.Run("missing_code_returns_error_without_calling_create_session", func(t *testing.T) {
-		t.Parallel()
-		svc := &stubCreateSessionService{}
-		h := protocolHandler.NewCallbackHandler(svc)
-		_, err := h.Execute(newCallbackContext(httptest.NewRecorder(), "/v1/oidc/callback/google?state=s1"))
-		assert.Error(t, err)
-		assert.Empty(t, svc.gotCode)
-	})
+	tests := []struct {
+		name         string
+		target       string
+		svcErr       error
+		svcRedirect  string
+		wantErr      bool
+		wantGotCode  string
+		wantGotEmpty bool
+	}{
+		{
+			name:         "missing_code_returns_error_without_calling_create_session",
+			target:       "/v1/oidc/callback/google?state=s1",
+			wantErr:      true,
+			wantGotEmpty: true,
+		},
+		{
+			name:         "missing_state_returns_error_without_calling_create_session",
+			target:       "/v1/oidc/callback/google?code=c1",
+			wantErr:      true,
+			wantGotEmpty: true,
+		},
+		{
+			name:    "create_session_error_is_propagated",
+			target:  "/v1/oidc/callback/google?code=c1&state=s1",
+			svcErr:  assert.AnError,
+			wantErr: true,
+		},
+		{
+			name:        "success_redirects_to_the_result_from_create_session",
+			target:      "/v1/oidc/callback/google?code=c1&state=s1",
+			svcRedirect: "https://client.example.com/cb?code=gas-code&state=s1",
+		},
+	}
 
-	t.Run("missing_state_returns_error_without_calling_create_session", func(t *testing.T) {
-		t.Parallel()
-		svc := &stubCreateSessionService{}
-		h := protocolHandler.NewCallbackHandler(svc)
-		_, err := h.Execute(newCallbackContext(httptest.NewRecorder(), "/v1/oidc/callback/google?code=c1"))
-		assert.Error(t, err)
-		assert.Empty(t, svc.gotCode)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			svc := &stubCreateSessionService{err: tt.svcErr, redirect: tt.svcRedirect}
+			h := protocolHandler.NewCallbackHandler(svc)
+			w := httptest.NewRecorder()
+			c := newCallbackContext(w, tt.target)
 
-	t.Run("create_session_error_is_propagated", func(t *testing.T) {
-		t.Parallel()
-		svc := &stubCreateSessionService{err: assert.AnError}
-		h := protocolHandler.NewCallbackHandler(svc)
-		_, err := h.Execute(newCallbackContext(httptest.NewRecorder(), "/v1/oidc/callback/google?code=c1&state=s1"))
-		assert.Error(t, err)
-	})
+			result, err := h.Execute(c)
 
-	t.Run("success_redirects_to_the_result_from_create_session", func(t *testing.T) {
-		t.Parallel()
-		svc := &stubCreateSessionService{redirect: "https://client.example.com/cb?code=gas-code&state=s1"}
-		h := protocolHandler.NewCallbackHandler(svc)
-		w := httptest.NewRecorder()
-		c := newCallbackContext(w, "/v1/oidc/callback/google?code=c1&state=s1")
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantGotEmpty {
+					assert.Empty(t, svc.gotCode)
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, "c1", svc.gotCode)
+			assert.Equal(t, "s1", svc.gotState)
+			assert.Equal(t, "google", svc.gotIdpId)
 
-		result, err := h.Execute(c)
-		require.NoError(t, err)
-		assert.Equal(t, "c1", svc.gotCode)
-		assert.Equal(t, "s1", svc.gotState)
-		assert.Equal(t, "google", svc.gotIdpId)
-
-		require.NoError(t, h.Success(c, result))
-		assert.Equal(t, http.StatusFound, w.Code)
-		assert.Equal(t, "https://client.example.com/cb?code=gas-code&state=s1", w.Header().Get("Location"))
-	})
+			require.NoError(t, h.Success(c, result))
+			assert.Equal(t, http.StatusFound, w.Code)
+			assert.Equal(t, "https://client.example.com/cb?code=gas-code&state=s1", w.Header().Get("Location"))
+		})
+	}
 }
 
 func TestCallbackHandler_Default(t *testing.T) {

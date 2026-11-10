@@ -22,45 +22,33 @@ func TestUpdateProtectedResourceNameHandler(t *testing.T) {
 		name       string
 		body       io.Reader
 		prIdFn     func(context.Context) (ids.ProtectedResourceId, bool)
-		userIdFn   func(context.Context) (ids.UserId, bool)
 		busErr     error
 		wantErr    bool
 		wantStatus int
 	}{
 		{
-			name:     "invalid_body_returns_error",
-			body:     bytes.NewBufferString(`{}`),
-			prIdFn:   handlerstest.ValidPrIdExtractor(),
-			userIdFn: handlerstest.ValidUserIdExtractor(),
-			wantErr:  true,
+			name:    "invalid_body_returns_error",
+			body:    bytes.NewBufferString(`{}`),
+			prIdFn:  handlerstest.ValidPrIdExtractor(),
+			wantErr: true,
 		},
 		{
-			name:     "missing_pr_id_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "New Name"}),
-			prIdFn:   handlerstest.MissingPrIdExtractor(),
-			userIdFn: handlerstest.ValidUserIdExtractor(),
-			wantErr:  true,
+			name:    "missing_pr_id_returns_error",
+			body:    handlerstest.JsonBody(map[string]string{"name": "New Name"}),
+			prIdFn:  handlerstest.MissingPrIdExtractor(),
+			wantErr: true,
 		},
 		{
-			name:     "missing_user_id_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "New Name"}),
-			prIdFn:   handlerstest.ValidPrIdExtractor(),
-			userIdFn: handlerstest.MissingUserIdExtractor(),
-			wantErr:  true,
-		},
-		{
-			name:     "bus_error_returns_error",
-			body:     handlerstest.JsonBody(map[string]string{"name": "New Name"}),
-			prIdFn:   handlerstest.ValidPrIdExtractor(),
-			userIdFn: handlerstest.ValidUserIdExtractor(),
-			busErr:   errors.New("bus error"),
-			wantErr:  true,
+			name:    "bus_error_returns_error",
+			body:    handlerstest.JsonBody(map[string]string{"name": "New Name"}),
+			prIdFn:  handlerstest.ValidPrIdExtractor(),
+			busErr:  errors.New("bus error"),
+			wantErr: true,
 		},
 		{
 			name:       "success_returns_204",
 			body:       handlerstest.JsonBody(map[string]string{"name": "New Name"}),
 			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusNoContent,
 		},
@@ -69,7 +57,7 @@ func TestUpdateProtectedResourceNameHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := prHandlers.NewUpdateProtectedResourceNameHandler(bus, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			h := prHandlers.NewUpdateProtectedResourceNameHandler(bus, tt.prIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPatch, tt.body)
 			result, err := h.Execute(c)
@@ -88,7 +76,7 @@ func TestUpdateProtectedResourceNameHandler(t *testing.T) {
 func TestUpdateProtectedResourceNameHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := prHandlers.NewUpdateProtectedResourceNameHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := prHandlers.NewUpdateProtectedResourceNameHandler(bus, handlerstest.ValidPrIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPatch, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

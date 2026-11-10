@@ -3,9 +3,11 @@ package soft_delete_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
-	"testing"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +20,7 @@ import (
 )
 
 func newService(repo *scopemocks.MockRepository) *soft_delete.Service {
-	return soft_delete.NewService(domain_services.NewScopeFinder(repo), repo)
+	return soft_delete.NewService(domain_services.NewScopeFinder(repo), repo, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func TestSoftDelete(t *testing.T) {
@@ -29,20 +31,20 @@ func TestSoftDelete(t *testing.T) {
 		repo := scopemocks.NewMockRepository(t)
 		scopeId := ids.NewScopeId()
 		prId := ids.NewProtectedResourceId()
-		userId := ids.NewUserId()
-		scope := aScope(t, scopeId, prId, userId)
+		subscriptionId := ids.NewSubscriptionId()
+		scope := aScope(t, scopeId, prId, subscriptionId)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 		repo.EXPECT().SoftDelete(mock.Anything, scopeId).Return(nil)
 
 		svc := newService(repo)
 		require.NoError(t, svc.SoftDelete(context.Background(),
-			aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))))
+			aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))))
 	})
 
 	scopeId := ids.NewScopeId()
 	prId := ids.NewProtectedResourceId()
-	userId := ids.NewUserId()
+	subscriptionId := ids.NewSubscriptionId()
 
 	errCases := []struct {
 		desc      string
@@ -56,12 +58,45 @@ func TestSoftDelete(t *testing.T) {
 			wantCode: scopes.ErrScopeNotFound,
 		},
 		{
-			desc: "returns ErrScopeNotSaved when repository fails",
+			desc: "returns ErrInvalidOwnership when author lacks subscription access",
 			cmd: func(t *testing.T) *soft_delete.Command {
-				return aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, ids.NewSubscriptionId())))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
-				scope := aScope(t, scopeId, prId, userId)
+				scope := aScope(t, scopeId, prId, subscriptionId)
+				repo.EXPECT().
+					SearchById(mock.Anything, mock.Anything).
+					Return(scope, nil)
+			},
+			wantCode: scopes.ErrInvalidOwnership,
+		},
+		{
+			desc: "returns forbidden when scope is system resource",
+			cmd: func(t *testing.T) *soft_delete.Command {
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				scope, err := scopes.FromPrimitives(scopes.ScopePrimitives{
+					Id:                  scopeId.String(),
+					Name:                "system-scope",
+					ProtectedResourceId: prId.String(),
+					SubscriptionId:      subscriptionId.String(),
+					IsSystem:            true,
+				})
+				require.NoError(t, err)
+				repo.EXPECT().
+					SearchById(mock.Anything, mock.Anything).
+					Return(scope, nil)
+			},
+			wantCode: scopes.ErrSystemResource,
+		},
+		{
+			desc: "returns ErrScopeNotSaved when repository fails",
+			cmd: func(t *testing.T) *soft_delete.Command {
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				scope := aScope(t, scopeId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)

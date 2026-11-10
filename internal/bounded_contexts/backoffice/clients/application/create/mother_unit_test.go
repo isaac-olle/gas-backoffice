@@ -16,8 +16,7 @@ type commandOpt func(*commandBuilder)
 
 type commandBuilder struct {
 	name              string
-	adminId           ids2.UserId
-	userId            ids2.UserId
+	subscriptionId    ids2.SubscriptionId
 	allowedGrantTypes []string
 	redirectUris      []string
 	public            bool
@@ -42,15 +41,14 @@ func withPublic(public bool) commandOpt {
 func aCommand(t *testing.T, opts ...commandOpt) *create.Command {
 	t.Helper()
 	b := &commandBuilder{
-		name:    "valid-client",
-		adminId: ids2.NewUserId(),
-		userId:  ids2.NewUserId(),
+		name:           "valid-client",
+		subscriptionId: ids2.NewSubscriptionId(),
 	}
 	for _, o := range opts {
 		o(b)
 	}
 	clientId := ids2.NewClientId()
-	ownership := clients.NewOwnership(b.adminId, b.userId)
+	ownership := clients.NewOwnership(b.subscriptionId)
 	cmd := create.NewCommand(clientId, b.name, ownership, b.allowedGrantTypes, b.redirectUris, b.public, false)
 	require.NotNil(t, cmd)
 	return cmd

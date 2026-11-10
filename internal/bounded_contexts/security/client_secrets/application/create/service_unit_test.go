@@ -17,7 +17,9 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	securityEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/security"
 )
 
@@ -29,7 +31,7 @@ func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
 }
 
 func newService(repo client_secrets.Repository, hasher client_secrets.SecretHasher, bus event.Bus, projection *client_projection.ClientProjection) *create.Service {
-	return create.NewService(&fakeClientProjectionRepository{projection: projection}, repo, hasher, bus)
+	return create.NewService(&fakeClientProjectionRepository{projection: projection}, repo, hasher, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func newClientId(t *testing.T) ids2.ClientId {
@@ -46,151 +48,109 @@ func newSecretId(t *testing.T) ids2.ClientSecretId {
 	return id
 }
 
+func authorFor(t *testing.T, subscriptionId ids2.SubscriptionId) *vo.UserAuthor {
+	t.Helper()
+	author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+		[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+	require.NoError(t, err)
+	return author
+}
+
 func TestCreateClientSecretService_HappyPath(t *testing.T) {
 	t.Parallel()
 
 	const plainSecret = "plaintext-secret"
 	const hashedSecret = "$argon2id$hashed"
 
-	adminId := ids2.NewUserId()
-	tenantId := ids2.NewUserId()
+	subscriptionId := ids2.NewSubscriptionId()
 
-	tests := []struct {
-		name          string
-		callerUserId  ids2.UserId
-		callerAdminId ids2.UserId
-	}{
-		{
-			name:          "owning tenant creates a secret for its own client",
-			callerUserId:  tenantId,
-			callerAdminId: adminId,
-		},
-		{
-			name:          "owning admin creates a secret for its tenant's client",
-			callerUserId:  adminId,
-			callerAdminId: adminId,
-		},
-	}
+	id := newSecretId(t)
+	clientId := newClientId(t)
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+	var savedCS *client_secrets.ClientSecret
+	repo := csmocks.NewMockRepository(t)
+	repo.EXPECT().Save(mock.Anything, mock.Anything).Run(func(_ context.Context, cs *client_secrets.ClientSecret) {
+		savedCS = cs
+	}).Return(nil)
 
-			id := newSecretId(t)
-			clientId := newClientId(t)
+	var publishedEvts []event.Event
+	bus := eventmocks.NewMockBus(t)
+	bus.EXPECT().Publish(mock.Anything, mock.Anything).Run(func(_ context.Context, evts []event.Event) {
+		publishedEvts = evts
+	})
 
-			var savedCS *client_secrets.ClientSecret
-			repo := csmocks.NewMockRepository(t)
-			repo.EXPECT().Save(mock.Anything, mock.Anything).Run(func(_ context.Context, cs *client_secrets.ClientSecret) {
-				savedCS = cs
-			}).Return(nil)
+	svc := newService(repo, &mockSecretHasher{hash: hashedSecret}, bus, aClientProjection(clientId, subscriptionId))
 
-			var publishedEvts []event.Event
-			bus := eventmocks.NewMockBus(t)
-			bus.EXPECT().Publish(mock.Anything, mock.Anything).Run(func(_ context.Context, evts []event.Event) {
-				publishedEvts = evts
-			})
+	cmd := create.NewCommand(id, clientId, plainSecret, authorFor(t, subscriptionId))
+	require.NoError(t, svc.Create(context.Background(), cmd))
 
-			svc := newService(repo, &mockSecretHasher{hash: hashedSecret}, bus, aClientProjection(clientId, adminId, tenantId))
+	require.NotNil(t, savedCS)
+	p := savedCS.ToPrimitives()
+	assert.Equal(t, id.String(), p.Id)
+	assert.Equal(t, clientId.String(), p.ClientId)
+	// Ownership is the CLIENT's subscription, not necessarily the caller's own.
+	assert.Equal(t, subscriptionId.String(), p.SubscriptionId)
+	assert.Equal(t, hashedSecret, p.SecretHash)
 
-			cmd := create.NewCommand(id, clientId, tc.callerUserId, tc.callerAdminId, plainSecret)
-			require.NoError(t, svc.Create(context.Background(), cmd))
-
-			require.NotNil(t, savedCS)
-			p := savedCS.ToPrimitives()
-			assert.Equal(t, id.String(), p.Id)
-			assert.Equal(t, clientId.String(), p.ClientId)
-			// Ownership is the CLIENT's owner, not the caller's own ids.
-			assert.Equal(t, tenantId.String(), p.UserId)
-			assert.Equal(t, adminId.String(), p.AdminId)
-			assert.Equal(t, hashedSecret, p.SecretHash)
-
-			require.Len(t, publishedEvts, 1)
-			evt, ok := publishedEvts[0].(securityEvents.ClientSecretCreated)
-			require.True(t, ok, "expected ClientSecretCreated event")
-			assert.Equal(t, clientId.String(), evt.ClientId)
-			assert.Equal(t, id.String(), evt.AggregateID())
-		})
-	}
+	require.Len(t, publishedEvts, 1)
+	evt, ok := publishedEvts[0].(securityEvents.ClientSecretCreated)
+	require.True(t, ok, "expected ClientSecretCreated event")
+	assert.Equal(t, clientId.String(), evt.ClientId)
+	assert.Equal(t, id.String(), evt.AggregateID())
 }
 
 func TestCreateClientSecretService_ErrorCases(t *testing.T) {
 	t.Parallel()
 
-	adminId := ids2.NewUserId()
-	tenantId := ids2.NewUserId()
-	otherAdminId := ids2.NewUserId()
+	subscriptionId := ids2.NewSubscriptionId()
 
 	tests := []struct {
-		name          string
-		callerUserId  ids2.UserId
-		callerAdminId ids2.UserId
-		plainSecret   string
-		hasher        *mockSecretHasher
-		noClient      bool
-		setupRepo     func(repo *csmocks.MockRepository)
-		wantErrCode   app_errors.ErrorCode
+		name        string
+		author      func(t *testing.T) *vo.UserAuthor
+		plainSecret string
+		hasher      *mockSecretHasher
+		noClient    bool
+		setupRepo   func(repo *csmocks.MockRepository)
+		wantErrCode app_errors.ErrorCode
 	}{
 		{
-			name:          "returns not found when client does not exist",
-			callerUserId:  tenantId,
-			callerAdminId: adminId,
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{hash: "hash"},
-			noClient:      true,
-			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
+			name:        "returns not found when client does not exist",
+			author:      func(t *testing.T) *vo.UserAuthor { return authorFor(t, subscriptionId) },
+			plainSecret: "plain",
+			hasher:      &mockSecretHasher{hash: "hash"},
+			noClient:    true,
+			wantErrCode: client_secrets.ErrClientSecretNotCreated,
 		},
 		{
-			name:          "rejects empty plain secret",
-			callerUserId:  tenantId,
-			callerAdminId: adminId,
-			plainSecret:   "",
-			hasher:        &mockSecretHasher{hash: "hash"},
-			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
+			name:        "returns forbidden when author lacks subscription access",
+			author:      func(t *testing.T) *vo.UserAuthor { return authorFor(t, ids2.NewSubscriptionId()) },
+			plainSecret: "plain",
+			hasher:      &mockSecretHasher{hash: "hash"},
+			wantErrCode: sharedDomainServices.SubscriptionAccessDenied,
 		},
 		{
-			name:          "propagates hasher error",
-			callerUserId:  tenantId,
-			callerAdminId: adminId,
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{err: errors.New("hash failed")},
-			wantErrCode:   client_secrets.ErrClientSecretNotCreated,
+			name:        "rejects empty plain secret",
+			author:      func(t *testing.T) *vo.UserAuthor { return authorFor(t, subscriptionId) },
+			plainSecret: "",
+			hasher:      &mockSecretHasher{hash: "hash"},
+			wantErrCode: client_secrets.ErrClientSecretNotCreated,
 		},
 		{
-			name:          "wraps repository save error",
-			callerUserId:  tenantId,
-			callerAdminId: adminId,
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{hash: "hash"},
+			name:        "propagates hasher error",
+			author:      func(t *testing.T) *vo.UserAuthor { return authorFor(t, subscriptionId) },
+			plainSecret: "plain",
+			hasher:      &mockSecretHasher{err: errors.New("hash failed")},
+			wantErrCode: client_secrets.ErrClientSecretNotCreated,
+		},
+		{
+			name:        "wraps repository save error",
+			author:      func(t *testing.T) *vo.UserAuthor { return authorFor(t, subscriptionId) },
+			plainSecret: "plain",
+			hasher:      &mockSecretHasher{hash: "hash"},
 			setupRepo: func(repo *csmocks.MockRepository) {
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			wantErrCode: client_secrets.ErrClientSecretNotSaved,
-		},
-		{
-			name:          "returns forbidden when client belongs to an unrelated user",
-			callerUserId:  ids2.NewUserId(),
-			callerAdminId: ids2.NewUserId(),
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{hash: "hash"},
-			wantErrCode:   client_secrets.ErrInvalidOwnership,
-		},
-		{
-			name:          "returns forbidden for a sibling tenant under the same admin",
-			callerUserId:  ids2.NewUserId(),
-			callerAdminId: adminId,
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{hash: "hash"},
-			wantErrCode:   client_secrets.ErrInvalidOwnership,
-		},
-		{
-			name:          "returns forbidden for a different admin",
-			callerUserId:  otherAdminId,
-			callerAdminId: otherAdminId,
-			plainSecret:   "plain",
-			hasher:        &mockSecretHasher{hash: "hash"},
-			wantErrCode:   client_secrets.ErrInvalidOwnership,
 		},
 	}
 
@@ -208,12 +168,12 @@ func TestCreateClientSecretService_ErrorCases(t *testing.T) {
 			clientId := newClientId(t)
 			var projection *client_projection.ClientProjection
 			if !tc.noClient {
-				projection = aClientProjection(clientId, adminId, tenantId)
+				projection = aClientProjection(clientId, subscriptionId)
 			}
 
 			svc := newService(repo, tc.hasher, bus, projection)
 
-			cmd := create.NewCommand(newSecretId(t), clientId, tc.callerUserId, tc.callerAdminId, tc.plainSecret)
+			cmd := create.NewCommand(newSecretId(t), clientId, tc.plainSecret, tc.author(t))
 			err := svc.Create(context.Background(), cmd)
 
 			assertErrCode(t, err, tc.wantErrCode)

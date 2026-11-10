@@ -20,8 +20,6 @@ func TestRemoveScopeAllowedClientHandler(t *testing.T) {
 		name       string
 		scopeIdFn  func(context.Context) (ids2.ScopeId, bool)
 		clientIdFn func(context.Context) (ids2.ClientId, bool)
-		prIdFn     func(context.Context) (ids2.ProtectedResourceId, bool)
-		userIdFn   func(context.Context) (ids2.UserId, bool)
 		busErr     error
 		wantErr    bool
 		wantStatus int
@@ -30,40 +28,18 @@ func TestRemoveScopeAllowedClientHandler(t *testing.T) {
 			name:       "missing_scope_id_returns_error",
 			scopeIdFn:  handlerstest.MissingScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    true,
 		},
 		{
 			name:       "missing_client_id_returns_error",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.MissingClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
-			wantErr:    true,
-		},
-		{
-			name:       "missing_pr_id_returns_error",
-			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.MissingPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
-			wantErr:    true,
-		},
-		{
-			name:       "missing_user_id_returns_error",
-			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.MissingUserIdExtractor(),
 			wantErr:    true,
 		},
 		{
 			name:       "bus_error_returns_error",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			busErr:     errors.New("bus error"),
 			wantErr:    true,
 		},
@@ -71,8 +47,6 @@ func TestRemoveScopeAllowedClientHandler(t *testing.T) {
 			name:       "success_returns_204",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusNoContent,
 		},
@@ -81,7 +55,7 @@ func TestRemoveScopeAllowedClientHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := scopeHandlers.NewRemoveScopeAllowedClientHandler(bus, tt.scopeIdFn, tt.clientIdFn, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			h := scopeHandlers.NewRemoveScopeAllowedClientHandler(bus, tt.scopeIdFn, tt.clientIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 			result, err := h.Execute(c)
@@ -100,7 +74,7 @@ func TestRemoveScopeAllowedClientHandler(t *testing.T) {
 func TestRemoveScopeAllowedClientHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := scopeHandlers.NewRemoveScopeAllowedClientHandler(bus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidClientIdExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := scopeHandlers.NewRemoveScopeAllowedClientHandler(bus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidClientIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

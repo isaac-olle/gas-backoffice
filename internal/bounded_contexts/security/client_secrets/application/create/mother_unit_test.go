@@ -31,10 +31,9 @@ func (f *fakeClientProjectionRepository) Find(_ context.Context, _ ids2.ClientId
 	return f.projection, nil
 }
 
-func aClientProjection(clientId ids2.ClientId, adminId, userId ids2.UserId) *client_projection.ClientProjection {
+func aClientProjection(clientId ids2.ClientId, subscriptionId ids2.SubscriptionId) *client_projection.ClientProjection {
 	return &client_projection.ClientProjection{
-		ClientId: clientId.String(),
-		UserId:   userId.String(),
-		AdminId:  adminId.String(),
+		ClientId:       clientId.String(),
+		SubscriptionId: subscriptionId.String(),
 	}
 }

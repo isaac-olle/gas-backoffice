@@ -3,6 +3,7 @@ package protected_resources_test
 import (
 	"context"
 	"errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"net/http"
 	"testing"
@@ -18,15 +19,15 @@ import (
 func TestGetProtectedResourceHandler(t *testing.T) {
 	t.Parallel()
 	validPR, _ := protectedResourcesAggregate.FromPrimitives(protectedResourcesAggregate.ProtectedResourcePrimitives{
-		Id:      handlerstest.PrID,
-		Name:    "My Resource",
-		AdminId: handlerstest.AdminID,
-		UserId:  handlerstest.UserId,
+		Id:             handlerstest.PrID,
+		Name:           "My Resource",
+		SubscriptionId: handlerstest.SubscriptionID,
 	})
 
 	tests := []struct {
 		name       string
 		prIdFn     func(context.Context) (ids.ProtectedResourceId, bool)
+		authorFn   func(context.Context) (*vo.UserAuthor, bool)
 		busResult  any
 		busErr     error
 		wantErr    bool
@@ -36,6 +37,12 @@ func TestGetProtectedResourceHandler(t *testing.T) {
 			name:    "missing_pr_id_returns_error",
 			prIdFn:  handlerstest.MissingPrIdExtractor(),
 			wantErr: true,
+		},
+		{
+			name:     "missing_author_returns_error",
+			prIdFn:   handlerstest.ValidPrIdExtractor(),
+			authorFn: handlerstest.MissingAuthorExtractor(),
+			wantErr:  true,
 		},
 		{
 			name:    "bus_error_returns_error",
@@ -54,8 +61,12 @@ func TestGetProtectedResourceHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			authorFn := tt.authorFn
+			if authorFn == nil {
+				authorFn = handlerstest.ValidAuthorExtractor()
+			}
 			bus := handlerstest.NewQueryBus(tt.busResult, tt.busErr)
-			h := prHandlers.NewGetProtectedResourceHandler(bus, tt.prIdFn, handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+			h := prHandlers.NewGetProtectedResourceHandler(bus, tt.prIdFn, authorFn)
 
 			_, c := handlerstest.NewCtx(http.MethodGet, nil)
 			result, err := h.Execute(c)
@@ -74,7 +85,7 @@ func TestGetProtectedResourceHandler(t *testing.T) {
 func TestGetProtectedResourceHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewQueryBus(nil, nil)
-	h := prHandlers.NewGetProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := prHandlers.NewGetProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidAuthorExtractor())
 	_, c := handlerstest.NewCtx(http.MethodGet, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

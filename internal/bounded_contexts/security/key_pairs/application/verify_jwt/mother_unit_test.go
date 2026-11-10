@@ -13,15 +13,19 @@ import (
 
 // mockTokenVerifier stubs key_pairs.TokenVerifier.
 type mockTokenVerifier struct {
-	claims     *key_pairs.TokenClaims
-	err        error
-	gotToken   string
-	gotKeyPair *key_pairs.KeyPair
+	claims              map[string]any
+	err                 error
+	gotToken            string
+	gotKeyPair          *key_pairs.KeyPair
+	gotExpectedClaims   map[string]any
+	gotVerifyExpiration bool
 }
 
-func (m *mockTokenVerifier) Verify(_ context.Context, token string, kp *key_pairs.KeyPair) (*key_pairs.TokenClaims, error) {
+func (m *mockTokenVerifier) Verify(_ context.Context, token string, kp *key_pairs.KeyPair, expectedClaims map[string]any, verifyExpiration bool) (map[string]any, error) {
 	m.gotToken = token
 	m.gotKeyPair = kp
+	m.gotExpectedClaims = expectedClaims
+	m.gotVerifyExpiration = verifyExpiration
 	return m.claims, m.err
 }
 
@@ -53,15 +57,12 @@ func newKeyPairMother(t *testing.T) *key_pairs.KeyPair {
 	return kp
 }
 
-// newValidClaimsMother builds a valid TokenClaims struct.
-func newValidClaimsMother(t *testing.T, issuer string) *key_pairs.TokenClaims {
-	t.Helper()
-	claims, err := key_pairs.NewTokenClaims(map[string]any{
+// newValidClaimsMother builds a valid claims map.
+func newValidClaimsMother(issuer string) map[string]any {
+	return map[string]any{
 		"sub":  uuid.New().String(),
 		"iss":  issuer,
 		"aud":  issuer,
 		"role": "admin",
-	})
-	require.NoError(t, err)
-	return claims
+	}
 }

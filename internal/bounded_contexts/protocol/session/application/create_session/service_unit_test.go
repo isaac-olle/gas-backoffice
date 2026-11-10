@@ -135,104 +135,96 @@ func successfulAuthentication() session.IdpAuthentication {
 func TestCreateSession(t *testing.T) {
 	t.Parallel()
 
-	t.Run("decodes the idp state, exchanges the code, and creates an already active session", func(t *testing.T) {
-		t.Parallel()
-		_, client, payload := newFixture(t)
-		idpClient := &stubIdpClient{auth: successfulAuthentication()}
-		sessionRepo := &stubSessionRepo{}
+	tests := []struct {
+		name         string
+		stateErr     error
+		noClient     bool
+		idpClientErr error
+		callbackIdp  string
+		code         string
+		wantErr      bool
+		check        func(t *testing.T, idpClient *stubIdpClient, sessionRepo *stubSessionRepo, redirect string)
+	}{
+		{
+			name:        "decodes the idp state, exchanges the code, and creates an already active session",
+			callbackIdp: "google",
+			code:        "the-code",
+			check: func(t *testing.T, idpClient *stubIdpClient, sessionRepo *stubSessionRepo, redirect string) {
+				assert.Equal(t, "the-code", idpClient.gotCode)
+				require.NotNil(t, sessionRepo.saved)
+				assert.Equal(t, "active", sessionRepo.saved.ToPrimitives().SessionState)
+				assert.Equal(t, redirectURI+"?code=gas-code&state=client-state", redirect)
+			},
+		},
+		{
+			name:        "rejects an invalid or expired idp state",
+			stateErr:    assert.AnError,
+			callbackIdp: "google",
+			code:        "code",
+			wantErr:     true,
+		},
+		{
+			name:        "rejects a state whose idp reference name does not match the callback path",
+			callbackIdp: "some-other-idp",
+			code:        "code",
+			wantErr:     true,
+			check: func(t *testing.T, idpClient *stubIdpClient, sessionRepo *stubSessionRepo, redirect string) {
+				assert.Empty(t, idpClient.gotCode)
+			},
+		},
+		{
+			name:         "returns error without saving when the idp exchange fails",
+			idpClientErr: assert.AnError,
+			callbackIdp:  "google",
+			code:         "code",
+			wantErr:      true,
+			check: func(t *testing.T, idpClient *stubIdpClient, sessionRepo *stubSessionRepo, redirect string) {
+				assert.Nil(t, sessionRepo.saved)
+			},
+		},
+		{
+			name:        "returns error when the client cannot be found",
+			noClient:    true,
+			callbackIdp: "google",
+			code:        "code",
+			wantErr:     true,
+		},
+	}
 
-		svc := create_session.NewService(
-			&stubStateCodec{payload: payload},
-			domain_services.NewClientFinder(&stubClientRepo{client: client}),
-			protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
-			idpClient,
-			sessionRepo,
-			fixedCodeGen{},
-			noopEventBus{},
-		)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, client, payload := newFixture(t)
+			if tt.noClient {
+				client = nil
+			}
 
-		redirect, err := svc.CreateSession(context.Background(), "the-code", "opaque-state", "google")
+			idpClient := &stubIdpClient{err: tt.idpClientErr, auth: successfulAuthentication()}
+			sessionRepo := &stubSessionRepo{}
 
-		require.NoError(t, err)
-		assert.Equal(t, "the-code", idpClient.gotCode)
-		require.NotNil(t, sessionRepo.saved)
-		assert.Equal(t, "active", sessionRepo.saved.ToPrimitives().SessionState)
-		assert.Equal(t, redirectURI+"?code=gas-code&state=client-state", redirect)
-	})
+			svc := create_session.NewService(
+				&stubStateCodec{payload: payload, err: tt.stateErr},
+				domain_services.NewClientFinder(&stubClientRepo{client: client}),
+				protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
+				idpClient,
+				sessionRepo,
+				fixedCodeGen{},
+				noopEventBus{},
+			)
 
-	t.Run("rejects an invalid or expired idp state", func(t *testing.T) {
-		t.Parallel()
-		_, client, _ := newFixture(t)
-		svc := create_session.NewService(
-			&stubStateCodec{err: assert.AnError},
-			domain_services.NewClientFinder(&stubClientRepo{client: client}),
-			protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
-			&stubIdpClient{},
-			&stubSessionRepo{},
-			fixedCodeGen{},
-			noopEventBus{},
-		)
+			redirect, err := svc.CreateSession(context.Background(), tt.code, "opaque-state", tt.callbackIdp)
 
-		_, err := svc.CreateSession(context.Background(), "code", "bad-state", "google")
-
-		assert.Error(t, err)
-	})
-
-	t.Run("rejects a state whose idp reference name does not match the callback path", func(t *testing.T) {
-		t.Parallel()
-		_, client, payload := newFixture(t)
-		idpClient := &stubIdpClient{}
-		svc := create_session.NewService(
-			&stubStateCodec{payload: payload},
-			domain_services.NewClientFinder(&stubClientRepo{client: client}),
-			protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
-			idpClient,
-			&stubSessionRepo{},
-			fixedCodeGen{},
-			noopEventBus{},
-		)
-
-		_, err := svc.CreateSession(context.Background(), "code", "opaque-state", "some-other-idp")
-
-		assert.Error(t, err)
-		assert.Empty(t, idpClient.gotCode)
-	})
-
-	t.Run("returns error without saving when the idp exchange fails", func(t *testing.T) {
-		t.Parallel()
-		_, client, payload := newFixture(t)
-		sessionRepo := &stubSessionRepo{}
-		svc := create_session.NewService(
-			&stubStateCodec{payload: payload},
-			domain_services.NewClientFinder(&stubClientRepo{client: client}),
-			protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
-			&stubIdpClient{err: assert.AnError},
-			sessionRepo,
-			fixedCodeGen{},
-			noopEventBus{},
-		)
-
-		_, err := svc.CreateSession(context.Background(), "code", "opaque-state", "google")
-
-		assert.Error(t, err)
-		assert.Nil(t, sessionRepo.saved)
-	})
-
-	t.Run("returns error when the client cannot be found", func(t *testing.T) {
-		t.Parallel()
-		_, _, payload := newFixture(t)
-		svc := create_session.NewService(
-			&stubStateCodec{payload: payload},
-			domain_services.NewClientFinder(&stubClientRepo{client: nil}),
-			protocolSharedDS.NewIdentityProviderFinder(&stubIdpRepo{idp: aGoogleIdp()}),
-			&stubIdpClient{},
-			&stubSessionRepo{},
-			fixedCodeGen{},
-			noopEventBus{},
-		)
-
-		_, err := svc.CreateSession(context.Background(), "code", "opaque-state", "google")
-
-		assert.Error(t, err)
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.check != nil {
+					tt.check(t, idpClient, sessionRepo, redirect)
+				}
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, idpClient, sessionRepo, redirect)
+			}
+		})
+	}
 }

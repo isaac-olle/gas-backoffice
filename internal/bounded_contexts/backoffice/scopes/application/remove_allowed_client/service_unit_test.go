@@ -3,13 +3,15 @@ package remove_allowed_client_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,8 +23,8 @@ import (
 	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
 
-func newService(repo *scopemocks.MockRepository, bus *eventmocks.MockBus) *remove_allowed_client.Service {
-	return remove_allowed_client.NewService(domain_services.NewScopeFinder(repo), repo, bus)
+func newService(repo *scopemocks.MockRepository, bus *eventmocks.MockBus, clientRepo *clientProjectionRepoStub) *remove_allowed_client.Service {
+	return remove_allowed_client.NewService(domain_services.NewScopeFinder(repo), repo, bus, domain_services.NewClientProjectionFinder(clientRepo), sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func TestRemoveAllowedClient(t *testing.T) {
@@ -33,9 +35,10 @@ func TestRemoveAllowedClient(t *testing.T) {
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		prId := ids.NewProtectedResourceId()
-		userId := ids.NewUserId()
+		subscriptionId := ids.NewSubscriptionId()
 		clientId := ids.NewClientId()
-		scope, scopeId := aScopeWithClient(t, clientId, prId, userId)
+		scope, scopeId := aScopeWithClient(t, clientId, prId, subscriptionId)
+		clientRepo := &clientProjectionRepoStub{projection: &scopes.ClientProjection{ClientId: clientId, SubscriptionId: subscriptionId}}
 
 		var saved *scopes.Scope
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
@@ -49,22 +52,22 @@ func TestRemoveAllowedClient(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ScopeClientRemovedType
 			}))
 
-		svc := newService(repo, bus)
+		svc := newService(repo, bus, clientRepo)
 		require.NoError(t, svc.RemoveAllowedClient(context.Background(),
-			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()),
-				withProtectedResourceId(prId.String()), withUserId(userId.String()))))
+			aCommand(t, withScopeId(scopeId.String()), withClientId(clientId.String()), withAuthor(authorFor(t, subscriptionId)))))
 
 		assert.Empty(t, saved.ToPrimitives().AllowedClientIds)
 	})
 
 	prId := ids.NewProtectedResourceId()
-	userId := ids.NewUserId()
+	subscriptionId := ids.NewSubscriptionId()
 
 	errCases := []struct {
-		desc      string
-		cmd       func(t *testing.T) *remove_allowed_client.Command
-		setupRepo func(repo *scopemocks.MockRepository)
-		wantCode  app_errors.ErrorCode
+		desc       string
+		cmd        func(t *testing.T) *remove_allowed_client.Command
+		setupRepo  func(repo *scopemocks.MockRepository)
+		clientRepo *clientProjectionRepoStub
+		wantCode   app_errors.ErrorCode
 	}{
 		{
 			desc:     "returns ErrScopeNotFound for invalid scope id",
@@ -87,13 +90,51 @@ func TestRemoveAllowedClient(t *testing.T) {
 			wantCode: scopes.ErrScopeNotFound,
 		},
 		{
-			desc: "returns ErrScopeNotSaved when save fails",
+			desc: "returns forbidden when author lacks subscription access",
 			cmd: func(t *testing.T) *remove_allowed_client.Command {
-				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withAuthor(authorFor(t, ids.NewSubscriptionId())))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				clientId := ids.NewClientId()
-				scope, _ := aScopeWithClient(t, clientId, prId, userId)
+				scope, _ := aScopeWithClient(t, clientId, prId, subscriptionId)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(scope, nil)
+			},
+			wantCode: scopes.ErrInvalidOwnership,
+		},
+		{
+			desc: "returns not found when client projection lookup fails",
+			cmd: func(t *testing.T) *remove_allowed_client.Command {
+				return aCommand(t, withAuthor(authorFor(t, subscriptionId)))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				clientId := ids.NewClientId()
+				scope, _ := aScopeWithClient(t, clientId, prId, subscriptionId)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(scope, nil)
+			},
+			clientRepo: &clientProjectionRepoStub{err: fmt.Errorf("db error")},
+			wantCode:   "CLIENT_PROJECTION_NOT_FOUND",
+		},
+		{
+			desc: "returns forbidden when client and scope belong to different subscriptions",
+			cmd: func(t *testing.T) *remove_allowed_client.Command {
+				return aCommand(t, withAuthor(authorFor(t, subscriptionId)))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				clientId := ids.NewClientId()
+				scope, _ := aScopeWithClient(t, clientId, prId, subscriptionId)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(scope, nil)
+			},
+			clientRepo: &clientProjectionRepoStub{projection: &scopes.ClientProjection{ClientId: ids.NewClientId(), SubscriptionId: ids.NewSubscriptionId()}},
+			wantCode:   scopes.ErrInvalidOwnership,
+		},
+		{
+			desc: "returns ErrScopeNotSaved when save fails",
+			cmd: func(t *testing.T) *remove_allowed_client.Command {
+				return aCommand(t, withAuthor(authorFor(t, subscriptionId)))
+			},
+			setupRepo: func(repo *scopemocks.MockRepository) {
+				clientId := ids.NewClientId()
+				scope, _ := aScopeWithClient(t, clientId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -106,11 +147,11 @@ func TestRemoveAllowedClient(t *testing.T) {
 		{
 			desc: "returns conflict when repository reports concurrent modification",
 			cmd: func(t *testing.T) *remove_allowed_client.Command {
-				return aCommand(t, withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withAuthor(authorFor(t, subscriptionId)))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				clientId := ids.NewClientId()
-				scope, _ := aScopeWithClient(t, clientId, prId, userId)
+				scope, _ := aScopeWithClient(t, clientId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -131,8 +172,12 @@ func TestRemoveAllowedClient(t *testing.T) {
 			if tc.setupRepo != nil {
 				tc.setupRepo(repo)
 			}
+			clientRepo := tc.clientRepo
+			if clientRepo == nil {
+				clientRepo = &clientProjectionRepoStub{projection: &scopes.ClientProjection{ClientId: ids.NewClientId(), SubscriptionId: subscriptionId}}
+			}
 
-			svc := newService(repo, bus)
+			svc := newService(repo, bus, clientRepo)
 			err := svc.RemoveAllowedClient(context.Background(), tc.cmd(t))
 
 			assertErrCode(t, err, tc.wantCode)

@@ -28,35 +28,42 @@ func aClient(t *testing.T) *clients.Client {
 func TestClientFinder(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns client when repo finds it", func(t *testing.T) {
-		t.Parallel()
-		expected := aClient(t)
-		repo := clientmocks.NewMockRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(expected, nil)
+	tests := []struct {
+		name       string
+		repoClient *clients.Client
+		repoErr    error
+		wantErr    bool
+	}{
+		{
+			name:       "returns client when repo finds it",
+			repoClient: aClient(t),
+		},
+		{
+			name:    "propagates error from repository",
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+		{
+			name:       "returns not found error when repo returns nil",
+			repoClient: nil,
+			wantErr:    true,
+		},
+	}
 
-		finder := domain_services.NewClientFinder(repo)
-		got, err := finder.Find(context.Background(), ids.NewClientId())
-		require.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := clientmocks.NewMockRepository(t)
+			repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(tt.repoClient, tt.repoErr)
 
-	t.Run("propagates error from repository", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(nil, fmt.Errorf("db error"))
+			finder := domain_services.NewClientFinder(repo)
+			got, err := finder.Find(context.Background(), ids.NewClientId())
 
-		finder := domain_services.NewClientFinder(repo)
-		_, err := finder.Find(context.Background(), ids.NewClientId())
-		assert.Error(t, err)
-	})
-
-	t.Run("returns not found error when repo returns nil", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(nil, nil)
-
-		finder := domain_services.NewClientFinder(repo)
-		_, err := finder.Find(context.Background(), ids.NewClientId())
-		assert.Error(t, err)
-	})
+			require.Equal(t, tt.wantErr, err != nil)
+			if tt.wantErr {
+				return
+			}
+			assert.Equal(t, tt.repoClient, got)
+		})
+	}
 }

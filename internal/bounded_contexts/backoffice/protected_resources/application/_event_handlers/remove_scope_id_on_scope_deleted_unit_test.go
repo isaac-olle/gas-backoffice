@@ -29,7 +29,7 @@ func TestRemoveScopeIdOnScopeDeleted(t *testing.T) {
 	t.Run("removes scope id from protected resource scope ids and saves it", func(t *testing.T) {
 		t.Parallel()
 		repo := prmocks.NewMockRepository(t)
-		pr := aPRForEventHandlers(t, ids2.NewUserId())
+		pr := aPRForEventHandlers(t, ids2.NewSubscriptionId())
 		prId, err := ids2.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 		require.NoError(t, err)
 		scopeId := ids2.NewScopeId()
@@ -72,7 +72,7 @@ func TestRemoveScopeIdOnScopeDeleted(t *testing.T) {
 			desc: "maps concurrent modification to conflict",
 			evt:  backofficeevents.NewScopeDeleted(ids2.NewScopeId().String(), ids2.NewProtectedResourceId().String()),
 			setupRepo: func(repo *prmocks.MockRepository) {
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aPRForEventHandlers(t, ids2.NewUserId()), nil)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aPRForEventHandlers(t, ids2.NewSubscriptionId()), nil)
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(persistance.ErrConcurrentModification)
 			},
 			wantCode: protected_resources.ErrProtectedResourceConcurrentModification,
@@ -81,7 +81,7 @@ func TestRemoveScopeIdOnScopeDeleted(t *testing.T) {
 			desc: "wraps repository save failure",
 			evt:  backofficeevents.NewScopeDeleted(ids2.NewScopeId().String(), ids2.NewProtectedResourceId().String()),
 			setupRepo: func(repo *prmocks.MockRepository) {
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aPRForEventHandlers(t, ids2.NewUserId()), nil)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aPRForEventHandlers(t, ids2.NewSubscriptionId()), nil)
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(fmt.Errorf("db error"))
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotSaved,

@@ -29,37 +29,55 @@ func (s *stubRepository) Latest(_ context.Context, _ int) ([]error_logs.ErrorLog
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
-	t.Run("saves the error log built from the command", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{}
-		occurredAt := time.Now()
-		cmd := create.NewCommand(
-			"e1", "INTERNAL", "X", "boom",
-			map[string]any{"k": "v"}, []string{"cause1"}, map[string]any{"trace": true},
-			"req-1", &occurredAt,
-		)
+	occurredAt := time.Now()
 
-		err := create.NewService(repo).Create(context.Background(), cmd)
-		require.NoError(t, err)
-		assert.Equal(t, error_logs.ErrorLog{
-			ErrorId:     "e1",
-			Type:        "INTERNAL",
-			Code:        "X",
-			Description: "boom",
-			Details:     map[string]any{"k": "v"},
-			Cause:       []string{"cause1"},
-			StackTrace:  map[string]any{"trace": true},
-			RequestId:   "req-1",
-			OccurredAt:  &occurredAt,
-		}, repo.gotLog)
-	})
+	tests := []struct {
+		name       string
+		cmd        *create.Command
+		repoErr    error
+		wantErr    bool
+		wantResult error_logs.ErrorLog
+	}{
+		{
+			name: "saves the error log built from the command",
+			cmd: create.NewCommand(
+				"e1", "INTERNAL", "X", "boom",
+				map[string]any{"k": "v"}, []string{"cause1"}, map[string]any{"trace": true},
+				"req-1", &occurredAt,
+			),
+			wantResult: error_logs.ErrorLog{
+				ErrorId:     "e1",
+				Type:        "INTERNAL",
+				Code:        "X",
+				Description: "boom",
+				Details:     map[string]any{"k": "v"},
+				Cause:       []string{"cause1"},
+				StackTrace:  map[string]any{"trace": true},
+				RequestId:   "req-1",
+				OccurredAt:  &occurredAt,
+			},
+		},
+		{
+			name:    "returns error when repo errors",
+			cmd:     create.NewCommand("e1", "INTERNAL", "X", "boom", nil, nil, nil, "", nil),
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+	}
 
-	t.Run("returns error when repo errors", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{err: fmt.Errorf("db error")}
-		cmd := create.NewCommand("e1", "INTERNAL", "X", "boom", nil, nil, nil, "", nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := &stubRepository{err: tt.repoErr}
 
-		err := create.NewService(repo).Create(context.Background(), cmd)
-		assert.Error(t, err)
-	})
+			err := create.NewService(repo).Create(context.Background(), tt.cmd)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantResult, repo.gotLog)
+		})
+	}
 }

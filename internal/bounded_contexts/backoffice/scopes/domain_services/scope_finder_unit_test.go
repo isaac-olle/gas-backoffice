@@ -18,36 +18,54 @@ import (
 func TestScopeFinder_Find(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns scope when found", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-		expected := aScope(t)
+	tests := []struct {
+		name          string
+		repoScope     *scopes.Scope
+		repoErr       error
+		wantErr       bool
+		wantNilResult bool
+	}{
+		{
+			name:      "returns scope when found",
+			repoScope: aScope(t),
+		},
+		{
+			name:    "propagates repository error",
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+		{
+			name:          "returns not found error when repo returns nil",
+			repoScope:     nil,
+			wantErr:       true,
+			wantNilResult: true,
+		},
+	}
 
-		repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(expected, nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := scopemocks.NewMockRepository(t)
+			repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(tt.repoScope, tt.repoErr)
 
-		finder := domain_services.NewScopeFinder(repo)
-		got, err := finder.Find(context.Background(), ids2.NewScopeId())
+			finder := domain_services.NewScopeFinder(repo)
+			got, err := finder.Find(context.Background(), ids2.NewScopeId())
 
-		require.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
-
-	t.Run("propagates repository error", func(t *testing.T) {
-		t.Parallel()
-		repo := scopemocks.NewMockRepository(t)
-
-		repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
-
-		finder := domain_services.NewScopeFinder(repo)
-		_, err := finder.Find(context.Background(), ids2.NewScopeId())
-
-		assert.Error(t, err)
-	})
+			require.Equal(t, tt.wantErr, err != nil)
+			if tt.wantErr {
+				if tt.wantNilResult {
+					assert.Nil(t, got)
+				}
+				return
+			}
+			assert.Equal(t, tt.repoScope, got)
+		})
+	}
 }
 
 func aScope(t *testing.T) *scopes.Scope {
 	t.Helper()
-	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewUserId(), ids2.NewUserId())
+	ownership := scopes.NewOwnershipFromVos(ids2.NewProtectedResourceId(), ids2.NewSubscriptionId())
 	scope, err := scopes.NewScope(ids2.NewScopeId(), "read:users", ownership, false)
 	require.NoError(t, err)
 	scope.PullDomainEvents()

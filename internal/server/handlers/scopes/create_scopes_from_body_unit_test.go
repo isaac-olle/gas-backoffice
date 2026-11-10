@@ -20,7 +20,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 	tests := []struct {
 		name           string
 		prIdFn         func(context.Context) (ids2.ProtectedResourceId, bool)
-		userIdFn       func(context.Context) (ids2.UserId, bool)
 		scopeIdFn      func(context.Context) (ids2.ScopeId, bool)
 		body           interface{}
 		queryErr       error
@@ -33,7 +32,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:           "empty_scopes_no_dispatches_success",
 			body:           map[string][]string{"scopes": {}},
 			prIdFn:         handlerstest.ValidPrIdExtractor(),
-			userIdFn:       handlerstest.ValidUserIdExtractor(),
 			scopeIdFn:      handlerstest.NewScopeIdExtractor(),
 			wantErr:        false,
 			wantStatus:     http.StatusOK,
@@ -43,7 +41,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:           "single_scope_one_dispatch",
 			body:           map[string][]string{"scopes": {"read"}},
 			prIdFn:         handlerstest.ValidPrIdExtractor(),
-			userIdFn:       handlerstest.ValidUserIdExtractor(),
 			scopeIdFn:      handlerstest.NewScopeIdExtractor(),
 			wantErr:        false,
 			wantStatus:     http.StatusOK,
@@ -53,7 +50,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:           "multi_scope_multiple_dispatches",
 			body:           map[string][]string{"scopes": {"read", "write", "delete"}},
 			prIdFn:         handlerstest.ValidPrIdExtractor(),
-			userIdFn:       handlerstest.ValidUserIdExtractor(),
 			scopeIdFn:      handlerstest.NewScopeIdExtractor(),
 			wantErr:        false,
 			wantStatus:     http.StatusOK,
@@ -63,7 +59,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:      "bus_error_returns_error",
 			body:      map[string][]string{"scopes": {"read"}},
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			scopeIdFn: handlerstest.NewScopeIdExtractor(),
 			busErr:    errors.New("bus error"),
 			wantErr:   true,
@@ -72,15 +67,6 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:      "missing_pr_id_when_scopes_non_empty",
 			body:      map[string][]string{"scopes": {"read"}},
 			prIdFn:    handlerstest.MissingPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
-			scopeIdFn: handlerstest.NewScopeIdExtractor(),
-			wantErr:   true,
-		},
-		{
-			name:      "missing_user_id_when_scopes_non_empty",
-			body:      map[string][]string{"scopes": {"read"}},
-			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.MissingUserIdExtractor(),
 			scopeIdFn: handlerstest.NewScopeIdExtractor(),
 			wantErr:   true,
 		},
@@ -88,9 +74,8 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 			name:      "protected_resource_ownership_check_error_returns_error",
 			body:      map[string][]string{"scopes": {"read"}},
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			scopeIdFn: handlerstest.NewScopeIdExtractor(),
-			queryErr:  errors.New("protected resource does not belong to the provided user"),
+			queryErr:  errors.New("protected resource does not belong to an accessible subscription"),
 			wantErr:   true,
 		},
 	}
@@ -98,8 +83,8 @@ func TestCreateScopesFromBodyHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			qryBus := handlerstest.NewQueryBus(nil, tt.queryErr)
-			h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor(), tt.scopeIdFn)
+			qryBus := handlerstest.NewQueryBus(handlerstest.SubscriptionID, tt.queryErr)
+			h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, tt.prIdFn, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, handlerstest.JsonBody(tt.body))
 			result, err := h.Execute(c)
@@ -120,7 +105,7 @@ func TestCreateScopesFromBodyHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
 	qryBus := handlerstest.NewQueryBus(nil, nil)
-	h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor(), handlerstest.ValidScopeIdExtractor())
+	h := scopeHandlers.NewCreateScopesFromBodyHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())
@@ -134,8 +119,6 @@ func TestCreateScopesFromBodyHandler_InvalidBody(t *testing.T) {
 		bus,
 		qryBus,
 		handlerstest.ValidPrIdExtractor(),
-		handlerstest.ValidUserIdExtractor(),
-		handlerstest.ValidAuthorExtractor(),
 		handlerstest.NewScopeIdExtractor(),
 	)
 	_, c := handlerstest.NewCtx(http.MethodPost, strings.NewReader("not valid json"))

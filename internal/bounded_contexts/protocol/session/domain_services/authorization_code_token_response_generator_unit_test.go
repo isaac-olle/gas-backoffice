@@ -34,60 +34,68 @@ func TestAuthorizationCodeTokenResponseGenerator_Generate(t *testing.T) {
 
 	identity := session.NewUserIdentityProjection("user-subject", "")
 
-	t.Run("includes an id_token when the session has the openid scope", func(t *testing.T) {
-		t.Parallel()
-		sess := makeSession(t) // scope: "openid", per mother_test.go
-		gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
-			&stubAccessTokenGenerator{token: "access-token"},
-			&stubIDTokenGenerator{token: "id-token"},
-		)
+	tests := []struct {
+		name          string
+		makeSession   func(t *testing.T) *session.AuthorizationCodeSession
+		accessToken   string
+		accessErr     error
+		idToken       string
+		idErr         error
+		wantErr       bool
+		wantIDToken   string
+		wantNoIDToken bool
+	}{
+		{
+			name:        "includes an id_token when the session has the openid scope",
+			makeSession: makeSession, // scope: "openid", per mother_test.go
+			accessToken: "access-token",
+			idToken:     "id-token",
+			wantIDToken: "id-token",
+		},
+		{
+			name:          "does not request an id_token when the session lacks the openid scope",
+			makeSession:   func(t *testing.T) *session.AuthorizationCodeSession { return makeSessionWithScope(t, "read") },
+			accessToken:   "access-token",
+			idToken:       "id-token",
+			wantNoIDToken: true,
+		},
+		{
+			name:        "returns error when generating the access token fails",
+			makeSession: makeSession,
+			accessErr:   assert.AnError,
+			wantErr:     true,
+		},
+		{
+			name:        "returns error when generating the id_token fails",
+			makeSession: makeSession,
+			accessToken: "access-token",
+			idErr:       assert.AnError,
+			wantErr:     true,
+		},
+	}
 
-		resp, err := gen.Generate(context.Background(), sess, identity)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			sess := tt.makeSession(t)
+			gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
+				&stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr},
+				&stubIDTokenGenerator{token: tt.idToken, err: tt.idErr},
+			)
 
-		require.NoError(t, err)
-		assert.Equal(t, "access-token", resp.AccessToken)
-		assert.Equal(t, "id-token", resp.IDToken)
-	})
+			resp, err := gen.Generate(context.Background(), sess, identity)
 
-	t.Run("does not request an id_token when the session lacks the openid scope", func(t *testing.T) {
-		t.Parallel()
-		sess := makeSessionWithScope(t, "read")
-		idTokenGen := &stubIDTokenGenerator{token: "id-token"}
-		gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
-			&stubAccessTokenGenerator{token: "access-token"},
-			idTokenGen,
-		)
-
-		resp, err := gen.Generate(context.Background(), sess, identity)
-
-		require.NoError(t, err)
-		assert.Equal(t, "access-token", resp.AccessToken)
-		assert.Empty(t, resp.IDToken)
-	})
-
-	t.Run("returns error when generating the access token fails", func(t *testing.T) {
-		t.Parallel()
-		sess := makeSession(t)
-		gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
-			&stubAccessTokenGenerator{err: assert.AnError},
-			&stubIDTokenGenerator{},
-		)
-
-		_, err := gen.Generate(context.Background(), sess, identity)
-
-		require.Error(t, err)
-	})
-
-	t.Run("returns error when generating the id_token fails", func(t *testing.T) {
-		t.Parallel()
-		sess := makeSession(t)
-		gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
-			&stubAccessTokenGenerator{token: "access-token"},
-			&stubIDTokenGenerator{err: assert.AnError},
-		)
-
-		_, err := gen.Generate(context.Background(), sess, identity)
-
-		require.Error(t, err)
-	})
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.accessToken, resp.AccessToken)
+			if tt.wantNoIDToken {
+				assert.Empty(t, resp.IDToken)
+				return
+			}
+			assert.Equal(t, tt.wantIDToken, resp.IDToken)
+		})
+	}
 }

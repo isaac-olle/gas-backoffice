@@ -25,25 +25,42 @@ func TestJwksHandler(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
-	t.Run("service_error_returns_error", func(t *testing.T) {
-		t.Parallel()
-		h := protocolHandler.NewJwksHandler(&stubJwksService{err: errors.New("db")})
-		c, _ := gin.CreateTestContext(httptest.NewRecorder())
-		c.Request = httptest.NewRequest(http.MethodGet, "/oidc/jwks", nil)
-		_, err := h.Execute(c)
-		assert.Error(t, err)
-	})
+	tests := []struct {
+		name     string
+		keys     []map[string]any
+		err      error
+		wantErr  bool
+		wantJSON string
+	}{
+		{
+			name:    "service_error_returns_error",
+			err:     errors.New("db"),
+			wantErr: true,
+		},
+		{
+			name:     "success_returns_key_set",
+			keys:     []map[string]any{{"kid": "k1", "kty": "RSA"}},
+			wantJSON: `{"keys":[{"kid":"k1","kty":"RSA"}]}`,
+		},
+	}
 
-	t.Run("success_returns_key_set", func(t *testing.T) {
-		t.Parallel()
-		h := protocolHandler.NewJwksHandler(&stubJwksService{keys: []map[string]any{{"kid": "k1", "kty": "RSA"}}})
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/oidc/jwks", nil)
-		result, err := h.Execute(c)
-		require.NoError(t, err)
-		require.NoError(t, h.Success(c, result))
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.JSONEq(t, `{"keys":[{"kid":"k1","kty":"RSA"}]}`, w.Body.String())
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			h := protocolHandler.NewJwksHandler(&stubJwksService{keys: tt.keys, err: tt.err})
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest(http.MethodGet, "/oidc/jwks", nil)
+			result, err := h.Execute(c)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NoError(t, h.Success(c, result))
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.JSONEq(t, tt.wantJSON, w.Body.String())
+		})
+	}
 }

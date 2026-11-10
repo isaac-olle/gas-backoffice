@@ -23,7 +23,6 @@ func TestCreateScopeHandler(t *testing.T) {
 		body       io.Reader
 		prIdFn     func(context.Context) (ids2.ProtectedResourceId, bool)
 		scopeIdFn  func(context.Context) (ids2.ScopeId, bool)
-		userIdFn   func(context.Context) (ids2.UserId, bool)
 		queryErr   error
 		busErr     error
 		wantErr    bool
@@ -34,7 +33,6 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:      handlerstest.JsonBody(map[string]string{"name": "read"}),
 			prIdFn:    handlerstest.MissingPrIdExtractor(),
 			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			wantErr:   true,
 		},
 		{
@@ -42,15 +40,6 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:      handlerstest.JsonBody(map[string]string{"name": "read"}),
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
 			scopeIdFn: handlerstest.MissingScopeIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
-			wantErr:   true,
-		},
-		{
-			name:      "missing_user_id_returns_error",
-			body:      handlerstest.JsonBody(map[string]string{"name": "read"}),
-			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			userIdFn:  handlerstest.MissingUserIdExtractor(),
 			wantErr:   true,
 		},
 		{
@@ -58,7 +47,6 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:      bytes.NewBufferString(`{}`),
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
 			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			wantErr:   true,
 		},
 		{
@@ -66,8 +54,7 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:      handlerstest.JsonBody(map[string]string{"name": "read"}),
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
 			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
-			queryErr:  errors.New("protected resource does not belong to the provided user"),
+			queryErr:  errors.New("protected resource does not belong to an accessible subscription"),
 			wantErr:   true,
 		},
 		{
@@ -75,7 +62,6 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:      handlerstest.JsonBody(map[string]string{"name": "read"}),
 			prIdFn:    handlerstest.ValidPrIdExtractor(),
 			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			busErr:    errors.New("bus error"),
 			wantErr:   true,
 		},
@@ -84,7 +70,6 @@ func TestCreateScopeHandler(t *testing.T) {
 			body:       handlerstest.JsonBody(map[string]string{"name": "read"}),
 			prIdFn:     handlerstest.ValidPrIdExtractor(),
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusCreated,
 		},
@@ -93,8 +78,8 @@ func TestCreateScopeHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			qryBus := handlerstest.NewQueryBus(nil, tt.queryErr)
-			h := scopeHandlers.NewCreateScopeHandler(bus, qryBus, tt.prIdFn, tt.scopeIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			qryBus := handlerstest.NewQueryBus(handlerstest.SubscriptionID, tt.queryErr)
+			h := scopeHandlers.NewCreateScopeHandler(bus, qryBus, tt.prIdFn, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, tt.body)
 			result, err := h.Execute(c)
@@ -110,11 +95,21 @@ func TestCreateScopeHandler(t *testing.T) {
 	}
 }
 
+func TestCreateScopeHandler_InvalidOwnershipResult(t *testing.T) {
+	t.Parallel()
+	bus := handlerstest.NewCommandExecutor(nil)
+	qryBus := handlerstest.NewQueryBus(42, nil)
+	h := scopeHandlers.NewCreateScopeHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidScopeIdExtractor())
+	_, c := handlerstest.NewCtx(http.MethodPost, handlerstest.JsonBody(map[string]string{"name": "read"}))
+	_, err := h.Execute(c)
+	assert.Error(t, err)
+}
+
 func TestCreateScopeHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
 	qryBus := handlerstest.NewQueryBus(nil, nil)
-	h := scopeHandlers.NewCreateScopeHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidScopeIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := scopeHandlers.NewCreateScopeHandler(bus, qryBus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

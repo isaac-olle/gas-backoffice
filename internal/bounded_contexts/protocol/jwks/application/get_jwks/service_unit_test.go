@@ -42,39 +42,60 @@ func newService(repo jwks.SigningKeyRepository) *get_jwks.Service {
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns one jwk per active signing key", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{keys: []*jwks.SigningKeyProjection{
-			jwks.NewSigningKeyProjection("kid-1", "RS256", aPublicKeyPEM(t)),
-			jwks.NewSigningKeyProjection("kid-2", "RS256", aPublicKeyPEM(t)),
-		}}
+	tests := []struct {
+		name     string
+		repo     func(t *testing.T) *stubRepository
+		wantErr  bool
+		wantKids []string
+	}{
+		{
+			name: "returns one jwk per active signing key",
+			repo: func(t *testing.T) *stubRepository {
+				return &stubRepository{keys: []*jwks.SigningKeyProjection{
+					jwks.NewSigningKeyProjection("kid-1", "RS256", aPublicKeyPEM(t)),
+					jwks.NewSigningKeyProjection("kid-2", "RS256", aPublicKeyPEM(t)),
+				}}
+			},
+			wantKids: []string{"kid-1", "kid-2"},
+		},
+		{
+			name: "returns an empty set when there are no keys",
+			repo: func(t *testing.T) *stubRepository { return &stubRepository{} },
+		},
+		{
+			name:    "returns error when repo errors",
+			repo:    func(t *testing.T) *stubRepository { return &stubRepository{err: fmt.Errorf("db error")} },
+			wantErr: true,
+		},
+		{
+			name: "returns error when a key cannot be rendered",
+			repo: func(t *testing.T) *stubRepository {
+				return &stubRepository{keys: []*jwks.SigningKeyProjection{
+					jwks.NewSigningKeyProjection("kid-1", "RS256", []byte("broken")),
+				}}
+			},
+			wantErr: true,
+		},
+	}
 
-		set, err := newService(repo).Get(context.Background())
-		require.NoError(t, err)
-		require.Len(t, set, 2)
-		assert.Equal(t, "kid-1", set[0]["kid"])
-		assert.Equal(t, "kid-2", set[1]["kid"])
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			set, err := newService(tt.repo(t)).Get(context.Background())
 
-	t.Run("returns an empty set when there are no keys", func(t *testing.T) {
-		t.Parallel()
-		set, err := newService(&stubRepository{}).Get(context.Background())
-		require.NoError(t, err)
-		assert.Empty(t, set)
-	})
-
-	t.Run("returns error when repo errors", func(t *testing.T) {
-		t.Parallel()
-		_, err := newService(&stubRepository{err: fmt.Errorf("db error")}).Get(context.Background())
-		assert.Error(t, err)
-	})
-
-	t.Run("returns error when a key cannot be rendered", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{keys: []*jwks.SigningKeyProjection{
-			jwks.NewSigningKeyProjection("kid-1", "RS256", []byte("broken")),
-		}}
-		_, err := newService(repo).Get(context.Background())
-		assert.Error(t, err)
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.wantKids == nil {
+				assert.Empty(t, set)
+				return
+			}
+			require.Len(t, set, len(tt.wantKids))
+			for i, kid := range tt.wantKids {
+				assert.Equal(t, kid, set[i]["kid"])
+			}
+		})
+	}
 }

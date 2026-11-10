@@ -3,12 +3,15 @@ package soft_delete_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
-	"testing"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/soft_delete"
@@ -24,7 +27,15 @@ func newService(t *testing.T) (*soft_delete.Service, *prmocks.MockRepository, *e
 	repo := prmocks.NewMockRepository(t)
 	bus := eventmocks.NewMockBus(t)
 	finder := domain_services.NewProtectedResourceFinder(repo)
-	return soft_delete.NewService(finder, repo, bus), repo, bus
+	return soft_delete.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer()), repo, bus
+}
+
+func authorFor(t *testing.T, subscriptionId ids.SubscriptionId) *vo.UserAuthor {
+	t.Helper()
+	author, err := vo.NewUserAuthorWithMemberships(ids.NewUserId().String(), ids.NewUserId().String(), vo.SubscriptionUserRole,
+		[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+	require.NoError(t, err)
+	return author
 }
 
 func TestSoftDelete(t *testing.T) {
@@ -33,8 +44,8 @@ func TestSoftDelete(t *testing.T) {
 	t.Run("soft deletes the correct resource and publishes ProtectedResourceDeleted event", func(t *testing.T) {
 		t.Parallel()
 		svc, repo, bus := newService(t)
-		userId := ids.NewUserId()
-		pr := aPR(t, userId)
+		subscriptionId := ids.NewSubscriptionId()
+		pr := aPR(t, subscriptionId)
 		prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 		require.NoError(t, err)
 
@@ -46,56 +57,73 @@ func TestSoftDelete(t *testing.T) {
 			})).
 			Return()
 
-		require.NoError(t, svc.SoftDelete(context.Background(), soft_delete.NewCommand(prId, ids.NewUserId(), userId)))
+		require.NoError(t, svc.SoftDelete(context.Background(), soft_delete.NewCommand(prId, authorFor(t, subscriptionId))))
 		assert.Equal(t, prId.String(), pr.ToPrimitives().Id)
 	})
 
-	t.Run("returns forbidden error when user is not the owner", func(t *testing.T) {
+	t.Run("returns forbidden error when author lacks subscription access", func(t *testing.T) {
 		t.Parallel()
 		svc, repo, _ := newService(t)
-		pr := aPR(t, ids.NewUserId())
+		pr := aPR(t, ids.NewSubscriptionId())
 		prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 		require.NoError(t, err)
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		err = svc.SoftDelete(context.Background(), soft_delete.NewCommand(prId, ids.NewUserId(), ids.NewUserId()))
+		err = svc.SoftDelete(context.Background(), soft_delete.NewCommand(prId, authorFor(t, ids.NewSubscriptionId())))
 		assertErrCode(t, err, protected_resources.ErrInvalidOwnership)
 	})
 
 	errCases := []struct {
 		desc      string
-		setupRepo func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId)
+		setupRepo func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, *vo.UserAuthor)
 		wantCode  app_errors.ErrorCode
 	}{
 		{
 			desc: "returns internal error when resource search fails",
-			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, *vo.UserAuthor) {
 				prId := ids.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, fmt.Errorf("db error"))
-				return prId, ids.NewUserId()
+				return prId, authorFor(t, ids.NewSubscriptionId())
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
 			desc: "returns not found error when resource is nil",
-			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, *vo.UserAuthor) {
 				prId := ids.NewProtectedResourceId()
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(nil, nil)
-				return prId, ids.NewUserId()
+				return prId, authorFor(t, ids.NewSubscriptionId())
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotFound,
 		},
 		{
+			desc: "returns forbidden when protected resource is system resource",
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, *vo.UserAuthor) {
+				prId := ids.NewProtectedResourceId()
+				subscriptionId := ids.NewSubscriptionId()
+				pr, err := protected_resources.FromPrimitives(protected_resources.ProtectedResourcePrimitives{
+					Id:             prId.String(),
+					Name:           "system-resource",
+					SubscriptionId: subscriptionId.String(),
+					IsSystem:       true,
+				})
+				require.NoError(t, err)
+				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
+				return prId, authorFor(t, subscriptionId)
+			},
+			wantCode: protected_resources.ErrSystemResource,
+		},
+		{
 			desc: "returns internal error when soft delete fails",
-			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, ids.UserId) {
-				userId := ids.NewUserId()
-				pr := aPR(t, userId)
+			setupRepo: func(repo *prmocks.MockRepository) (ids.ProtectedResourceId, *vo.UserAuthor) {
+				subscriptionId := ids.NewSubscriptionId()
+				pr := aPR(t, subscriptionId)
 				prId, err := ids.NewProtectedResourceIdFromString(pr.ToPrimitives().Id)
 				require.NoError(t, err)
 				repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 				repo.EXPECT().SoftDelete(mock.Anything, prId).Return(fmt.Errorf("db error"))
-				return prId, userId
+				return prId, authorFor(t, subscriptionId)
 			},
 			wantCode: protected_resources.ErrProtectedResourceNotSaved,
 		},
@@ -107,8 +135,8 @@ func TestSoftDelete(t *testing.T) {
 			repo := prmocks.NewMockRepository(t)
 			bus := eventmocks.NewMockBus(t)
 			finder := domain_services.NewProtectedResourceFinder(repo)
-			prId, userId := tc.setupRepo(repo)
-			err := soft_delete.NewService(finder, repo, bus).SoftDelete(context.Background(), soft_delete.NewCommand(prId, ids.NewUserId(), userId))
+			prId, author := tc.setupRepo(repo)
+			err := soft_delete.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer()).SoftDelete(context.Background(), soft_delete.NewCommand(prId, author))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

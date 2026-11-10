@@ -13,6 +13,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/_event_handlers"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/application/create"
+	keyPairInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/infrastructure"
 	kpmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/key_pairs/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
@@ -71,7 +72,7 @@ func TestCreateKeyPairOnProtectedResourceCreated(t *testing.T) {
 				}))
 			}
 
-			svc := create.NewService(repo, bus)
+			svc := create.NewService(repo, bus, keyPairInfra.NewPEMKeyGenerator())
 			handler := _event_handlers.NewCreateKeyPairOnProtectedResourceCreatedEventHandler(svc)
 
 			evt := backofficeevents.NewProtectedResourceCreated(

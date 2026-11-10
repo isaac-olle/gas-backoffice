@@ -3,12 +3,14 @@ package hard_delete_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,6 +22,10 @@ import (
 	scopemocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/mocks"
 )
 
+func newService(finder *domain_services.ScopeFinder, repo *scopemocks.MockRepository, bus *eventmocks.MockBus) *hard_delete.Service {
+	return hard_delete.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
+}
+
 func TestHardDelete(t *testing.T) {
 	t.Parallel()
 
@@ -27,7 +33,7 @@ func TestHardDelete(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
-		scope, scopeId, prId, userId := aScope(t)
+		scope, scopeId, _, subscriptionId := aScope(t)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 		repo.EXPECT().HardDelete(mock.Anything, scopeId).Return(nil)
@@ -37,9 +43,9 @@ func TestHardDelete(t *testing.T) {
 			}))
 
 		finder := domain_services.NewScopeFinder(repo)
-		svc := hard_delete.NewService(finder, repo, bus)
+		svc := newService(finder, repo, bus)
 
-		cmd := aCommand(t, withScopeId(scopeId), withProtectedResourceId(prId), withUserId(userId))
+		cmd := aCommand(t, withScopeId(scopeId), withAuthor(authorFor(t, subscriptionId)))
 		require.NoError(t, svc.HardDelete(context.Background(), cmd))
 		assert.Equal(t, scopeId.String(), scope.ToPrimitives().Id)
 	})
@@ -48,19 +54,19 @@ func TestHardDelete(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
-		_, scopeId, prId, userId := aScope(t)
+		_, scopeId, _, subscriptionId := aScope(t)
 
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(nil, fmt.Errorf("db error"))
 
 		finder := domain_services.NewScopeFinder(repo)
-		svc := hard_delete.NewService(finder, repo, bus)
-		cmd := aCommand(t, withScopeId(scopeId), withProtectedResourceId(prId), withUserId(userId))
+		svc := newService(finder, repo, bus)
+		cmd := aCommand(t, withScopeId(scopeId), withAuthor(authorFor(t, subscriptionId)))
 		err := svc.HardDelete(context.Background(), cmd)
 
 		assert.Error(t, err)
 	})
 
-	t.Run("returns forbidden when caller does not own the scope", func(t *testing.T) {
+	t.Run("returns forbidden when author lacks subscription access", func(t *testing.T) {
 		t.Parallel()
 		repo := scopemocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
@@ -69,9 +75,8 @@ func TestHardDelete(t *testing.T) {
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
 
 		finder := domain_services.NewScopeFinder(repo)
-		svc := hard_delete.NewService(finder, repo, bus)
-		// Different prId/userId than the scope's real ownership.
-		cmd := aCommand(t, withScopeId(scopeId))
+		svc := newService(finder, repo, bus)
+		cmd := aCommand(t, withScopeId(scopeId), withAuthor(authorFor(t, ids2.NewSubscriptionId())))
 		err := svc.HardDelete(context.Background(), cmd)
 
 		assertErrCode(t, err, scopes.ErrInvalidOwnership)
@@ -87,34 +92,33 @@ func TestHardDelete(t *testing.T) {
 			setupRepo: func(repo *scopemocks.MockRepository) *hard_delete.Command {
 				scopeId := ids2.NewScopeId()
 				prId := ids2.NewProtectedResourceId()
-				userId := ids2.NewUserId()
+				subscriptionId := ids2.NewSubscriptionId()
 				scope, err := scopes.FromPrimitives(scopes.ScopePrimitives{
 					Id:                  scopeId.String(),
 					Name:                "system-scope",
 					ProtectedResourceId: prId.String(),
-					AdminId:             ids2.NewUserId().String(),
-					UserId:              userId.String(),
+					SubscriptionId:      subscriptionId.String(),
 					IsSystem:            true,
 				})
 				require.NoError(t, err)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
-				return aCommand(t, withScopeId(scopeId), withProtectedResourceId(prId), withUserId(userId))
+				return aCommand(t, withScopeId(scopeId), withAuthor(authorFor(t, subscriptionId)))
 			},
 			wantCode: scopes.ErrSystemResource,
 		},
 		{
 			desc: "returns ErrScopeNotSaved when hard delete fails",
 			setupRepo: func(repo *scopemocks.MockRepository) *hard_delete.Command {
-				scope, scopeId, prId, userId := aScope(t)
+				scope, scopeId, _, subscriptionId := aScope(t)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
 				repo.EXPECT().
 					HardDelete(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("db error"))
-				return aCommand(t, withScopeId(scopeId), withProtectedResourceId(prId), withUserId(userId))
+				return aCommand(t, withScopeId(scopeId), withAuthor(authorFor(t, subscriptionId)))
 			},
 			wantCode: scopes.ErrScopeNotSaved,
 		},
@@ -129,7 +133,7 @@ func TestHardDelete(t *testing.T) {
 			cmd := tc.setupRepo(repo)
 
 			finder := domain_services.NewScopeFinder(repo)
-			svc := hard_delete.NewService(finder, repo, bus)
+			svc := newService(finder, repo, bus)
 			err := svc.HardDelete(context.Background(), cmd)
 
 			assertErrCode(t, err, tc.wantCode)

@@ -3,12 +3,15 @@ package soft_delete_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,8 +29,11 @@ func TestSoftDelete(t *testing.T) {
 	t.Run("soft deletes client and publishes ClientDeleted event", func(t *testing.T) {
 		t.Parallel()
 		repo, bus := newMocks(t)
-		userId := ids2.NewUserId()
-		c, clientId := aClient(t, userId)
+		subscriptionId := ids2.NewSubscriptionId()
+		c, clientId := aClient(t, subscriptionId)
+		author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+			[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+		require.NoError(t, err)
 
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 		repo.EXPECT().SoftDelete(mock.Anything, clientId).Return(nil)
@@ -36,7 +42,7 @@ func TestSoftDelete(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientDeletedType
 			}))
 
-		err := newService(t, repo, bus).SoftDelete(context.Background(), soft_delete.NewCommand(clientId.String(), ids2.NewUserId().String(), userId.String()))
+		err = newService(t, repo, bus).SoftDelete(context.Background(), soft_delete.NewCommand(clientId.String(), author))
 		require.NoError(t, err)
 	})
 
@@ -68,39 +74,34 @@ func TestSoftDelete(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "returns forbidden when ownership does not match",
-			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
+			desc: "returns forbidden when author lacks subscription access",
+			cmd: func(t *testing.T) *soft_delete.Command {
+				unauthorized, err := vo.NewUserAuthorFromString(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole)
+				require.NoError(t, err)
+				return aCommand(t, withAuthor(unauthorized))
+			},
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := aClient(t, ids2.NewUserId())
+				c, _ := aClient(t, ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrInvalidOwnership,
 		},
 		{
 			desc: "returns forbidden when client is system resource",
-			cmd: func(t *testing.T) *soft_delete.Command {
-				return aCommand(t, withUserId(systemResourceUserId.String()))
-			},
+			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.FromPrimitives(clients.ClientPrimitives{
-					Id:       ids2.NewClientId().String(),
-					Name:     "system-client",
-					AdminId:  ids2.NewUserId().String(),
-					UserId:   systemResourceUserId.String(),
-					IsSystem: true,
-				})
+				c, err := clients.NewClient(ids2.NewClientId(), "system-client", clients.NewOwnership(ids2.NewSubscriptionId()), nil, nil, false, true)
+				require.NoError(t, err)
+				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrSystemResource,
 		},
 		{
 			desc: "wraps repository soft delete failure",
-			cmd: func(t *testing.T) *soft_delete.Command {
-				return aCommand(t, withUserId(saveFailureUserId.String()))
-			},
+			cmd:  func(t *testing.T) *soft_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), saveFailureUserId), nil, nil, false, false)
-				c.PullDomainEvents()
+				c, _ := aClient(t, ids2.NewSubscriptionId())
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().SoftDelete(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(fmt.Errorf("db error"))
 			},
@@ -122,11 +123,6 @@ func TestSoftDelete(t *testing.T) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-var (
-	systemResourceUserId = ids2.NewUserId()
-	saveFailureUserId    = ids2.NewUserId()
-)
-
 func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
 	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
@@ -135,7 +131,7 @@ func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *soft_delete.Service {
 	t.Helper()
 	finder := domain_services.NewClientFinder(repo)
-	return soft_delete.NewService(finder, repo, bus)
+	return soft_delete.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

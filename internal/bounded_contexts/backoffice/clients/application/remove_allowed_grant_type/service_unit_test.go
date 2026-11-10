@@ -3,8 +3,9 @@ package remove_allowed_grant_type_test
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
 	"testing"
+
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/clients/vos"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,7 +18,9 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 )
@@ -28,8 +31,11 @@ func TestRemoveAllowedGrantType(t *testing.T) {
 	t.Run("removes grant type from client and publishes ClientGrantTypeRemoved event", func(t *testing.T) {
 		t.Parallel()
 		repo, bus := newMocks(t)
-		userId := ids2.NewUserId()
-		c, clientId := aClientWithGrantType(t, userId, "client_credentials")
+		subscriptionId := ids2.NewSubscriptionId()
+		c, clientId := aClientWithGrantType(t, subscriptionId, "client_credentials")
+		author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+			[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+		require.NoError(t, err)
 
 		var saved *clients.Client
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
@@ -44,7 +50,7 @@ func TestRemoveAllowedGrantType(t *testing.T) {
 				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientGrantTypeRemovedType
 			}))
 
-		cmd := remove_allowed_grant_type.NewCommand(clientId, ids2.NewUserId(), userId, "client_credentials")
+		cmd := remove_allowed_grant_type.NewCommand(clientId, "client_credentials", author)
 		require.NoError(t, newService(t, repo, bus).Remove(context.Background(), cmd))
 
 		assert.NotContains(t, saved.ToPrimitives().AllowedGrantTypes, "client_credentials")
@@ -78,40 +84,34 @@ func TestRemoveAllowedGrantType(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "returns forbidden when ownership does not match",
-			cmd:  func(t *testing.T) *remove_allowed_grant_type.Command { return aCommand(t) },
+			desc: "returns forbidden when author lacks subscription access",
+			cmd: func(t *testing.T) *remove_allowed_grant_type.Command {
+				unauthorized, err := vo.NewUserAuthorFromString(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole)
+				require.NoError(t, err)
+				return aCommand(t, withAuthor(unauthorized))
+			},
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := aClientWithGrantType(t, ids2.NewUserId(), "client_credentials")
+				c, _ := aClientWithGrantType(t, ids2.NewSubscriptionId(), "client_credentials")
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrInvalidOwnership,
 		},
 		{
 			desc: "returns forbidden when client is system resource",
-			cmd: func(t *testing.T) *remove_allowed_grant_type.Command {
-				return aCommand(t, withUserId(systemResourceUserId))
-			},
+			cmd:  func(t *testing.T) *remove_allowed_grant_type.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.FromPrimitives(clients.ClientPrimitives{
-					Id:                ids2.NewClientId().String(),
-					Name:              "system-client",
-					AdminId:           ids2.NewUserId().String(),
-					UserId:            systemResourceUserId.String(),
-					AllowedGrantTypes: []string{"client_credentials"},
-					IsSystem:          true,
-				})
+				c, err := clients.NewClient(ids2.NewClientId(), "system-client", clients.NewOwnership(ids2.NewSubscriptionId()), nil, []string{"client_credentials"}, false, true)
+				require.NoError(t, err)
+				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrSystemResource,
 		},
 		{
 			desc: "wraps repository save failure",
-			cmd: func(t *testing.T) *remove_allowed_grant_type.Command {
-				return aCommand(t, withUserId(saveFailureUserId))
-			},
+			cmd:  func(t *testing.T) *remove_allowed_grant_type.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), saveFailureUserId), nil, []string{"client_credentials"}, false, false)
-				c.PullDomainEvents()
+				c, _ := aClientWithGrantType(t, ids2.NewSubscriptionId(), "client_credentials")
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))
 			},
@@ -119,12 +119,9 @@ func TestRemoveAllowedGrantType(t *testing.T) {
 		},
 		{
 			desc: "returns conflict when repository reports concurrent modification",
-			cmd: func(t *testing.T) *remove_allowed_grant_type.Command {
-				return aCommand(t, withUserId(concurrentModificationUserId))
-			},
+			cmd:  func(t *testing.T) *remove_allowed_grant_type.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids2.NewClientId(), "valid-client", clients.NewOwnership(ids2.NewUserId(), concurrentModificationUserId), nil, []string{"client_credentials"}, false, false)
-				c.PullDomainEvents()
+				c, _ := aClientWithGrantType(t, ids2.NewSubscriptionId(), "client_credentials")
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(persistance.ErrConcurrentModification)
 			},
@@ -146,12 +143,6 @@ func TestRemoveAllowedGrantType(t *testing.T) {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-var (
-	systemResourceUserId         = ids2.NewUserId()
-	saveFailureUserId            = ids2.NewUserId()
-	concurrentModificationUserId = ids2.NewUserId()
-)
-
 func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
 	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
@@ -160,7 +151,7 @@ func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *remove_allowed_grant_type.Service {
 	t.Helper()
 	finder := domain_services.NewClientFinder(repo)
-	return remove_allowed_grant_type.NewService(finder, repo, bus)
+	return remove_allowed_grant_type.NewService(finder, repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

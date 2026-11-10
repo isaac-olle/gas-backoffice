@@ -29,21 +29,37 @@ func (s *stubRepository) Latest(_ context.Context, limit int) ([]error_logs.Erro
 func TestList(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns the latest errors capped at the limit", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{result: []error_logs.ErrorLog{{ErrorId: "e1", Code: "X"}}}
+	tests := []struct {
+		name       string
+		repoResult []error_logs.ErrorLog
+		repoErr    error
+		wantErr    bool
+	}{
+		{
+			name:       "returns the latest errors capped at the limit",
+			repoResult: []error_logs.ErrorLog{{ErrorId: "e1", Code: "X"}},
+		},
+		{
+			name:    "returns error when repo errors",
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+	}
 
-		result, err := list.NewService(repo).List(context.Background(), list.NewQuery())
-		require.NoError(t, err)
-		assert.Equal(t, repo.result, result)
-		assert.Equal(t, list.Limit, repo.gotLimit)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := &stubRepository{result: tt.repoResult, err: tt.repoErr}
 
-	t.Run("returns error when repo errors", func(t *testing.T) {
-		t.Parallel()
-		repo := &stubRepository{err: fmt.Errorf("db error")}
+			result, err := list.NewService(repo).List(context.Background(), list.NewQuery())
 
-		_, err := list.NewService(repo).List(context.Background(), list.NewQuery())
-		assert.Error(t, err)
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, repo.result, result)
+			assert.Equal(t, list.Limit, repo.gotLimit)
+		})
+	}
 }

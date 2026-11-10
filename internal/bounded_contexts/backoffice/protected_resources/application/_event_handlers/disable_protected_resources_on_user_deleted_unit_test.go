@@ -17,9 +17,9 @@ import (
 	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
-func aPRForEventHandlers(t *testing.T, userId ids2.UserId) *protected_resources.ProtectedResource {
+func aPRForEventHandlers(t *testing.T, subscriptionId ids2.SubscriptionId) *protected_resources.ProtectedResource {
 	t.Helper()
-	pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "A Resource", protected_resources.NewOwnership(ids2.NewUserId(), userId), false)
+	pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "A Resource", protected_resources.NewOwnership(subscriptionId), false)
 	require.NoError(t, err)
 	pr.PullDomainEvents()
 	return pr
@@ -28,66 +28,76 @@ func aPRForEventHandlers(t *testing.T, userId ids2.UserId) *protected_resources.
 func TestDisableProtectedResourcesOnUserDeleted(t *testing.T) {
 	t.Parallel()
 
-	t.Run("disables every enabled protected resource of the deleted user", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, repo *prmocks.MockRepository, bus *eventmocks.MockBus) *protected_resources.ProtectedResource
+		wantErr bool
+		check   func(t *testing.T, pr *protected_resources.ProtectedResource)
+	}{
+		{
+			name: "disables every enabled protected resource of the deleted user",
+			setup: func(t *testing.T, repo *prmocks.MockRepository, bus *eventmocks.MockBus) *protected_resources.ProtectedResource {
+				pr := aPRForEventHandlers(t, ids2.NewSubscriptionId())
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(nil)
+				bus.EXPECT().Publish(mock.Anything, mock.Anything)
+				return pr
+			},
+			check: func(t *testing.T, pr *protected_resources.ProtectedResource) {
+				assert.False(t, pr.IsEnabled())
+			},
+		},
+		{
+			name: "skips protected resources that are already disabled",
+			setup: func(t *testing.T, repo *prmocks.MockRepository, bus *eventmocks.MockBus) *protected_resources.ProtectedResource {
+				pr := aPRForEventHandlers(t, ids2.NewSubscriptionId())
+				pr.Disable()
+				pr.PullDomainEvents()
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
+				return pr
+			},
+		},
+		{
+			name: "wraps repository search failure",
+			setup: func(t *testing.T, repo *prmocks.MockRepository, bus *eventmocks.MockBus) *protected_resources.ProtectedResource {
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "wraps repository save failure",
+			setup: func(t *testing.T, repo *prmocks.MockRepository, bus *eventmocks.MockBus) *protected_resources.ProtectedResource {
+				pr := aPRForEventHandlers(t, ids2.NewSubscriptionId())
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(fmt.Errorf("db error"))
+				return pr
+			},
+			wantErr: true,
+		},
+	}
 
-		pr := aPRForEventHandlers(t, userId)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := prmocks.NewMockRepository(t)
+			bus := eventmocks.NewMockBus(t)
+			userId := ids2.NewUserId()
 
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(nil)
-		bus.EXPECT().Publish(mock.Anything, mock.Anything)
+			pr := tt.setup(t, repo, bus)
 
-		handler := event_handlers.NewDisableProtectedResourcesOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		require.NoError(t, handler.Handle(context.Background(), evt))
+			handler := event_handlers.NewDisableProtectedResourcesOnUserDeletedEventHandler(repo, bus)
+			evt := backofficeevents.NewUserDeleted(userId.String())
+			err := handler.Handle(context.Background(), evt)
 
-		assert.False(t, pr.IsEnabled())
-	})
-
-	t.Run("skips protected resources that are already disabled", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
-
-		pr := aPRForEventHandlers(t, userId)
-		pr.Disable()
-		pr.PullDomainEvents()
-
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
-
-		handler := event_handlers.NewDisableProtectedResourcesOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		require.NoError(t, handler.Handle(context.Background(), evt))
-	})
-
-	t.Run("wraps repository search failure", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
-
-		handler := event_handlers.NewDisableProtectedResourcesOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(ids2.NewUserId().String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
-
-	t.Run("wraps repository save failure", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
-
-		pr := aPRForEventHandlers(t, userId)
-
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*protected_resources.ProtectedResource{pr}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*protected_resources.ProtectedResource")).Return(fmt.Errorf("db error"))
-
-		handler := event_handlers.NewDisableProtectedResourcesOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, pr)
+			}
+		})
+	}
 }

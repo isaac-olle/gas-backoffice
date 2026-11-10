@@ -16,25 +16,40 @@ import (
 func TestListErrorLogsHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("bus_error_returns_error", func(t *testing.T) {
-		t.Parallel()
-		h := error_logs.NewListErrorLogsHandler(handlerstest.NewQueryBus(nil, errors.New("db")))
-		_, c := handlerstest.NewCtx(http.MethodGet, nil)
-		_, err := h.Execute(c)
-		assert.Error(t, err)
-	})
+	tests := []struct {
+		name    string
+		busLogs []errorLogAggregate.ErrorLog
+		busErr  error
+		wantErr bool
+	}{
+		{
+			name:    "bus_error_returns_error",
+			busErr:  errors.New("db"),
+			wantErr: true,
+		},
+		{
+			name:    "success_returns_200",
+			busLogs: []errorLogAggregate.ErrorLog{{ErrorId: "e1", Code: "X"}},
+		},
+	}
 
-	t.Run("success_returns_200", func(t *testing.T) {
-		t.Parallel()
-		logs := []errorLogAggregate.ErrorLog{{ErrorId: "e1", Code: "X"}}
-		h := error_logs.NewListErrorLogsHandler(handlerstest.NewQueryBus(logs, nil))
-		_, c := handlerstest.NewCtx(http.MethodGet, nil)
-		result, err := h.Execute(c)
-		require.NoError(t, err)
-		assert.Equal(t, logs, result)
-		require.NoError(t, h.Success(c, result))
-		assert.Equal(t, http.StatusOK, c.Writer.Status())
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			h := error_logs.NewListErrorLogsHandler(handlerstest.NewQueryBus(tt.busLogs, tt.busErr))
+			_, c := handlerstest.NewCtx(http.MethodGet, nil)
+			result, err := h.Execute(c)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.busLogs, result)
+			require.NoError(t, h.Success(c, result))
+			assert.Equal(t, http.StatusOK, c.Writer.Status())
+		})
+	}
 }
 
 func TestListErrorLogsHandler_Default(t *testing.T) {

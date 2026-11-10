@@ -45,7 +45,7 @@ func TestSoftDeleteProtectedResourceHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := prHandlers.NewSoftDeleteProtectedResourceHandler(bus, tt.prIdFn, handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+			h := prHandlers.NewSoftDeleteProtectedResourceHandler(bus, tt.prIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 			result, err := h.Execute(c)
@@ -64,7 +64,7 @@ func TestSoftDeleteProtectedResourceHandler(t *testing.T) {
 func TestSoftDeleteProtectedResourceHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := prHandlers.NewSoftDeleteProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := prHandlers.NewSoftDeleteProtectedResourceHandler(bus, handlerstest.ValidPrIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodDelete, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

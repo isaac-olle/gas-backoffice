@@ -8,9 +8,11 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/list"
 	prmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,41 +21,68 @@ import (
 func TestList(t *testing.T) {
 	t.Parallel()
 
-	t.Run("filters a tenant caller by user_id and returns the matches", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		callerId := ids.NewUserId()
-		expected := []*protected_resources.ProtectedResource{}
-		want := criteria.Criteria{Filters: []criteria.Filter{{Field: "user_id", Operator: criteria.Equals, Value: callerId.String()}}}
+	subscriptionId := ids.NewSubscriptionId()
+	subscriptionAuthor, err := vo.NewUserAuthorWithMemberships(ids.NewUserId().String(), ids.NewUserId().String(), vo.SubscriptionUserRole,
+		[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+	require.NoError(t, err)
+	adminId := ids.NewUserId()
+	systemAuthor, err := vo.NewUserAuthorFromString(adminId.String(), adminId.String(), vo.SystemAdministratorRole)
+	require.NoError(t, err)
 
-		repo.EXPECT().Matching(mock.Anything, want).Return(expected, nil)
+	tests := []struct {
+		desc       string
+		author     *vo.UserAuthor
+		wantFilter *criteria.Criteria
+		repoErr    error
+		wantCode   app_errors.ErrorCode
+	}{
+		{
+			desc:   "filters a subscription caller by allowed subscription ids",
+			author: subscriptionAuthor,
+			wantFilter: &criteria.Criteria{Filters: []criteria.Filter{
+				{Field: "subscription_id", Operator: criteria.AnyOf, Value: []string{subscriptionId.String()}},
+			}},
+		},
+		{
+			desc:       "returns every protected resource for a system administrator without filtering",
+			author:     systemAuthor,
+			wantFilter: &criteria.Criteria{},
+		},
+		{
+			desc:     "rejects a missing author",
+			author:   nil,
+			wantCode: "MISSING_AUTHOR",
+		},
+		{
+			desc:       "wraps repository errors",
+			author:     systemAuthor,
+			wantFilter: &criteria.Criteria{},
+			repoErr:    fmt.Errorf("db error"),
+			wantCode:   protected_resources.ErrProtectedResourcesNotListed,
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			repo := prmocks.NewMockRepository(t)
+			expected := []*protected_resources.ProtectedResource{}
+			if tc.wantFilter != nil {
+				repo.EXPECT().Matching(mock.Anything, *tc.wantFilter).Return(expected, tc.repoErr)
+			}
 
-		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(callerId, ids.NewUserId(), vo.SubscriptionUserRole))
-		require.NoError(t, err)
-		assert.Equal(t, expected, result)
-	})
+			result, err := list.NewService(repo, sharedDomainServices.NewSubscriptionAuthorizer()).List(context.Background(), list.NewQuery(tc.author))
 
-	t.Run("filters an admin caller by admin_id and returns the matches", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-		adminId := ids.NewUserId()
-		expected := []*protected_resources.ProtectedResource{}
-		want := criteria.Criteria{Filters: []criteria.Filter{{Field: "admin_id", Operator: criteria.Equals, Value: adminId.String()}}}
-
-		repo.EXPECT().Matching(mock.Anything, want).Return(expected, nil)
-
-		result, err := list.NewService(repo).List(context.Background(), list.NewQuery(adminId, adminId, vo.SystemAdministratorRole))
-		require.NoError(t, err)
-		assert.Equal(t, expected, result)
-	})
-
-	t.Run("returns error when repo errors", func(t *testing.T) {
-		t.Parallel()
-		repo := prmocks.NewMockRepository(t)
-
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
-
-		_, err := list.NewService(repo).List(context.Background(), list.NewQuery(ids.NewUserId(), ids.NewUserId(), vo.SubscriptionUserRole))
-		assert.Error(t, err)
-	})
+			if tc.wantCode != "" {
+				if appErr, ok := err.(*app_errors.AppError); ok {
+					assert.Equal(t, tc.wantCode, appErr.Code)
+				} else {
+					require.Error(t, err)
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, expected, result)
+		})
+	}
 }

@@ -40,106 +40,169 @@ func newClientCredentialsGrantHandler(clientRepo *mockClientRepo, ccRepo *mockCC
 func TestAuthorizationCodeGrantHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("consumes the code and returns the generated token", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		sess := newAuthSessionMother(t, clientID, "https://example.com/cb", "authcode")
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, clientID string) (*flows.AuthorizationCodeGrantHandler, token.Request)
+		wantErr bool
+		check   func(t *testing.T, resp *session.TokenResponse)
+	}{
+		{
+			name: "consumes the code and returns the generated token",
+			setup: func(t *testing.T, clientID string) (*flows.AuthorizationCodeGrantHandler, token.Request) {
+				sess := newAuthSessionMother(t, clientID, "https://example.com/cb", "authcode")
+				h := newAuthorizationCodeGrantHandler(
+					&mockSessionRepo{byCode: sess},
+					&mockClientRepo{client: newAuthCodeClientMother(clientID)},
+					&mockAccessTokenGenerator{token: "signed.access.token"},
+					&mockIDTokenGenerator{token: "signed.id.token"},
+				)
+				assert.True(t, h.Supports(flows.AuthorizationCodeGrantType))
+				return h, token.Request{ClientID: clientID, Code: "authcode", RedirectURI: "https://example.com/cb"}
+			},
+			check: func(t *testing.T, resp *session.TokenResponse) {
+				assert.Equal(t, "signed.access.token", resp.AccessToken)
+				assert.Equal(t, "signed.id.token", resp.IDToken)
+			},
+		},
+		{
+			name: "returns error when the code cannot be consumed",
+			setup: func(t *testing.T, clientID string) (*flows.AuthorizationCodeGrantHandler, token.Request) {
+				h := newAuthorizationCodeGrantHandler(
+					&mockSessionRepo{findErr: assert.AnError},
+					&mockClientRepo{},
+					&mockAccessTokenGenerator{},
+					&mockIDTokenGenerator{},
+				)
+				return h, token.Request{Code: "bad-code"}
+			},
+			wantErr: true,
+		},
+	}
 
-		h := newAuthorizationCodeGrantHandler(
-			&mockSessionRepo{byCode: sess},
-			&mockClientRepo{client: newAuthCodeClientMother(clientID)},
-			&mockAccessTokenGenerator{token: "signed.access.token"},
-			&mockIDTokenGenerator{token: "signed.id.token"},
-		)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			h, req := tt.setup(t, uuid.New().String())
 
-		assert.True(t, h.Supports(flows.AuthorizationCodeGrantType))
+			resp, err := h.Execute(context.Background(), req)
 
-		resp, err := h.Execute(context.Background(), token.Request{
-			ClientID:    clientID,
-			Code:        "authcode",
-			RedirectURI: "https://example.com/cb",
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, resp)
+			}
 		})
-
-		require.NoError(t, err)
-		assert.Equal(t, "signed.access.token", resp.AccessToken)
-		assert.Equal(t, "signed.id.token", resp.IDToken)
-	})
-
-	t.Run("returns error when the code cannot be consumed", func(t *testing.T) {
-		t.Parallel()
-		h := newAuthorizationCodeGrantHandler(
-			&mockSessionRepo{findErr: assert.AnError},
-			&mockClientRepo{},
-			&mockAccessTokenGenerator{},
-			&mockIDTokenGenerator{},
-		)
-
-		_, err := h.Execute(context.Background(), token.Request{Code: "bad-code"})
-
-		assert.Error(t, err)
-	})
+	}
 }
 
 func TestClientCredentialsGrantHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("creates the session and returns the generated token", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		h := newClientCredentialsGrantHandler(
-			&mockClientRepo{client: newCCClientMother(clientID)},
-			&mockCCRepo{},
-			&mockAccessTokenGenerator{token: "signed.jwt.token"},
-		)
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T, clientID string) (*flows.ClientCredentialsGrantHandler, token.Request)
+		wantErr     bool
+		wantErrCode app_errors.ErrorCode
+		check       func(t *testing.T, resp *session.TokenResponse)
+	}{
+		{
+			name: "creates the session and returns the generated token",
+			setup: func(t *testing.T, clientID string) (*flows.ClientCredentialsGrantHandler, token.Request) {
+				h := newClientCredentialsGrantHandler(
+					&mockClientRepo{client: newCCClientMother(clientID)},
+					&mockCCRepo{},
+					&mockAccessTokenGenerator{token: "signed.jwt.token"},
+				)
+				assert.True(t, h.Supports(flows.ClientCredentialsGrantType))
+				return h, token.Request{ClientID: clientID, Scope: "openid"}
+			},
+			check: func(t *testing.T, resp *session.TokenResponse) {
+				assert.Equal(t, "signed.jwt.token", resp.AccessToken)
+				assert.Empty(t, resp.IDToken)
+			},
+		},
+		{
+			name: "rejects public clients",
+			setup: func(t *testing.T, clientID string) (*flows.ClientCredentialsGrantHandler, token.Request) {
+				h := newClientCredentialsGrantHandler(&mockClientRepo{}, &mockCCRepo{}, &mockAccessTokenGenerator{})
+				return h, token.Request{IsPublic: true}
+			},
+			wantErr:     true,
+			wantErrCode: session.ErrUnsupportedGrantType,
+		},
+	}
 
-		assert.True(t, h.Supports(flows.ClientCredentialsGrantType))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			h, req := tt.setup(t, uuid.New().String())
 
-		resp, err := h.Execute(context.Background(), token.Request{ClientID: clientID, Scope: "openid"})
+			resp, err := h.Execute(context.Background(), req)
 
-		require.NoError(t, err)
-		assert.Equal(t, "signed.jwt.token", resp.AccessToken)
-		assert.Empty(t, resp.IDToken)
-	})
-
-	t.Run("rejects public clients", func(t *testing.T) {
-		t.Parallel()
-		h := newClientCredentialsGrantHandler(&mockClientRepo{}, &mockCCRepo{}, &mockAccessTokenGenerator{})
-
-		_, err := h.Execute(context.Background(), token.Request{IsPublic: true})
-
-		var appErr *app_errors.AppError
-		require.ErrorAs(t, err, &appErr)
-		assert.Equal(t, session.ErrUnsupportedGrantType, appErr.Code)
-	})
+			if tt.wantErr {
+				var appErr *app_errors.AppError
+				require.ErrorAs(t, err, &appErr)
+				assert.Equal(t, tt.wantErrCode, appErr.Code)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, resp)
+			}
+		})
+	}
 }
 
 func TestService(t *testing.T) {
 	t.Parallel()
 
-	t.Run("routes to the handler that supports the grant type", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		h := newClientCredentialsGrantHandler(
-			&mockClientRepo{client: newCCClientMother(clientID)},
-			&mockCCRepo{},
-			&mockAccessTokenGenerator{token: "signed.jwt.token"},
-		)
-		svc := token.NewService(h)
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T, clientID string) (*token.Service, string, token.Request)
+		wantErr     bool
+		wantErrCode app_errors.ErrorCode
+		wantAccess  string
+	}{
+		{
+			name: "routes to the handler that supports the grant type",
+			setup: func(t *testing.T, clientID string) (*token.Service, string, token.Request) {
+				h := newClientCredentialsGrantHandler(
+					&mockClientRepo{client: newCCClientMother(clientID)},
+					&mockCCRepo{},
+					&mockAccessTokenGenerator{token: "signed.jwt.token"},
+				)
+				return token.NewService(h), flows.ClientCredentialsGrantType, token.Request{ClientID: clientID, Scope: "openid"}
+			},
+			wantAccess: "signed.jwt.token",
+		},
+		{
+			name: "returns error for an unsupported grant type",
+			setup: func(t *testing.T, clientID string) (*token.Service, string, token.Request) {
+				return token.NewService(), "refresh_token", token.Request{}
+			},
+			wantErr:     true,
+			wantErrCode: session.ErrUnsupportedGrantType,
+		},
+	}
 
-		resp, err := svc.Execute(context.Background(), flows.ClientCredentialsGrantType, token.Request{ClientID: clientID, Scope: "openid"})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			svc, grantType, req := tt.setup(t, uuid.New().String())
 
-		require.NoError(t, err)
-		assert.Equal(t, "signed.jwt.token", resp.AccessToken)
-	})
+			resp, err := svc.Execute(context.Background(), grantType, req)
 
-	t.Run("returns error for an unsupported grant type", func(t *testing.T) {
-		t.Parallel()
-		svc := token.NewService()
-
-		_, err := svc.Execute(context.Background(), "refresh_token", token.Request{})
-
-		var appErr *app_errors.AppError
-		require.ErrorAs(t, err, &appErr)
-		assert.Equal(t, session.ErrUnsupportedGrantType, appErr.Code)
-	})
+			if tt.wantErr {
+				var appErr *app_errors.AppError
+				require.ErrorAs(t, err, &appErr)
+				assert.Equal(t, tt.wantErrCode, appErr.Code)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantAccess, resp.AccessToken)
+		})
+	}
 }

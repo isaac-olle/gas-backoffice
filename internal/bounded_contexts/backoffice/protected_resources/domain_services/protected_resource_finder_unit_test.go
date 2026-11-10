@@ -18,7 +18,7 @@ import (
 // aPR builds a minimal valid ProtectedResource for test setup.
 func aPR(t *testing.T) *protected_resources.ProtectedResource {
 	t.Helper()
-	ownership := protected_resources.NewOwnership(ids2.NewUserId(), ids2.NewUserId())
+	ownership := protected_resources.NewOwnership(ids2.NewSubscriptionId())
 	pr, err := protected_resources.NewProtectedResource(ids2.NewProtectedResourceId(), "Test", ownership, false)
 	require.NoError(t, err)
 	pr.PullDomainEvents() // drain creation event

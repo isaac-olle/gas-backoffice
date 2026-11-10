@@ -29,7 +29,7 @@ func TestAddKeyOnClientAssertionKeyCreated(t *testing.T) {
 	t.Run("adds key id to client and saves it", func(t *testing.T) {
 		t.Parallel()
 		repo := clientmocks.NewMockRepository(t)
-		client := aClientForEventHandlers(t, ids2.NewUserId())
+		client := aClientForEventHandlers(t, ids2.NewSubscriptionId())
 		clientId, err := ids2.NewClientIdFromString(client.ToPrimitives().Id)
 		require.NoError(t, err)
 		childId := ids2.NewClientAssertionKeyId()
@@ -71,7 +71,7 @@ func TestAddKeyOnClientAssertionKeyCreated(t *testing.T) {
 			desc: "maps concurrent modification to conflict",
 			evt:  securityevents.NewClientAssertionKeyCreated(ids2.NewClientAssertionKeyId().String(), ids2.NewClientId().String()),
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aClientForEventHandlers(t, ids2.NewUserId()), nil)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aClientForEventHandlers(t, ids2.NewSubscriptionId()), nil)
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(persistance.ErrConcurrentModification)
 			},
 			wantCode: clients.ErrClientConcurrentModification,
@@ -80,7 +80,7 @@ func TestAddKeyOnClientAssertionKeyCreated(t *testing.T) {
 			desc: "wraps repository save failure",
 			evt:  securityevents.NewClientAssertionKeyCreated(ids2.NewClientAssertionKeyId().String(), ids2.NewClientId().String()),
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aClientForEventHandlers(t, ids2.NewUserId()), nil)
+				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(aClientForEventHandlers(t, ids2.NewSubscriptionId()), nil)
 				repo.EXPECT().Save(mock.Anything, mock.Anything).Return(fmt.Errorf("db error"))
 			},
 			wantCode: clients.ErrClientNotSaved,

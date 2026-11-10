@@ -31,29 +31,40 @@ func TestClientCredentialsTokenResponseGenerator_Generate(t *testing.T) {
 
 	identity := session.NewUserIdentityProjection("client-subject", "")
 
-	t.Run("returns only an access token, never an id_token", func(t *testing.T) {
-		t.Parallel()
-		sess := makeClientCredentialsSession(t)
-		gen := domain_services.NewClientCredentialsTokenResponseGenerator(
-			&stubAccessTokenGenerator{token: "access-token"},
-		)
+	tests := []struct {
+		name        string
+		accessToken string
+		accessErr   error
+		wantErr     bool
+	}{
+		{
+			name:        "returns only an access token, never an id_token",
+			accessToken: "access-token",
+		},
+		{
+			name:      "returns error when generating the access token fails",
+			accessErr: assert.AnError,
+			wantErr:   true,
+		},
+	}
 
-		resp, err := gen.Generate(context.Background(), sess, identity)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			sess := makeClientCredentialsSession(t)
+			gen := domain_services.NewClientCredentialsTokenResponseGenerator(
+				&stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr},
+			)
 
-		require.NoError(t, err)
-		assert.Equal(t, "access-token", resp.AccessToken)
-		assert.Empty(t, resp.IDToken)
-	})
+			resp, err := gen.Generate(context.Background(), sess, identity)
 
-	t.Run("returns error when generating the access token fails", func(t *testing.T) {
-		t.Parallel()
-		sess := makeClientCredentialsSession(t)
-		gen := domain_services.NewClientCredentialsTokenResponseGenerator(
-			&stubAccessTokenGenerator{err: assert.AnError},
-		)
-
-		_, err := gen.Generate(context.Background(), sess, identity)
-
-		require.Error(t, err)
-	})
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.accessToken, resp.AccessToken)
+			assert.Empty(t, resp.IDToken)
+		})
+	}
 }

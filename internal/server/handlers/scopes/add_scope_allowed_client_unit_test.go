@@ -20,9 +20,6 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 		name       string
 		scopeIdFn  func(context.Context) (ids.ScopeId, bool)
 		clientIdFn func(context.Context) (ids.ClientId, bool)
-		prIdFn     func(context.Context) (ids.ProtectedResourceId, bool)
-		userIdFn   func(context.Context) (ids.UserId, bool)
-		queryErr   error
 		busErr     error
 		wantErr    bool
 		wantStatus int
@@ -31,49 +28,18 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 			name:       "missing_scope_id_returns_error",
 			scopeIdFn:  handlerstest.MissingScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    true,
 		},
 		{
 			name:       "missing_client_id_returns_error",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.MissingClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
-			wantErr:    true,
-		},
-		{
-			name:       "missing_pr_id_returns_error",
-			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.MissingPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
-			wantErr:    true,
-		},
-		{
-			name:       "missing_user_id_returns_error",
-			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.MissingUserIdExtractor(),
-			wantErr:    true,
-		},
-		{
-			name:       "client_ownership_check_error_returns_error",
-			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
-			queryErr:   errors.New("client does not belong to the provided user"),
 			wantErr:    true,
 		},
 		{
 			name:       "bus_error_returns_error",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			busErr:     errors.New("bus error"),
 			wantErr:    true,
 		},
@@ -81,8 +47,6 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 			name:       "success_returns_204",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
 			clientIdFn: handlerstest.ValidClientIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusNoContent,
 		},
@@ -92,8 +56,7 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			qryBus := handlerstest.NewQueryBus(nil, tt.queryErr)
-			h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, qryBus, tt.scopeIdFn, tt.clientIdFn, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, tt.scopeIdFn, tt.clientIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPost, nil)
 			result, err := h.Execute(c)
@@ -112,8 +75,7 @@ func TestAddScopeAllowedClientHandler(t *testing.T) {
 func TestAddScopeAllowedClientHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	qryBus := handlerstest.NewQueryBus(nil, nil)
-	h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, qryBus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidClientIdExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := scopeHandlers.NewAddScopeAllowedClientHandler(bus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidClientIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPost, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

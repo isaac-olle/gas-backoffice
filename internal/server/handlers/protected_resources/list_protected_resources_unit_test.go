@@ -12,34 +12,38 @@ import (
 	aggregate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 func TestListProtectedResourcesHandler(t *testing.T) {
 	t.Parallel()
-	item, err := aggregate.FromPrimitives(aggregate.ProtectedResourcePrimitives{Id: handlerstest.PrID, Name: "My API", AdminId: handlerstest.AdminID, UserId: handlerstest.UserId})
+	item, err := aggregate.FromPrimitives(aggregate.ProtectedResourcePrimitives{Id: handlerstest.PrID, Name: "My API", SubscriptionId: handlerstest.SubscriptionID})
 	require.NoError(t, err)
 
 	tests := []struct {
 		name      string
-		userIdFn  func(context.Context) (ids.UserId, bool)
+		hasAuthor bool
 		busResult any
 		busErr    error
 		wantErr   bool
 		wantLen   int
 	}{
-		{name: "missing_user_id_returns_error", userIdFn: handlerstest.MissingUserIdExtractor(), wantErr: true},
-		{name: "bus_error_returns_error", userIdFn: handlerstest.ValidUserIdExtractor(), busErr: errors.New("db"), wantErr: true},
-		{name: "empty_list_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.ProtectedResource{}, wantLen: 0},
-		{name: "success_returns_200", userIdFn: handlerstest.ValidUserIdExtractor(), busResult: []*aggregate.ProtectedResource{item}, wantLen: 1},
+		{name: "missing author returns unauthorized", wantErr: true},
+		{name: "bus_error_returns_error", hasAuthor: true, busErr: errors.New("db"), wantErr: true},
+		{name: "empty_list_returns_200", hasAuthor: true, busResult: []*aggregate.ProtectedResource{}, wantLen: 0},
+		{name: "success_returns_200", hasAuthor: true, busResult: []*aggregate.ProtectedResource{item}, wantLen: 1},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewQueryBus(tt.busResult, tt.busErr)
-			h := protected_resources.NewListProtectedResourcesHandler(bus, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			h := protected_resources.NewListProtectedResourcesHandler(bus)
 
 			_, c := handlerstest.NewCtx(http.MethodGet, nil)
+			if tt.hasAuthor {
+				author, _ := handlerstest.ValidAuthorExtractor()(context.Background())
+				c.Request = c.Request.WithContext(vo.WithAuthor(c.Request.Context(), author))
+			}
 			result, err := h.Execute(c)
 
 			if tt.wantErr {
@@ -58,16 +62,8 @@ func TestListProtectedResourcesHandler(t *testing.T) {
 
 func TestListProtectedResourcesHandler_Default(t *testing.T) {
 	t.Parallel()
-	h := protected_resources.NewListProtectedResourcesHandler(handlerstest.NewQueryBus(nil, nil), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := protected_resources.NewListProtectedResourcesHandler(handlerstest.NewQueryBus(nil, nil))
 	_, c := handlerstest.NewCtx(http.MethodGet, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())
-}
-
-func TestListProtectedResourcesHandler_MissingAuthor(t *testing.T) {
-	t.Parallel()
-	h := protected_resources.NewListProtectedResourcesHandler(handlerstest.NewQueryBus(nil, nil), handlerstest.ValidUserIdExtractor(), handlerstest.MissingAuthorExtractor())
-	_, c := handlerstest.NewCtx(http.MethodGet, nil)
-	_, err := h.Execute(c)
-	assert.Error(t, err)
 }

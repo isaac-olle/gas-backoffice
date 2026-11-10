@@ -25,7 +25,7 @@ func aCommand(t *testing.T, opts ...cmdOpt) *create.Command {
 	b := &cmdBuilder{
 		prId:      ids2.NewProtectedResourceId(),
 		name:      "My Resource",
-		ownership: protected_resources.NewOwnership(ids2.NewUserId(), ids2.NewUserId()),
+		ownership: protected_resources.NewOwnership(ids2.NewSubscriptionId()),
 	}
 	for _, o := range opts {
 		o(b)

@@ -19,8 +19,6 @@ func TestDisableScopeHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		scopeIdFn  func(context.Context) (ids.ScopeId, bool)
-		prIdFn     func(context.Context) (ids.ProtectedResourceId, bool)
-		userIdFn   func(context.Context) (ids.UserId, bool)
 		busErr     error
 		wantErr    bool
 		wantStatus int
@@ -28,37 +26,17 @@ func TestDisableScopeHandler(t *testing.T) {
 		{
 			name:      "missing_scope_id_returns_error",
 			scopeIdFn: handlerstest.MissingScopeIdExtractor(),
-			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
-			wantErr:   true,
-		},
-		{
-			name:      "missing_pr_id_returns_error",
-			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			prIdFn:    handlerstest.MissingPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
-			wantErr:   true,
-		},
-		{
-			name:      "missing_user_id_returns_error",
-			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.MissingUserIdExtractor(),
 			wantErr:   true,
 		},
 		{
 			name:      "bus_error_returns_error",
 			scopeIdFn: handlerstest.ValidScopeIdExtractor(),
-			prIdFn:    handlerstest.ValidPrIdExtractor(),
-			userIdFn:  handlerstest.ValidUserIdExtractor(),
 			busErr:    errors.New("bus error"),
 			wantErr:   true,
 		},
 		{
 			name:       "success_returns_204",
 			scopeIdFn:  handlerstest.ValidScopeIdExtractor(),
-			prIdFn:     handlerstest.ValidPrIdExtractor(),
-			userIdFn:   handlerstest.ValidUserIdExtractor(),
 			wantErr:    false,
 			wantStatus: http.StatusNoContent,
 		},
@@ -67,7 +45,7 @@ func TestDisableScopeHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := scopeHandlers.NewDisableScopeHandler(bus, tt.scopeIdFn, tt.prIdFn, tt.userIdFn, handlerstest.ValidAuthorExtractor())
+			h := scopeHandlers.NewDisableScopeHandler(bus, tt.scopeIdFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPatch, nil)
 			result, err := h.Execute(c)
@@ -86,7 +64,7 @@ func TestDisableScopeHandler(t *testing.T) {
 func TestDisableScopeHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := scopeHandlers.NewDisableScopeHandler(bus, handlerstest.ValidScopeIdExtractor(), handlerstest.ValidPrIdExtractor(), handlerstest.ValidUserIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := scopeHandlers.NewDisableScopeHandler(bus, handlerstest.ValidScopeIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPatch, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())

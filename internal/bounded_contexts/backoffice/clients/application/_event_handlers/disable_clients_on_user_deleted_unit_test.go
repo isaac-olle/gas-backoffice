@@ -17,9 +17,9 @@ import (
 	backofficeevents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 )
 
-func aClientForEventHandlers(t *testing.T, userId ids2.UserId) *clients.Client {
+func aClientForEventHandlers(t *testing.T, subscriptionId ids2.SubscriptionId) *clients.Client {
 	t.Helper()
-	client, err := clients.NewClient(ids2.NewClientId(), "A Client", clients.NewOwnership(userId, userId), nil, nil, false, false)
+	client, err := clients.NewClient(ids2.NewClientId(), "A Client", clients.NewOwnership(subscriptionId), nil, nil, false, false)
 	require.NoError(t, err)
 	client.PullDomainEvents()
 	return client
@@ -28,66 +28,76 @@ func aClientForEventHandlers(t *testing.T, userId ids2.UserId) *clients.Client {
 func TestDisableClientsOnUserDeleted(t *testing.T) {
 	t.Parallel()
 
-	t.Run("disables every enabled client of the deleted user", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus, userId ids2.UserId) *clients.Client
+		wantErr bool
+		check   func(t *testing.T, client *clients.Client)
+	}{
+		{
+			name: "disables every enabled client of the deleted user",
+			setup: func(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus, userId ids2.UserId) *clients.Client {
+				client := aClientForEventHandlers(t, ids2.NewSubscriptionId())
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(nil)
+				bus.EXPECT().Publish(mock.Anything, mock.Anything)
+				return client
+			},
+			check: func(t *testing.T, client *clients.Client) {
+				assert.False(t, client.IsEnabled())
+			},
+		},
+		{
+			name: "skips clients that are already disabled",
+			setup: func(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus, userId ids2.UserId) *clients.Client {
+				client := aClientForEventHandlers(t, ids2.NewSubscriptionId())
+				client.Disable()
+				client.PullDomainEvents()
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
+				return client
+			},
+		},
+		{
+			name: "wraps repository search failure",
+			setup: func(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus, userId ids2.UserId) *clients.Client {
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
+				return nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "wraps repository save failure",
+			setup: func(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus, userId ids2.UserId) *clients.Client {
+				client := aClientForEventHandlers(t, ids2.NewSubscriptionId())
+				repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
+				repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))
+				return client
+			},
+			wantErr: true,
+		},
+	}
 
-		client := aClientForEventHandlers(t, userId)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := clientmocks.NewMockRepository(t)
+			bus := eventmocks.NewMockBus(t)
+			userId := ids2.NewUserId()
 
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(nil)
-		bus.EXPECT().Publish(mock.Anything, mock.Anything)
+			client := tt.setup(t, repo, bus, userId)
 
-		handler := event_handlers.NewDisableClientsOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		require.NoError(t, handler.Handle(context.Background(), evt))
+			handler := event_handlers.NewDisableClientsOnUserDeletedEventHandler(repo, bus)
+			evt := backofficeevents.NewUserDeleted(userId.String())
+			err := handler.Handle(context.Background(), evt)
 
-		assert.False(t, client.IsEnabled())
-	})
-
-	t.Run("skips clients that are already disabled", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
-
-		client := aClientForEventHandlers(t, userId)
-		client.Disable()
-		client.PullDomainEvents()
-
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
-
-		handler := event_handlers.NewDisableClientsOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		require.NoError(t, handler.Handle(context.Background(), evt))
-	})
-
-	t.Run("wraps repository search failure", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db error"))
-
-		handler := event_handlers.NewDisableClientsOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(ids2.NewUserId().String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
-
-	t.Run("wraps repository save failure", func(t *testing.T) {
-		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
-		bus := eventmocks.NewMockBus(t)
-		userId := ids2.NewUserId()
-
-		client := aClientForEventHandlers(t, userId)
-
-		repo.EXPECT().Matching(mock.Anything, mock.Anything).Return([]*clients.Client{client}, nil)
-		repo.EXPECT().Save(mock.Anything, mock.AnythingOfType("*clients.Client")).Return(fmt.Errorf("db error"))
-
-		handler := event_handlers.NewDisableClientsOnUserDeletedEventHandler(repo, bus)
-		evt := backofficeevents.NewUserDeleted(userId.String())
-		assert.Error(t, handler.Handle(context.Background(), evt))
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, client)
+			}
+		})
+	}
 }

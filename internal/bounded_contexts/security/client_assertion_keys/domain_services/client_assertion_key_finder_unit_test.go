@@ -17,12 +17,11 @@ import (
 func aClientAssertionKey(t *testing.T) *client_assertion_keys.ClientAssertionKey {
 	t.Helper()
 	cak, err := client_assertion_keys.FromPrimitives(client_assertion_keys.ClientAssertionKeyPrimitives{
-		Id:        ids.NewClientAssertionKeyId().String(),
-		ClientId:  ids.NewClientId().String(),
-		UserId:    ids.NewUserId().String(),
-		AdminId:   ids.NewUserId().String(),
-		Algorithm: "RS256",
-		PublicKey: []byte("stub-public-key"),
+		Id:             ids.NewClientAssertionKeyId().String(),
+		ClientId:       ids.NewClientId().String(),
+		SubscriptionId: ids.NewSubscriptionId().String(),
+		Algorithm:      "RS256",
+		PublicKey:      []byte("stub-public-key"),
 	})
 	require.NoError(t, err)
 	return cak
@@ -31,71 +30,85 @@ func aClientAssertionKey(t *testing.T) *client_assertion_keys.ClientAssertionKey
 func TestClientAssertionKeyFinder_Find(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns key when repo finds it", func(t *testing.T) {
-		t.Parallel()
-		expected := aClientAssertionKey(t)
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientAssertionKeyId")).Return(expected, nil)
+	tests := []struct {
+		name    string
+		repoKey *client_assertion_keys.ClientAssertionKey
+		repoErr error
+		wantErr bool
+	}{
+		{
+			name:    "returns key when repo finds it",
+			repoKey: aClientAssertionKey(t),
+		},
+		{
+			name:    "propagates error from repository",
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+		{
+			name:    "returns not found error when repo returns nil",
+			repoKey: nil,
+			wantErr: true,
+		},
+	}
 
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		got, err := finder.Find(context.Background(), ids.NewClientAssertionKeyId())
-		require.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := cakmocks.NewMockClientAssertionKeyRepository(t)
+			repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientAssertionKeyId")).Return(tt.repoKey, tt.repoErr)
 
-	t.Run("propagates error from repository", func(t *testing.T) {
-		t.Parallel()
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientAssertionKeyId")).Return(nil, fmt.Errorf("db error"))
+			finder := domain_services.NewClientAssertionKeyFinder(repo)
+			got, err := finder.Find(context.Background(), ids.NewClientAssertionKeyId())
 
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		_, err := finder.Find(context.Background(), ids.NewClientAssertionKeyId())
-		assert.Error(t, err)
-	})
-
-	t.Run("returns not found error when repo returns nil", func(t *testing.T) {
-		t.Parallel()
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().SearchById(mock.Anything, mock.AnythingOfType("ids.ClientAssertionKeyId")).Return(nil, nil)
-
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		_, err := finder.Find(context.Background(), ids.NewClientAssertionKeyId())
-		assert.Error(t, err)
-	})
+			require.Equal(t, tt.wantErr, err != nil)
+			if tt.wantErr {
+				return
+			}
+			assert.Equal(t, tt.repoKey, got)
+		})
+	}
 }
 
 func TestClientAssertionKeyFinder_FindByClientId(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns key when repo finds it by client id", func(t *testing.T) {
-		t.Parallel()
-		expected := aClientAssertionKey(t)
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().FindByClientId(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(expected, nil)
+	tests := []struct {
+		name    string
+		repoKey *client_assertion_keys.ClientAssertionKey
+		repoErr error
+		wantErr bool
+	}{
+		{
+			name:    "returns key when repo finds it by client id",
+			repoKey: aClientAssertionKey(t),
+		},
+		{
+			name:    "propagates error from repository",
+			repoErr: fmt.Errorf("db error"),
+			wantErr: true,
+		},
+		{
+			name:    "returns not found error when repo returns nil",
+			repoKey: nil,
+			wantErr: true,
+		},
+	}
 
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		got, err := finder.FindByClientId(context.Background(), ids.NewClientId())
-		require.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			repo := cakmocks.NewMockClientAssertionKeyRepository(t)
+			repo.EXPECT().FindByClientId(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(tt.repoKey, tt.repoErr)
 
-	t.Run("propagates error from repository", func(t *testing.T) {
-		t.Parallel()
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().FindByClientId(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(nil, fmt.Errorf("db error"))
+			finder := domain_services.NewClientAssertionKeyFinder(repo)
+			got, err := finder.FindByClientId(context.Background(), ids.NewClientId())
 
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		_, err := finder.FindByClientId(context.Background(), ids.NewClientId())
-		assert.Error(t, err)
-	})
-
-	t.Run("returns not found error when repo returns nil", func(t *testing.T) {
-		t.Parallel()
-		repo := cakmocks.NewMockClientAssertionKeyRepository(t)
-		repo.EXPECT().FindByClientId(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(nil, nil)
-
-		finder := domain_services.NewClientAssertionKeyFinder(repo)
-		_, err := finder.FindByClientId(context.Background(), ids.NewClientId())
-		assert.Error(t, err)
-	})
+			require.Equal(t, tt.wantErr, err != nil)
+			if tt.wantErr {
+				return
+			}
+			assert.Equal(t, tt.repoKey, got)
+		})
+	}
 }

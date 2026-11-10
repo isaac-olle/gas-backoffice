@@ -3,13 +3,15 @@ package disable_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
 	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +24,7 @@ import (
 )
 
 func newService(repo *scopemocks.MockRepository, bus *eventmocks.MockBus) *disable.Service {
-	return disable.NewService(domain_services.NewScopeFinder(repo), repo, bus)
+	return disable.NewService(domain_services.NewScopeFinder(repo), repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func TestDisable(t *testing.T) {
@@ -34,8 +36,8 @@ func TestDisable(t *testing.T) {
 		bus := eventmocks.NewMockBus(t)
 		scopeId := ids2.NewScopeId()
 		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
-		scope := anEnabledScope(t, scopeId, prId, userId)
+		subscriptionId := ids2.NewSubscriptionId()
+		scope := anEnabledScope(t, scopeId, prId, subscriptionId)
 
 		var saved *scopes.Scope
 		repo.EXPECT().SearchById(mock.Anything, scopeId).Return(scope, nil)
@@ -51,14 +53,14 @@ func TestDisable(t *testing.T) {
 
 		svc := newService(repo, bus)
 		require.NoError(t, svc.Disable(context.Background(),
-			aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))))
+			aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))))
 
 		assert.False(t, saved.IsEnabled())
 	})
 
 	scopeId := ids2.NewScopeId()
 	prId := ids2.NewProtectedResourceId()
-	userId := ids2.NewUserId()
+	subscriptionId := ids2.NewSubscriptionId()
 
 	errCases := []struct {
 		desc      string
@@ -72,12 +74,12 @@ func TestDisable(t *testing.T) {
 			wantCode: scopes.ErrScopeNotFound,
 		},
 		{
-			desc: "returns ErrInvalidOwnership when ownership does not match",
+			desc: "returns ErrInvalidOwnership when author lacks subscription access",
 			cmd: func(t *testing.T) *disable.Command {
-				return aCommand(t, withScopeId(scopeId.String()))
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, ids2.NewSubscriptionId())))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
-				scope := anEnabledScope(t, scopeId, prId, userId)
+				scope := anEnabledScope(t, scopeId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -87,15 +89,14 @@ func TestDisable(t *testing.T) {
 		{
 			desc: "returns forbidden when scope is a system resource",
 			cmd: func(t *testing.T) *disable.Command {
-				return aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
 				scope, err := scopes.FromPrimitives(scopes.ScopePrimitives{
 					Id:                  scopeId.String(),
 					Name:                "system-scope",
 					ProtectedResourceId: prId.String(),
-					AdminId:             ids2.NewUserId().String(),
-					UserId:              userId.String(),
+					SubscriptionId:      subscriptionId.String(),
 					IsSystem:            true,
 					Enabled:             true,
 				})
@@ -109,10 +110,10 @@ func TestDisable(t *testing.T) {
 		{
 			desc: "returns ErrScopeNotSaved when save fails",
 			cmd: func(t *testing.T) *disable.Command {
-				return aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
-				scope := anEnabledScope(t, scopeId, prId, userId)
+				scope := anEnabledScope(t, scopeId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)
@@ -125,10 +126,10 @@ func TestDisable(t *testing.T) {
 		{
 			desc: "returns conflict when repository reports concurrent modification",
 			cmd: func(t *testing.T) *disable.Command {
-				return aCommand(t, withScopeId(scopeId.String()), withProtectedResourceId(prId.String()), withUserId(userId.String()))
+				return aCommand(t, withScopeId(scopeId.String()), withAuthor(authorFor(t, subscriptionId)))
 			},
 			setupRepo: func(repo *scopemocks.MockRepository) {
-				scope := anEnabledScope(t, scopeId, prId, userId)
+				scope := anEnabledScope(t, scopeId, prId, subscriptionId)
 				repo.EXPECT().
 					SearchById(mock.Anything, mock.Anything).
 					Return(scope, nil)

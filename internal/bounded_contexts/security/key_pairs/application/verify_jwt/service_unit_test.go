@@ -30,7 +30,7 @@ func TestVerifyJWT_HappyPath(t *testing.T) {
 	t.Parallel()
 
 	kp := newKeyPairMother(t)
-	validClaims := newValidClaimsMother(t, testIssuer)
+	validClaims := newValidClaimsMother(testIssuer)
 	const token = "some.jwt.token"
 
 	repo := kpmocks.NewMockRepository(t)
@@ -38,21 +38,87 @@ func TestVerifyJWT_HappyPath(t *testing.T) {
 	decoder := &mockJwtDecoder{kid: kp.ToPrimitives().Id}
 	verifier := &mockTokenVerifier{claims: validClaims}
 	finder := domain_services.NewKeyPairFinder(repo)
-	svc := verify_jwt.NewService(finder, verifier, decoder, testIssuer)
+	svc := verify_jwt.NewService(finder, verifier, decoder)
 
-	_, err := svc.VerifyJWT(context.Background(), verify_jwt.NewQuery(token))
+	result, err := svc.VerifyJWT(context.Background(), verify_jwt.NewQuery(token).WithExpectedClaim("iss", testIssuer).WithVerifyExpiration())
 
 	require.NoError(t, err)
+	assert.Equal(t, validClaims, result)
 	assert.Equal(t, token, decoder.gotToken, "decoder must receive the original token")
 	assert.Equal(t, token, verifier.gotToken, "verifier must receive the original token")
 	assert.Equal(t, kp, verifier.gotKeyPair, "verifier must receive the fetched KeyPair")
+	assert.Equal(t, testIssuer, verifier.gotExpectedClaims["iss"], "verifier must receive the expected claims")
+	assert.True(t, verifier.gotVerifyExpiration, "verifier must receive the verify-expiration flag")
+}
+
+func TestVerifyJWT_ClaimsToReturn(t *testing.T) {
+	t.Parallel()
+
+	kp := newKeyPairMother(t)
+	claims := map[string]any{
+		"sub": uuid.New().String(),
+		"address": map[string]any{
+			"city": "Barcelona",
+		},
+	}
+
+	tests := []struct {
+		name           string
+		claimsTemplate map[string]any
+		wantResult     map[string]any
+		wantErrCode    app_errors.ErrorCode
+	}{
+		{
+			name:           "returns only the requested top-level claim",
+			claimsTemplate: map[string]any{"sub": nil},
+			wantResult:     map[string]any{"sub": claims["sub"]},
+		},
+		{
+			name:           "descends into a nested claim",
+			claimsTemplate: map[string]any{"address": map[string]any{"city": nil}},
+			wantResult:     map[string]any{"address": map[string]any{"city": "Barcelona"}},
+		},
+		{
+			name:           "returns invalid token error when a requested claim is missing",
+			claimsTemplate: map[string]any{"missing": nil},
+			wantErrCode:    key_pairs.ErrInvalidToken,
+		},
+		{
+			name:           "returns invalid token error when descending into a non-object claim",
+			claimsTemplate: map[string]any{"sub": map[string]any{"nested": nil}},
+			wantErrCode:    key_pairs.ErrInvalidToken,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := kpmocks.NewMockRepository(t)
+			repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(kp, nil)
+			decoder := &mockJwtDecoder{kid: kp.ToPrimitives().Id}
+			verifier := &mockTokenVerifier{claims: claims}
+			finder := domain_services.NewKeyPairFinder(repo)
+			svc := verify_jwt.NewService(finder, verifier, decoder)
+
+			result, err := svc.VerifyJWT(context.Background(), verify_jwt.NewQuery("tok").WithClaimsToReturn(tc.claimsTemplate))
+
+			if tc.wantErrCode != "" {
+				assertErrCode(t, err, tc.wantErrCode)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantResult, result)
+		})
+	}
 }
 
 func TestVerifyJWT_ErrorCases(t *testing.T) {
 	t.Parallel()
 
 	kp := newKeyPairMother(t)
-	validClaims := newValidClaimsMother(t, testIssuer)
+	validClaims := newValidClaimsMother(testIssuer)
 
 	tests := []struct {
 		name           string
@@ -60,7 +126,7 @@ func TestVerifyJWT_ErrorCases(t *testing.T) {
 		decoderKid     string
 		decoderErr     error
 		repoResult     *key_pairs.KeyPair
-		verifierClaims *key_pairs.TokenClaims
+		verifierClaims map[string]any
 		verifierErr    error
 		wantErrCode    app_errors.ErrorCode
 	}{
@@ -71,6 +137,12 @@ func TestVerifyJWT_ErrorCases(t *testing.T) {
 			wantErrCode: key_pairs.ErrInvalidToken,
 		},
 		{
+			name:        "returns invalid token error when kid is not a valid UUID",
+			token:       "tok",
+			decoderKid:  "not-a-uuid",
+			wantErrCode: key_pairs.ErrInvalidToken,
+		},
+		{
 			name:        "returns not found error when key pair does not exist",
 			token:       "tok",
 			decoderKid:  uuid.New().String(),
@@ -78,70 +150,13 @@ func TestVerifyJWT_ErrorCases(t *testing.T) {
 			wantErrCode: key_pairs.ErrKeyPairNotFound,
 		},
 		{
-			name:           "returns invalid token error when verifier rejects signature",
+			name:           "returns invalid token error when verifier rejects the token",
 			token:          "bad.sig",
 			decoderKid:     kp.ToPrimitives().Id,
 			repoResult:     kp,
 			verifierClaims: validClaims,
 			verifierErr:    errors.New("invalid signature"),
 			wantErrCode:    key_pairs.ErrInvalidToken,
-		},
-		{
-			name:        "returns invalid token error when kid is not a valid UUID",
-			token:       "tok",
-			decoderKid:  "not-a-uuid",
-			wantErrCode: key_pairs.ErrInvalidToken,
-		},
-		{
-			name:       "returns invalid token error when issuer does not match",
-			token:      "tok",
-			decoderKid: kp.ToPrimitives().Id,
-			repoResult: kp,
-			verifierClaims: func() *key_pairs.TokenClaims {
-				c, err := key_pairs.NewTokenClaims(map[string]any{
-					"sub":  uuid.New().String(),
-					"iss":  "wrong-issuer",
-					"aud":  testIssuer,
-					"role": "admin",
-				})
-				require.NoError(t, err)
-				return c
-			}(),
-			wantErrCode: key_pairs.ErrInvalidToken,
-		},
-		{
-			name:       "returns invalid token error when audience does not match",
-			token:      "tok",
-			decoderKid: kp.ToPrimitives().Id,
-			repoResult: kp,
-			verifierClaims: func() *key_pairs.TokenClaims {
-				c, err := key_pairs.NewTokenClaims(map[string]any{
-					"sub":  uuid.New().String(),
-					"iss":  testIssuer,
-					"aud":  "wrong-audience",
-					"role": "admin",
-				})
-				require.NoError(t, err)
-				return c
-			}(),
-			wantErrCode: key_pairs.ErrInvalidToken,
-		},
-		{
-			name:       "returns invalid token error when sub is not a valid actor UUID",
-			token:      "tok",
-			decoderKid: kp.ToPrimitives().Id,
-			repoResult: kp,
-			verifierClaims: func() *key_pairs.TokenClaims {
-				c, err := key_pairs.NewTokenClaims(map[string]any{
-					"sub":  "not-a-uuid",
-					"iss":  testIssuer,
-					"aud":  testIssuer,
-					"role": "admin",
-				})
-				require.NoError(t, err)
-				return c
-			}(),
-			wantErrCode: key_pairs.ErrInvalidToken,
 		},
 	}
 
@@ -157,7 +172,7 @@ func TestVerifyJWT_ErrorCases(t *testing.T) {
 			decoder := &mockJwtDecoder{kid: tc.decoderKid, err: tc.decoderErr}
 			verifier := &mockTokenVerifier{claims: tc.verifierClaims, err: tc.verifierErr}
 			finder := domain_services.NewKeyPairFinder(repo)
-			svc := verify_jwt.NewService(finder, verifier, decoder, testIssuer)
+			svc := verify_jwt.NewService(finder, verifier, decoder)
 
 			_, err := svc.VerifyJWT(context.Background(), verify_jwt.NewQuery(tc.token))
 

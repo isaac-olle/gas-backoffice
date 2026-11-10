@@ -3,9 +3,15 @@ package hard_delete_test
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
+
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
+	eventmocks "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/mocks"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
+	backofficeEvents "github.com/isaac-olle/gas-backoffice/internal/shared/events/backoffice"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,15 +27,22 @@ func TestHardDelete(t *testing.T) {
 
 	t.Run("hard deletes client with correct id from repository", func(t *testing.T) {
 		t.Parallel()
-		repo := clientmocks.NewMockRepository(t)
+		repo, bus := newMocks(t)
 		clientId := ids.NewClientId()
-		userId := ids.NewUserId()
-		c, _ := clients.NewClient(clientId, "valid-client", clients.NewOwnership(ids.NewUserId(), userId), nil, nil, false, false)
+		subscriptionId := ids.NewSubscriptionId()
+		c, _ := clients.NewClient(clientId, "valid-client", clients.NewOwnership(subscriptionId), nil, nil, false, false)
 		c.PullDomainEvents()
+		author, err := vo.NewUserAuthorWithMemberships(ids.NewUserId().String(), ids.NewUserId().String(), vo.SubscriptionUserRole,
+			[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+		require.NoError(t, err)
 		repo.EXPECT().SearchById(mock.Anything, clientId).Return(c, nil)
 		repo.EXPECT().HardDelete(mock.Anything, clientId).Return(nil)
+		bus.EXPECT().
+			Publish(mock.Anything, mock.MatchedBy(func(evts []event.Event) bool {
+				return len(evts) == 1 && evts[0].Type() == backofficeEvents.ClientDeletedType
+			}))
 
-		err := newService(t, repo).HardDelete(context.Background(), hard_delete.NewCommand(clientId.String(), ids.NewUserId().String(), userId.String()))
+		err = newService(t, repo, bus).HardDelete(context.Background(), hard_delete.NewCommand(clientId.String(), author))
 		require.NoError(t, err)
 	})
 
@@ -45,11 +58,6 @@ func TestHardDelete(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc:     "rejects invalid user id format",
-			cmd:      func(t *testing.T) *hard_delete.Command { return aCommand(t, withUserId("bad-id")) },
-			wantCode: clients.ErrClientNotFound,
-		},
-		{
 			desc: "returns not found when client does not exist",
 			cmd:  func(t *testing.T) *hard_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
@@ -58,10 +66,14 @@ func TestHardDelete(t *testing.T) {
 			wantCode: clients.ErrClientNotFound,
 		},
 		{
-			desc: "returns forbidden when caller does not own the client",
-			cmd:  func(t *testing.T) *hard_delete.Command { return aCommand(t) },
+			desc: "returns forbidden when author lacks subscription access",
+			cmd: func(t *testing.T) *hard_delete.Command {
+				unauthorized, err := vo.NewUserAuthorFromString(ids.NewUserId().String(), ids.NewUserId().String(), vo.SubscriptionUserRole)
+				require.NoError(t, err)
+				return aCommand(t, withAuthor(unauthorized))
+			},
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids.NewClientId(), "valid-client", clients.NewOwnership(ids.NewUserId(), ids.NewUserId()), nil, nil, false, false)
+				c, _ := clients.NewClient(ids.NewClientId(), "valid-client", clients.NewOwnership(ids.NewSubscriptionId()), nil, nil, false, false)
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
@@ -69,28 +81,20 @@ func TestHardDelete(t *testing.T) {
 		},
 		{
 			desc: "returns forbidden when client is system resource",
-			cmd: func(t *testing.T) *hard_delete.Command {
-				return aCommand(t, withUserId(systemResourceUserId.String()))
-			},
+			cmd:  func(t *testing.T) *hard_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.FromPrimitives(clients.ClientPrimitives{
-					Id:       ids.NewClientId().String(),
-					Name:     "system-client",
-					AdminId:  ids.NewUserId().String(),
-					UserId:   systemResourceUserId.String(),
-					IsSystem: true,
-				})
+				c, err := clients.NewClient(ids.NewClientId(), "system-client", clients.NewOwnership(ids.NewSubscriptionId()), nil, nil, false, true)
+				require.NoError(t, err)
+				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 			},
 			wantCode: clients.ErrSystemResource,
 		},
 		{
 			desc: "wraps repository hard delete failure",
-			cmd: func(t *testing.T) *hard_delete.Command {
-				return aCommand(t, withUserId(saveFailureUserId.String()))
-			},
+			cmd:  func(t *testing.T) *hard_delete.Command { return aCommand(t) },
 			setupRepo: func(repo *clientmocks.MockRepository) {
-				c, _ := clients.NewClient(ids.NewClientId(), "valid-client", clients.NewOwnership(ids.NewUserId(), saveFailureUserId), nil, nil, false, false)
+				c, _ := clients.NewClient(ids.NewClientId(), "valid-client", clients.NewOwnership(ids.NewSubscriptionId()), nil, nil, false, false)
 				c.PullDomainEvents()
 				repo.EXPECT().SearchById(mock.Anything, mock.Anything).Return(c, nil)
 				repo.EXPECT().HardDelete(mock.Anything, mock.AnythingOfType("ids.ClientId")).Return(fmt.Errorf("db error"))
@@ -102,25 +106,25 @@ func TestHardDelete(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			repo := clientmocks.NewMockRepository(t)
+			repo, bus := newMocks(t)
 			if tc.setupRepo != nil {
 				tc.setupRepo(repo)
 			}
-			assertErrCode(t, newService(t, repo).HardDelete(context.Background(), tc.cmd(t)), tc.wantCode)
+			assertErrCode(t, newService(t, repo, bus).HardDelete(context.Background(), tc.cmd(t)), tc.wantCode)
 		})
 	}
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-var (
-	systemResourceUserId = ids.NewUserId()
-	saveFailureUserId    = ids.NewUserId()
-)
-
-func newService(t *testing.T, repo *clientmocks.MockRepository) *hard_delete.Service {
+func newMocks(t *testing.T) (*clientmocks.MockRepository, *eventmocks.MockBus) {
 	t.Helper()
-	return hard_delete.NewService(domain_services.NewClientFinder(repo), repo)
+	return clientmocks.NewMockRepository(t), eventmocks.NewMockBus(t)
+}
+
+func newService(t *testing.T, repo *clientmocks.MockRepository, bus *eventmocks.MockBus) *hard_delete.Service {
+	t.Helper()
+	return hard_delete.NewService(domain_services.NewClientFinder(repo), repo, bus, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {

@@ -80,7 +80,7 @@ func TestCreateClientAssertionKeyHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bus := handlerstest.NewCommandExecutor(tt.busErr)
-			h := security.NewCreateClientAssertionKeyHandler(bus, tt.clientIdFn, tt.assertionKeyFn, handlerstest.ValidAuthorExtractor())
+			h := security.NewCreateClientAssertionKeyHandler(bus, tt.clientIdFn, tt.assertionKeyFn)
 
 			_, c := handlerstest.NewCtx(http.MethodPut, tt.body)
 			result, err := h.Execute(c)
@@ -99,17 +99,8 @@ func TestCreateClientAssertionKeyHandler(t *testing.T) {
 func TestCreateClientAssertionKeyHandler_Default(t *testing.T) {
 	t.Parallel()
 	bus := handlerstest.NewCommandExecutor(nil)
-	h := security.NewCreateClientAssertionKeyHandler(bus, handlerstest.ValidClientIdExtractor(), validAssertionKeyIdExtractor(), handlerstest.ValidAuthorExtractor())
+	h := security.NewCreateClientAssertionKeyHandler(bus, handlerstest.ValidClientIdExtractor(), validAssertionKeyIdExtractor())
 	_, c := handlerstest.NewCtx(http.MethodPut, nil)
 	h.Default(c)
 	assert.Equal(t, http.StatusInternalServerError, c.Writer.Status())
-}
-
-func TestCreateClientAssertionKeyHandler_MissingAuthor(t *testing.T) {
-	t.Parallel()
-	bus := handlerstest.NewCommandExecutor(nil)
-	h := security.NewCreateClientAssertionKeyHandler(bus, handlerstest.ValidClientIdExtractor(), validAssertionKeyIdExtractor(), handlerstest.MissingAuthorExtractor())
-	_, c := handlerstest.NewCtx(http.MethodPut, handlerstest.JsonBody(map[string]string{"public_key": "somekey"}))
-	_, err := h.Execute(c)
-	assert.Error(t, err)
 }

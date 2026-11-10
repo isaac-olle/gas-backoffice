@@ -48,119 +48,108 @@ func validRequest(clientID string) authorize.Request {
 func TestAuthorizeService(t *testing.T) {
 	t.Parallel()
 
-	t.Run("validates against the client and returns the idp authorization url built with the encoded idp state", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		svc := newService(
-			&mockClientRepo{client: newClientMother(clientID)},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			&mockIdpClient{url: "https://accounts.google.com/authorize?state=opaque-state"},
-			&mockStateCodec{encoded: "opaque-state"},
-		)
+	tests := []struct {
+		name      string
+		client    func(clientID string) *session.Client
+		noClient  bool
+		noIdp     bool
+		idpURL    string
+		encoded   string
+		mutateReq func(req *authorize.Request)
+		wantErr   bool
+		wantErrAs bool
+		wantURL   string
+	}{
+		{
+			name:    "validates against the client and returns the idp authorization url built with the encoded idp state",
+			client:  newClientMother,
+			idpURL:  "https://accounts.google.com/authorize?state=opaque-state",
+			encoded: "opaque-state",
+			wantURL: "https://accounts.google.com/authorize?state=opaque-state",
+		},
+		{
+			name:     "returns error when the client cannot be found",
+			noClient: true,
+			wantErr:  true,
+		},
+		{
+			name:    "returns error when the identity provider cannot be found",
+			client:  newClientMother,
+			noIdp:   true,
+			wantErr: true,
+		},
+		{
+			name:   "rejects an unsupported response_type without touching the idp",
+			client: newClientMother,
+			idpURL: "should-not-be-used",
+			mutateReq: func(req *authorize.Request) {
+				req.ResponseType = "token"
+			},
+			wantErr:   true,
+			wantErrAs: true,
+		},
+		{
+			name:   "rejects a redirect_uri not registered for the client",
+			client: newClientMother,
+			mutateReq: func(req *authorize.Request) {
+				req.RedirectURI = "https://evil.example.com/cb"
+			},
+			wantErr: true,
+		},
+		{
+			name:    "requires pkce for public clients",
+			client:  newPublicClientMother,
+			wantErr: true,
+		},
+		{
+			// authorize.Service no longer depends on session.Repository at all —
+			// this case documents that: NewService's signature has no repository
+			// parameter, so there is nothing to assert beyond compiling.
+			name:    "does not persist anything and never touches a session repository",
+			client:  newClientMother,
+			idpURL:  "https://accounts.google.com/authorize",
+			encoded: "x",
+			wantURL: "https://accounts.google.com/authorize",
+		},
+	}
 
-		url, err := svc.Authorize(context.Background(), validRequest(clientID))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			clientID := uuid.New().String()
 
-		require.NoError(t, err)
-		assert.Equal(t, "https://accounts.google.com/authorize?state=opaque-state", url)
-	})
+			clientRepo := &mockClientRepo{client: newClientMother(clientID)}
+			if tt.client != nil {
+				clientRepo = &mockClientRepo{client: tt.client(clientID)}
+			}
+			if tt.noClient {
+				clientRepo = &mockClientRepo{client: nil}
+			}
 
-	t.Run("returns error when the client cannot be found", func(t *testing.T) {
-		t.Parallel()
-		svc := newService(
-			&mockClientRepo{client: nil},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			&mockIdpClient{},
-			&mockStateCodec{},
-		)
+			idpRepo := &mockIdpFinderRepo{idp: aGoogleIdp()}
+			if tt.noIdp {
+				idpRepo = &mockIdpFinderRepo{idp: nil}
+			}
 
-		_, err := svc.Authorize(context.Background(), validRequest(uuid.New().String()))
+			svc := newService(clientRepo, idpRepo, &mockIdpClient{url: tt.idpURL}, &mockStateCodec{encoded: tt.encoded})
 
-		assert.Error(t, err)
-	})
+			req := validRequest(clientID)
+			if tt.mutateReq != nil {
+				tt.mutateReq(&req)
+			}
 
-	t.Run("returns error when the identity provider cannot be found", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		svc := newService(
-			&mockClientRepo{client: newClientMother(clientID)},
-			&mockIdpFinderRepo{idp: nil},
-			&mockIdpClient{},
-			&mockStateCodec{},
-		)
+			url, err := svc.Authorize(context.Background(), req)
 
-		_, err := svc.Authorize(context.Background(), validRequest(clientID))
-
-		assert.Error(t, err)
-	})
-
-	t.Run("rejects an unsupported response_type without touching the idp", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		idpClient := &mockIdpClient{url: "should-not-be-used"}
-		svc := newService(
-			&mockClientRepo{client: newClientMother(clientID)},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			idpClient,
-			&mockStateCodec{},
-		)
-
-		req := validRequest(clientID)
-		req.ResponseType = "token"
-
-		_, err := svc.Authorize(context.Background(), req)
-
-		require.Error(t, err)
-		var appErr *app_errors.AppError
-		require.ErrorAs(t, err, &appErr)
-	})
-
-	t.Run("rejects a redirect_uri not registered for the client", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		svc := newService(
-			&mockClientRepo{client: newClientMother(clientID)},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			&mockIdpClient{},
-			&mockStateCodec{},
-		)
-
-		req := validRequest(clientID)
-		req.RedirectURI = "https://evil.example.com/cb"
-
-		_, err := svc.Authorize(context.Background(), req)
-
-		require.Error(t, err)
-	})
-
-	t.Run("requires pkce for public clients", func(t *testing.T) {
-		t.Parallel()
-		clientID := uuid.New().String()
-		publicClient := newPublicClientMother(clientID)
-		svc := newService(
-			&mockClientRepo{client: publicClient},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			&mockIdpClient{},
-			&mockStateCodec{},
-		)
-
-		_, err := svc.Authorize(context.Background(), validRequest(clientID))
-
-		require.Error(t, err)
-	})
-
-	t.Run("does not persist anything and never touches a session repository", func(t *testing.T) {
-		t.Parallel()
-		// authorize.Service no longer depends on session.Repository at all —
-		// this test documents that: NewService's signature has no repository
-		// parameter, so there is nothing to assert beyond compiling.
-		clientID := uuid.New().String()
-		svc := newService(
-			&mockClientRepo{client: newClientMother(clientID)},
-			&mockIdpFinderRepo{idp: aGoogleIdp()},
-			&mockIdpClient{url: "https://accounts.google.com/authorize"},
-			&mockStateCodec{encoded: "x"},
-		)
-		_, err := svc.Authorize(context.Background(), validRequest(clientID))
-		require.NoError(t, err)
-	})
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.wantErrAs {
+					var appErr *app_errors.AppError
+					require.ErrorAs(t, err, &appErr)
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantURL, url)
+		})
+	}
 }

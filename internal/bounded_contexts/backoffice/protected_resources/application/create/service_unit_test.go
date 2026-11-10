@@ -66,7 +66,7 @@ func TestCreate(t *testing.T) {
 			cmd:  func(t *testing.T) *create.Command { return aCommand(t) },
 			setupRepo: func(repo *prmocks.MockRepository) {
 				existing, _ := protected_resources.NewProtectedResource(
-					ids.NewProtectedResourceId(), "My Resource", protected_resources.NewOwnership(ids.NewUserId(), ids.NewUserId()), false,
+					ids.NewProtectedResourceId(), "My Resource", protected_resources.NewOwnership(ids.NewSubscriptionId()), false,
 				)
 				repo.EXPECT().
 					Matching(mock.Anything, mock.Anything).

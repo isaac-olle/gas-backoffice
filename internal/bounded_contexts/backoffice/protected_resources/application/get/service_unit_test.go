@@ -3,9 +3,12 @@ package get_test
 import (
 	"context"
 	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
-	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 	"testing"
+
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	ids2 "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/get"
@@ -20,22 +23,30 @@ func newService(t *testing.T) (*get.Service, *prmocks.MockRepository) {
 	t.Helper()
 	repo := prmocks.NewMockRepository(t)
 	finder := domain_services.NewProtectedResourceFinder(repo)
-	return get.NewService(finder), repo
+	return get.NewService(finder, sharedDomainServices.NewSubscriptionAuthorizer()), repo
+}
+
+func authorFor(t *testing.T, subscriptionId ids2.SubscriptionId) *vo.UserAuthor {
+	t.Helper()
+	author, err := vo.NewUserAuthorWithMemberships(ids2.NewUserId().String(), ids2.NewUserId().String(), vo.SubscriptionUserRole,
+		[]vo.SubscriptionMembership{{SubscriptionId: subscriptionId, SubscriptionRole: vo.UserSubscriptionRole}})
+	require.NoError(t, err)
+	return author
 }
 
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns protected resource primitives with correct id, name and user id", func(t *testing.T) {
+	t.Run("returns protected resource primitives with correct id, name and subscription id", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
-		pr := aPR(t, prId, userId)
+		subscriptionId := ids2.NewSubscriptionId()
+		pr := aPR(t, prId, subscriptionId)
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		result, err := svc.Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), userId))
+		result, err := svc.Get(context.Background(), get.NewQuery(prId, authorFor(t, subscriptionId)))
 		require.NoError(t, err)
 
 		pr, ok := result.(*protected_resources.ProtectedResource)
@@ -43,18 +54,18 @@ func TestGet(t *testing.T) {
 		prims := pr.ToPrimitives()
 		assert.Equal(t, prId.String(), prims.Id)
 		assert.Equal(t, "My Resource", prims.Name)
-		assert.NotEmpty(t, prims.UserId)
+		assert.Equal(t, subscriptionId.String(), prims.SubscriptionId)
 	})
 
-	t.Run("returns forbidden error when user is not the owner", func(t *testing.T) {
+	t.Run("returns forbidden error when author lacks subscription access", func(t *testing.T) {
 		t.Parallel()
 		svc, repo := newService(t)
 		prId := ids2.NewProtectedResourceId()
-		pr := aPR(t, prId, ids2.NewUserId())
+		pr := aPR(t, prId, ids2.NewSubscriptionId())
 
 		repo.EXPECT().SearchById(mock.Anything, prId).Return(pr, nil)
 
-		_, err := svc.Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), ids2.NewUserId()))
+		_, err := svc.Get(context.Background(), get.NewQuery(prId, authorFor(t, ids2.NewSubscriptionId())))
 		assertErrCode(t, err, protected_resources.ErrInvalidOwnership)
 	})
 
@@ -89,7 +100,7 @@ func TestGet(t *testing.T) {
 			repo := prmocks.NewMockRepository(t)
 			finder := domain_services.NewProtectedResourceFinder(repo)
 			prId := tc.setupRepo(repo)
-			_, err := get.NewService(finder).Get(context.Background(), get.NewQuery(prId, ids2.NewUserId(), ids2.NewUserId()))
+			_, err := get.NewService(finder, sharedDomainServices.NewSubscriptionAuthorizer()).Get(context.Background(), get.NewQuery(prId, authorFor(t, ids2.NewSubscriptionId())))
 			assertErrCode(t, err, tc.wantCode)
 		})
 	}

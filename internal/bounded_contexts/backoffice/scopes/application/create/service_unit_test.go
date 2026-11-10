@@ -34,9 +34,9 @@ func TestCreate(t *testing.T) {
 		bus := eventmocks.NewMockBus(t)
 
 		prId := ids2.NewProtectedResourceId()
-		userId := ids2.NewUserId()
+		subscriptionId := ids2.NewSubscriptionId()
 
-		cmd := aCommand(t, withName("tenants:read"), withProtectedResourceId(prId), withUserId(userId))
+		cmd := aCommand(t, withName("tenants:read"), withProtectedResourceId(prId), withSubscriptionId(subscriptionId))
 
 		scopeRepo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)
 
@@ -56,7 +56,7 @@ func TestCreate(t *testing.T) {
 	})
 
 	prId := ids2.NewProtectedResourceId()
-	userId := ids2.NewUserId()
+	subscriptionId := ids2.NewSubscriptionId()
 
 	errCases := []struct {
 		desc       string
@@ -67,14 +67,14 @@ func TestCreate(t *testing.T) {
 		{
 			desc: "rejects empty name with ErrScopeNotCreated",
 			cmd: func(t *testing.T) *create.Command {
-				return aCommand(t, withName(""), withProtectedResourceId(prId), withUserId(userId))
+				return aCommand(t, withName(""), withProtectedResourceId(prId), withSubscriptionId(subscriptionId))
 			},
 			wantCode: scopes.ErrScopeNotCreated,
 		},
 		{
 			desc: "wraps repository error as ErrScopeNotSaved",
 			cmd: func(t *testing.T) *create.Command {
-				return aCommand(t, withProtectedResourceId(prId), withUserId(userId))
+				return aCommand(t, withProtectedResourceId(prId), withSubscriptionId(subscriptionId))
 			},
 			setupScope: func(scopeRepo *scopemocks.MockRepository) {
 				scopeRepo.EXPECT().Matching(mock.Anything, mock.Anything).Return(nil, nil)

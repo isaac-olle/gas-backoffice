@@ -15,6 +15,7 @@ import (
 	csmocks "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/security/client_secrets/mocks"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedDomainServices "github.com/isaac-olle/gas-backoffice/internal/shared/domain_services"
 )
 
 func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
@@ -24,8 +25,12 @@ func assertErrCode(t *testing.T, err error, code app_errors.ErrorCode) {
 	assert.Equal(t, code, appErr.Code)
 }
 
-func ownerCmd(f secretFixture) *hard_delete.Command {
-	return hard_delete.NewCommand(f.id.String(), f.clientId.String(), f.adminId.String(), f.userId.String())
+func ownerCmd(t *testing.T, f secretFixture) *hard_delete.Command {
+	return hard_delete.NewCommand(f.id.String(), f.clientId.String(), authorFor(t, f.subscriptionId))
+}
+
+func newService(repo *csmocks.MockRepository) *hard_delete.Service {
+	return hard_delete.NewService(repo, sharedDomainServices.NewSubscriptionAuthorizer())
 }
 
 func TestHardDeleteClientSecretService(t *testing.T) {
@@ -33,13 +38,13 @@ func TestHardDeleteClientSecretService(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		buildCmd    func(f secretFixture) *hard_delete.Command
+		buildCmd    func(t *testing.T, f secretFixture) *hard_delete.Command
 		setupRepo   func(t *testing.T, repo *csmocks.MockRepository, f secretFixture)
 		wantErr     bool
 		wantErrCode app_errors.ErrorCode
 	}{
 		{
-			name:     "owning tenant deletes its secret",
+			name:     "owning subscription deletes its secret",
 			buildCmd: ownerCmd,
 			setupRepo: func(t *testing.T, repo *csmocks.MockRepository, f secretFixture) {
 				repo.EXPECT().SearchById(mock.Anything, f.id).Return(aSecret(t, f), nil)
@@ -47,27 +52,17 @@ func TestHardDeleteClientSecretService(t *testing.T) {
 			},
 		},
 		{
-			name: "owning admin deletes its tenant's secret",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand(f.id.String(), f.clientId.String(), f.adminId.String(), f.adminId.String())
-			},
-			setupRepo: func(t *testing.T, repo *csmocks.MockRepository, f secretFixture) {
-				repo.EXPECT().SearchById(mock.Anything, f.id).Return(aSecret(t, f), nil)
-				repo.EXPECT().HardDelete(mock.Anything, f.id).Return(nil)
-			},
-		},
-		{
 			name: "rejects invalid id",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand("not-a-valid-uuid", f.clientId.String(), f.adminId.String(), f.userId.String())
+			buildCmd: func(t *testing.T, f secretFixture) *hard_delete.Command {
+				return hard_delete.NewCommand("not-a-valid-uuid", f.clientId.String(), authorFor(t, f.subscriptionId))
 			},
 			wantErr:     true,
 			wantErrCode: client_secrets.ErrClientSecretNotFound,
 		},
 		{
-			name: "rejects invalid ownership ids",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand(f.id.String(), f.clientId.String(), f.adminId.String(), "not-a-uuid")
+			name: "rejects invalid client id",
+			buildCmd: func(t *testing.T, f secretFixture) *hard_delete.Command {
+				return hard_delete.NewCommand(f.id.String(), "not-a-uuid", authorFor(t, f.subscriptionId))
 			},
 			wantErr:     true,
 			wantErrCode: client_secrets.ErrInvalidOwnership,
@@ -101,20 +96,9 @@ func TestHardDeleteClientSecretService(t *testing.T) {
 			wantErrCode: client_secrets.ErrClientSecretNotFound,
 		},
 		{
-			name: "returns forbidden for an unrelated user",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand(f.id.String(), f.clientId.String(), ids.NewUserId().String(), ids.NewUserId().String())
-			},
-			setupRepo: func(t *testing.T, repo *csmocks.MockRepository, f secretFixture) {
-				repo.EXPECT().SearchById(mock.Anything, f.id).Return(aSecret(t, f), nil)
-			},
-			wantErr:     true,
-			wantErrCode: client_secrets.ErrInvalidOwnership,
-		},
-		{
-			name: "returns forbidden for a sibling tenant under the same admin",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand(f.id.String(), f.clientId.String(), f.adminId.String(), ids.NewUserId().String())
+			name: "returns forbidden when author lacks subscription access",
+			buildCmd: func(t *testing.T, f secretFixture) *hard_delete.Command {
+				return hard_delete.NewCommand(f.id.String(), f.clientId.String(), authorFor(t, ids.NewSubscriptionId()))
 			},
 			setupRepo: func(t *testing.T, repo *csmocks.MockRepository, f secretFixture) {
 				repo.EXPECT().SearchById(mock.Anything, f.id).Return(aSecret(t, f), nil)
@@ -124,8 +108,8 @@ func TestHardDeleteClientSecretService(t *testing.T) {
 		},
 		{
 			name: "returns forbidden when the secret belongs to a different client",
-			buildCmd: func(f secretFixture) *hard_delete.Command {
-				return hard_delete.NewCommand(f.id.String(), uuid.New().String(), f.adminId.String(), f.userId.String())
+			buildCmd: func(t *testing.T, f secretFixture) *hard_delete.Command {
+				return hard_delete.NewCommand(f.id.String(), uuid.New().String(), authorFor(t, f.subscriptionId))
 			},
 			setupRepo: func(t *testing.T, repo *csmocks.MockRepository, f secretFixture) {
 				repo.EXPECT().SearchById(mock.Anything, f.id).Return(aSecret(t, f), nil)
@@ -156,7 +140,7 @@ func TestHardDeleteClientSecretService(t *testing.T) {
 				tc.setupRepo(t, repo, f)
 			}
 
-			err := hard_delete.NewService(repo).HardDelete(context.Background(), tc.buildCmd(f))
+			err := newService(repo).HardDelete(context.Background(), tc.buildCmd(t, f))
 
 			if tc.wantErr {
 				assertErrCode(t, err, tc.wantErrCode)
