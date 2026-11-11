@@ -21,7 +21,7 @@ func (h *RefreshHandler) Execute(c *gin.Context) (any, error) {
 	refreshToken, err := c.Cookie(authenticators.RefreshTokenCookieName)
 	if err != nil || refreshToken == "" {
 		reason := "empty"
-		var cause error = fmt.Errorf("cookie %q is empty", authenticators.RefreshTokenCookieName)
+		cause := fmt.Errorf("cookie %q is empty", authenticators.RefreshTokenCookieName)
 		if err != nil {
 			reason = "missing"
 			cause = fmt.Errorf("cannot read cookie %q: %w", authenticators.RefreshTokenCookieName, err)
