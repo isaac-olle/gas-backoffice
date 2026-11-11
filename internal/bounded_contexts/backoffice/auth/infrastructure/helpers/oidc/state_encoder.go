@@ -4,14 +4,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/vos"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"time"
 )
 
 type statePayload struct {
-	CV  string `json:"cv"`
-	Exp int64  `json:"exp"`
+	CodeVerifier     string `json:"code_verifier"`
+	Exp              int64  `json:"exp"`
+	IdpReferenceName string `json:"idp_reference_name"`
 }
 
 type StateEncoder struct {
@@ -27,10 +29,11 @@ func NewStateEncoder(stateTTl time.Duration,
 	}
 }
 
-func (s *StateEncoder) EncodeState(codeVerifier vos.CodeVerifier) (string, error) {
+func (s *StateEncoder) EncodeState(codeVerifier vos.CodeVerifier, idpReferenceName string) (string, error) {
 	payload := statePayload{
-		CV:  codeVerifier.String(),
-		Exp: time.Now().Add(s.stateTTl).Unix(),
+		CodeVerifier:     codeVerifier.String(),
+		Exp:              time.Now().Add(s.stateTTl).Unix(),
+		IdpReferenceName: idpReferenceName,
 	}
 	raw, err := json.Marshal(payload)
 	if err != nil {
@@ -45,31 +48,31 @@ func (s *StateEncoder) EncodeState(codeVerifier vos.CodeVerifier) (string, error
 	return toURLSafeState(encrypted)
 }
 
-func (s *StateEncoder) DecodeState(encodedState string) (string, error) {
+func (s *StateEncoder) DecodeState(encodedState string) (auth.AuthorizationState, error) {
 	encrypted, err := fromURLSafeState(encodedState)
 	if err != nil {
-		return "", fmt.Errorf("invalid state: %w", err)
+		return auth.AuthorizationState{}, fmt.Errorf("invalid state: %w", err)
 	}
 
 	raw, err := s.encrypter.Decrypt(encrypted)
 	if err != nil {
-		return "", fmt.Errorf("invalid state: %w", err)
+		return auth.AuthorizationState{}, fmt.Errorf("invalid state: %w", err)
 	}
 
 	var payload statePayload
 	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
-		return "", fmt.Errorf("malformed state payload: %w", err)
+		return auth.AuthorizationState{}, fmt.Errorf("malformed state payload: %w", err)
 	}
 
 	if time.Now().Unix() > payload.Exp {
-		return "", fmt.Errorf("state token expired")
+		return auth.AuthorizationState{}, fmt.Errorf("state token expired")
 	}
 
-	if payload.CV == "" {
-		return "", fmt.Errorf("missing code_verifier in state")
+	if payload.CodeVerifier == "" {
+		return auth.AuthorizationState{}, fmt.Errorf("missing code_verifier in state")
 	}
 
-	return payload.CV, nil
+	return auth.AuthorizationState{CodeVerifier: payload.CodeVerifier, IdpReferenceName: payload.IdpReferenceName}, nil
 }
 
 func toURLSafeState(encrypted string) (string, error) {

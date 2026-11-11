@@ -46,13 +46,13 @@ func NewService(
 
 func (s *Service) Exchange(ctx context.Context, qry *Query) (any, error) {
 	//TODO aqui com apunta un redirect sha de mirar si el redirect conte error
-	verifier, err := s.stateDecoder.DecodeState(qry.state)
+	state, err := s.stateDecoder.DecodeState(qry.state)
 	if err != nil {
 		return nil, app_errors.BadRequestError(auth.ErrCannotExchangeToken).
 			WithDescription("error while decoding token").WithCause(err, false)
 	}
 
-	tokenResult, err := s.tokenClient.ExchangeCode(ctx, qry.code, verifier)
+	tokenResult, err := s.tokenClient.ExchangeCode(ctx, qry.code, state.CodeVerifier, state.IdpReferenceName)
 	if err != nil {
 		return nil, app_errors.InternalError(auth.ErrCannotExchangeToken).WithCause(err, false).WithDescription("error while exchanging code for token")
 	}

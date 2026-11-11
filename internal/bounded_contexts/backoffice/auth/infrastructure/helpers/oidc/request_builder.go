@@ -32,7 +32,7 @@ func (r *RequestBuilder) Build(
 		return "", fmt.Errorf("oidc: generate code verifier: %w", err)
 	}
 
-	state, err := r.stateEncoder.EncodeState(codeVerifier)
+	state, err := r.stateEncoder.EncodeState(codeVerifier, idpReferenceName)
 	if err != nil {
 		return "", fmt.Errorf("oidc: encode state: %w", err)
 	}

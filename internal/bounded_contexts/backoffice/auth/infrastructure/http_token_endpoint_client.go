@@ -31,11 +31,14 @@ func NewHttpTokenEndpointClient(endpoint, clientId, clientSecret, redirectUri st
 	}
 }
 
-func (c *HttpTokenEndpointClient) ExchangeCode(ctx context.Context, code, codeVerifier string) (auth.TokenExchangeResult, error) {
+func (c *HttpTokenEndpointClient) ExchangeCode(ctx context.Context, code, codeVerifier, idpReferenceName string) (auth.TokenExchangeResult, error) {
+	if strings.Contains(c.redirectUri, ":idp_reference_name") && idpReferenceName == "" {
+		return auth.TokenExchangeResult{}, fmt.Errorf("missing idp_reference_name in authorization state; restart login")
+	}
 	form := url.Values{
 		"grant_type":    {"authorization_code"},
 		"code":          {code},
-		"redirect_uri":  {c.redirectUri},
+		"redirect_uri":  {strings.ReplaceAll(c.redirectUri, ":idp_reference_name", idpReferenceName)},
 		"code_verifier": {codeVerifier},
 	}
 

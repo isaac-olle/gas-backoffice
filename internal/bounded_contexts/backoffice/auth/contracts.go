@@ -20,8 +20,13 @@ type IdpConnector interface {
 	Connect(ctx context.Context, idp *IdpConfig) (string, error)
 }
 
+type AuthorizationState struct {
+	CodeVerifier     string
+	IdpReferenceName string
+}
+
 type StateDecoder interface {
-	DecodeState(state string) (codeVerifier string, err error)
+	DecodeState(state string) (AuthorizationState, error)
 }
 
 type IdpConfigRepository interface {
@@ -36,7 +41,7 @@ type TokenExchangeResult struct {
 }
 
 type TokenEndpointClient interface {
-	ExchangeCode(ctx context.Context, code, codeVerifier string) (TokenExchangeResult, error)
+	ExchangeCode(ctx context.Context, code, codeVerifier, idpReferenceName string) (TokenExchangeResult, error)
 }
 
 type TokenGenerator interface {

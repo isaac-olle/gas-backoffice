@@ -18,16 +18,20 @@ type createSessionDecoder struct {
 	err      error
 }
 
-func (d *createSessionDecoder) DecodeState(string) (string, error) { return d.verifier, d.err }
-
-type createSessionTokenClient struct {
-	result         auth.TokenExchangeResult
-	err            error
-	code, verifier string
+func (d *createSessionDecoder) DecodeState(string) (auth.AuthorizationState, error) {
+	return auth.AuthorizationState{CodeVerifier: d.verifier, IdpReferenceName: "google"}, d.err
 }
 
-func (c *createSessionTokenClient) ExchangeCode(_ context.Context, code, verifier string) (auth.TokenExchangeResult, error) {
+type createSessionTokenClient struct {
+	result           auth.TokenExchangeResult
+	err              error
+	code, verifier   string
+	idpReferenceName string
+}
+
+func (c *createSessionTokenClient) ExchangeCode(_ context.Context, code, verifier, idpReferenceName string) (auth.TokenExchangeResult, error) {
 	c.code, c.verifier = code, verifier
+	c.idpReferenceName = idpReferenceName
 	return c.result, c.err
 }
 
@@ -114,6 +118,7 @@ func TestExchange(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, create_session.Result{AccessToken: "access-token", RefreshToken: "refresh-token"}, got)
 			require.Equal(t, "pkce-verifier", client.verifier)
+			require.Equal(t, "google", client.idpReferenceName)
 			require.Equal(t, "ada@example.com", projection.email)
 			require.Equal(t, 1, sessions.saved)
 			require.Equal(t, 1, bus.events)
