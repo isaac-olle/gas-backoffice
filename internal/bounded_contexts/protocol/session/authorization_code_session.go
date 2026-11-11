@@ -319,7 +319,11 @@ func (s *AuthorizationCodeSession) CheckExchangeParams(clientID, redirectURI str
 	}
 	if s.redirectURI.String() != redirectURI {
 		return app_errors.BadRequestError(ErrInvalidRedirectURI).
-			WithDescription("redirect_uri does not match the one used in the authorization request")
+			WithDescription("redirect_uri does not match the one used in the authorization request").
+			WithDetails(map[string]any{
+				"expected_redirect_uri": s.redirectURI.String(),
+				"received_redirect_uri": redirectURI,
+			})
 	}
 	return nil
 }

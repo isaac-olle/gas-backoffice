@@ -16,12 +16,16 @@ func NewOAuth2TokenErrorPresenter() *OAuth2TokenErrorPresenter {
 
 func (p *OAuth2TokenErrorPresenter) Present(c *gin.Context, err *app_errors2.AppError) {
 	oauthCode, status := toOAuth2TokenError(err)
-	c.JSON(status, gin.H{
+	body := gin.H{
 		"error":             oauthCode,
 		"error_description": err.Description,
 		"request_id":        err.RequestId,
 		"occurred_at":       err.OccurredAt.Format(time.RFC3339),
-	})
+	}
+	if len(err.Details) > 0 {
+		body["details"] = err.Details
+	}
+	c.JSON(status, body)
 }
 
 func toOAuth2TokenError(err *app_errors2.AppError) (string, int) {
