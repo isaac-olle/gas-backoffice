@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,16 @@ func NewRefreshHandler(queryBus query.Bus) *RefreshHandler {
 func (h *RefreshHandler) Execute(c *gin.Context) (any, error) {
 	refreshToken, err := c.Cookie(authenticators.RefreshTokenCookieName)
 	if err != nil || refreshToken == "" {
-		return nil, app_errors.UnauthorizedError("MISSING_REFRESH_TOKEN")
+		reason := "empty"
+		var cause error = fmt.Errorf("cookie %q is empty", authenticators.RefreshTokenCookieName)
+		if err != nil {
+			reason = "missing"
+			cause = fmt.Errorf("cannot read cookie %q: %w", authenticators.RefreshTokenCookieName, err)
+		}
+		return nil, app_errors.UnauthorizedError("MISSING_REFRESH_TOKEN").
+			WithDescription("refresh_token cookie is missing or empty").
+			WithCause(cause, true).
+			WithDetails(map[string]any{"cookie_name": authenticators.RefreshTokenCookieName, "reason": reason})
 	}
 	return h.queryBus.Dispatch(c.Request.Context(), refreshSession.NewQuery(refreshToken))
 }

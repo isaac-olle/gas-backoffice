@@ -12,6 +12,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/auth"
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/authenticators"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
 func TestRefreshHandler_Execute(t *testing.T) {
@@ -45,6 +46,28 @@ func TestRefreshHandler_Execute(t *testing.T) {
 			assert.Equal(t, http.StatusNoContent, c.Writer.Status())
 			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.AccessTokenCookieName+"=access-token; Path=/; Max-Age=3600; HttpOnly")
 			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.RefreshTokenCookieName+"=new-refresh-token; Path=/; Max-Age=2592000; HttpOnly")
+		})
+	}
+}
+
+func TestRefreshHandlerMissingTokenCause(t *testing.T) {
+	for _, emptyCookie := range []bool{false, true} {
+		name, reason := "missing cookie", "missing"
+		if emptyCookie {
+			name, reason = "empty cookie", "empty"
+		}
+		t.Run(name, func(t *testing.T) {
+			_, ctx := handlerstest.NewCtx(http.MethodPost, nil)
+			if emptyCookie {
+				ctx.Request.AddCookie(&http.Cookie{Name: authenticators.RefreshTokenCookieName, Value: ""})
+			}
+			_, err := auth.NewRefreshHandler(nil).Execute(ctx)
+			var appError *app_errors.AppError
+			require.ErrorAs(t, err, &appError)
+			require.Equal(t, app_errors.ErrorCode("MISSING_REFRESH_TOKEN"), appError.Code)
+			require.Equal(t, reason, appError.Details["reason"])
+			require.Len(t, appError.PublicCauses(), 1)
+			require.Contains(t, appError.PublicCauses()[0], "refresh_token")
 		})
 	}
 }
