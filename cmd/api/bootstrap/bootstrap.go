@@ -11,7 +11,6 @@ import (
 	outboxapp "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event/application/outbox"
 	queryInfra "github.com/isaac-olle/gas-backoffice/internal/shared/buses/query/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/logger"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	persistanceInfra "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/workers"
 	"strconv"
@@ -56,7 +55,7 @@ func Run() error {
 	auditRepo := eventinfra.NewPostgresAuditRepository(postgresPool)
 	subsManager.AddInMemorySubscription(auditapp.NewSubscriber(auditRepo))
 
-	encrypter, err := infrastructure.NewAESEncrypter(cfg.Security.EncryptionKey)
+	encrypter, err := persistanceInfra.NewAESEncrypter(cfg.Security.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("failed to create encrypter: %w", err)
 	}

@@ -20,8 +20,16 @@ type Service struct {
 	eventBus              event.Bus
 }
 
-func NewService(refreshTokenVerifier auth.RefreshTokenVerifier, accessTokenGenerator auth.TokenGenerator, refreshTokenGenerator auth.RefreshTokenGenerator, sessionRepository auth.SessionRepository, eventBus event.Bus) *Service {
-	return &Service{refreshTokenVerifier: refreshTokenVerifier, accessTokenGenerator: accessTokenGenerator, refreshTokenGenerator: refreshTokenGenerator, sessionRepository: sessionRepository, eventBus: eventBus}
+func NewService(refreshTokenVerifier auth.RefreshTokenVerifier,
+	accessTokenGenerator auth.TokenGenerator,
+	refreshTokenGenerator auth.RefreshTokenGenerator,
+	sessionRepository auth.SessionRepository,
+	eventBus event.Bus) *Service {
+	return &Service{refreshTokenVerifier: refreshTokenVerifier,
+		accessTokenGenerator:  accessTokenGenerator,
+		refreshTokenGenerator: refreshTokenGenerator,
+		sessionRepository:     sessionRepository,
+		eventBus:              eventBus}
 }
 
 func (s *Service) Refresh(ctx context.Context, qry *Query) (any, error) {

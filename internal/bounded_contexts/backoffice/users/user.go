@@ -42,7 +42,15 @@ func NewUser(id ids.UserId, name, email string, role vo.Role, isSystem bool) (*U
 	if es.HasErrors() {
 		return nil, es
 	}
-	u := &User{Root: aggregate.NewRoot(userAggregateName), id: id, name: n, email: em, systemRole: role, isSystem: isSystem, version: 1, subscriptionIds: vo.NewEmptySetVo[ids.SubscriptionId](), memberships: []vo.SubscriptionMembership{}}
+	u := &User{Root: aggregate.NewRoot(userAggregateName),
+		id:              id,
+		name:            n,
+		email:           em,
+		systemRole:      role,
+		isSystem:        isSystem,
+		version:         1,
+		subscriptionIds: vo.NewEmptySetVo[ids.SubscriptionId](),
+		memberships:     []vo.SubscriptionMembership{}}
 	u.Record(backoffice.NewUserCreated(id.String(), n.String()))
 	return u, nil
 }
@@ -100,7 +108,18 @@ func FromPrimitives(p UserPrimitives) (*User, error) {
 	if v == 0 {
 		v = 1
 	}
-	return &User{Root: aggregate.NewRoot(userAggregateName), id: id, name: vos.UserNameFromPrimitives(p.Name), email: vos.EmailFromPrimitives(p.Email), systemRole: role, isSystem: p.IsSystem, version: v, authorId: aid, authorRole: ar, subscriptionIds: set, memberships: ms}, nil
+	return &User{Root: aggregate.NewRoot(userAggregateName),
+			id:              id,
+			name:            vos.UserNameFromPrimitives(p.Name),
+			email:           vos.EmailFromPrimitives(p.Email),
+			systemRole:      role,
+			isSystem:        p.IsSystem,
+			version:         v,
+			authorId:        aid,
+			authorRole:      ar,
+			subscriptionIds: set,
+			memberships:     ms},
+		nil
 }
 func (u *User) IsSystemResource() bool                     { return u.isSystem }
 func (u *User) IsSystemAdministrator() bool                { return u.systemRole.IsSystemAdministrator() }

@@ -82,7 +82,7 @@ type DatabasesConfig struct {
 func Load() (*Config, error) {
 	env := EnvOr("ENV", "local")
 	if env == "local" {
-		godotenv.Load(".env.local")
+		_ = godotenv.Load(".env.local") // Local environment file is optional.
 	}
 
 	configPath := EnvOr("CONFIG_FILE_PATH", "config/config.yaml")

@@ -27,7 +27,7 @@ func HttpError(
 				err, false)
 
 		}
-		appError.WithRequestId(c.GetString(RequestIDHeader))
+		appError = appError.WithRequestId(c.GetString(RequestIDHeader))
 
 		for _, manager := range errorManagers {
 			manager.Manage(appError)

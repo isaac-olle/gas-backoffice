@@ -21,7 +21,11 @@ type Service struct {
 	authorizer             *sharedDomainServices.SubscriptionAuthorizer
 }
 
-func NewService(scopeFinder *domain_services.ScopeFinder, repository scopes.Repository, eventBus event.Bus, clientProjectionFinder *domain_services.ClientProjectionFinder, authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
+func NewService(scopeFinder *domain_services.ScopeFinder,
+	repository scopes.Repository,
+	eventBus event.Bus,
+	clientProjectionFinder *domain_services.ClientProjectionFinder,
+	authorizer *sharedDomainServices.SubscriptionAuthorizer) *Service {
 	return &Service{scopeFinder: scopeFinder, repository: repository, eventBus: eventBus, clientProjectionFinder: clientProjectionFinder, authorizer: authorizer}
 }
 

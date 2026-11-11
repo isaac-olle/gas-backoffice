@@ -56,7 +56,12 @@ func ProtectedResource(t *testing.T, pool *pgxpool.Pool) (subscriptionID, protec
 	t.Helper()
 	_, subscriptionID = BackofficeSubscription(t, pool)
 	protectedResourceID = uuid.NewString()
-	if _, err := pool.Exec(context.Background(), `INSERT INTO backoffice.protected_resources (id,name,subscription_id) VALUES ($1,$2,$3)`, protectedResourceID, "Integration Resource", subscriptionID); err != nil {
+	if _,
+		err := pool.Exec(context.Background(),
+		`INSERT INTO backoffice.protected_resources (id,name,subscription_id) VALUES ($1,$2,$3)`,
+		protectedResourceID,
+		"Integration Resource",
+		subscriptionID); err != nil {
 		t.Fatalf("insert integration protected resource: %v", err)
 	}
 	t.Cleanup(func() {

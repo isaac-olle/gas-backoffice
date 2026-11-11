@@ -53,7 +53,7 @@ func (c *HttpTokenEndpointClient) ExchangeCode(ctx context.Context, code, codeVe
 	if err != nil {
 		return auth.TokenExchangeResult{}, fmt.Errorf("call token endpoint: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, err := io.ReadAll(resp.Body)

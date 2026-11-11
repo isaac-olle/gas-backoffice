@@ -107,7 +107,11 @@ func RegisterBackoffice(
 	subscriptionAuthorizer := sharedDomainServices.NewSubscriptionAuthorizer()
 	cmdBus.Register(clientCreate.CommandType, clientCreate.NewCommandHandler(clientCreate.NewService(clientDuplicateChecker, clientRepo, evtBus)))
 	cmdBus.Register(clientAddAllowedGrantType.CommandType, clientAddAllowedGrantType.NewCommandHandler(clientAddAllowedGrantType.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
-	cmdBus.Register(clientRemoveAllowedGrantType.CommandType, clientRemoveAllowedGrantType.NewCommandHandler(clientRemoveAllowedGrantType.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientRemoveAllowedGrantType.CommandType,
+		clientRemoveAllowedGrantType.NewCommandHandler(clientRemoveAllowedGrantType.NewService(clientFinder,
+			clientRepo,
+			evtBus,
+			subscriptionAuthorizer)))
 	cmdBus.Register(clientAddRedirectUri.CommandType, clientAddRedirectUri.NewCommandHandler(clientAddRedirectUri.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
 	cmdBus.Register(clientSoftDelete.CommandType, clientSoftDelete.NewCommandHandler(clientSoftDelete.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
 	cmdBus.Register(clientHardDelete.CommandType, clientHardDelete.NewCommandHandler(clientHardDelete.NewService(clientFinder, clientRepo, evtBus, subscriptionAuthorizer)))
@@ -120,8 +124,18 @@ func RegisterBackoffice(
 
 	// scopes
 	cmdBus.Register(scopeCreate.CommandType, scopeCreate.NewCommandHandler(scopeCreate.NewService(scopeDuplicateChecker, scopeRepo, evtBus)))
-	cmdBus.Register(scopeAddAllowedClient.CommandType, scopeAddAllowedClient.NewCommandHandler(scopeAddAllowedClient.NewService(scopeFinder, scopeRepo, evtBus, clientProjectionFinder, subscriptionAuthorizer)))
-	cmdBus.Register(scopeRemoveAllowedClient.CommandType, scopeRemoveAllowedClient.NewCommandHandler(scopeRemoveAllowedClient.NewService(scopeFinder, scopeRepo, evtBus, clientProjectionFinder, subscriptionAuthorizer)))
+	cmdBus.Register(scopeAddAllowedClient.CommandType,
+		scopeAddAllowedClient.NewCommandHandler(scopeAddAllowedClient.NewService(scopeFinder,
+			scopeRepo,
+			evtBus,
+			clientProjectionFinder,
+			subscriptionAuthorizer)))
+	cmdBus.Register(scopeRemoveAllowedClient.CommandType,
+		scopeRemoveAllowedClient.NewCommandHandler(scopeRemoveAllowedClient.NewService(scopeFinder,
+			scopeRepo,
+			evtBus,
+			clientProjectionFinder,
+			subscriptionAuthorizer)))
 	cmdBus.Register(scopeSoftDelete.CommandType, scopeSoftDelete.NewCommandHandler(scopeSoftDelete.NewService(scopeFinder, scopeRepo, subscriptionAuthorizer)))
 	cmdBus.Register(scopeHardDelete.CommandType, scopeHardDelete.NewCommandHandler(scopeHardDelete.NewService(scopeFinder, scopeRepo, evtBus, subscriptionAuthorizer)))
 	cmdBus.Register(scopeEnable.CommandType, scopeEnable.NewCommandHandler(scopeEnable.NewService(scopeFinder, scopeRepo, evtBus, subscriptionAuthorizer)))
@@ -195,9 +209,15 @@ func RegisterBackoffice(
 	tokenClient := authInfra.NewHttpTokenEndpointClient(tokenEndpoint, backofficeClientId, backofficeClientSecret, backofficeClientRedirectUri, idTokenVerifier)
 	userProjectionRepo := userProjectionInfra.NewUserProjectionRepository(pool)
 	tokenGenerator := authInfra.NewBusTokenGenerator(qryBus, backofficeProtectedResourceId)
-	qryBus.Register(sessionExchangeToken.QueryType, sessionExchangeToken.NewQueryHandler(sessionExchangeToken.NewService(tokenClient, stateEncoder, userProjectionRepo, tokenGenerator, tokenGenerator, sessionRepo, evtBus)))
+	qryBus.Register(sessionExchangeToken.QueryType,
+		sessionExchangeToken.NewQueryHandler(sessionExchangeToken.NewService(tokenClient,
+			stateEncoder,
+			userProjectionRepo,
+			tokenGenerator,
+			tokenGenerator,
+			sessionRepo,
+			evtBus)))
 	refreshTokenVerifier := authInfra.NewRefreshTokenVerifier(qryBus, backofficeProtectedResourceId)
 	qryBus.Register(sessionRefresh.QueryType, sessionRefresh.NewQueryHandler(sessionRefresh.NewService(refreshTokenVerifier, tokenGenerator, tokenGenerator, sessionRepo, evtBus)))
 
-	return
 }

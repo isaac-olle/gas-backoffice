@@ -14,5 +14,10 @@ type SubscriptionMemberRemoved struct {
 
 func (e SubscriptionMemberRemoved) Type() event.Type { return SubscriptionMemberRemovedType }
 func NewSubscriptionMemberRemoved(subscriptionId, userId string) SubscriptionMemberRemoved {
-	return SubscriptionMemberRemoved{UserId: userId, BaseEvent: event.NewEvent(subscriptionId, SubscriptionMemberRemovedType, false, map[string]any{"user_id": userId}, aggregate.Name("backoffice.subscription"))}
+	return SubscriptionMemberRemoved{UserId: userId,
+		BaseEvent: event.NewEvent(subscriptionId,
+			SubscriptionMemberRemovedType,
+			false,
+			map[string]any{"user_id": userId},
+			aggregate.Name("backoffice.subscription"))}
 }

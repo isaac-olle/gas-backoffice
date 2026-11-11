@@ -14,5 +14,12 @@ type SubscriptionCreated struct {
 
 func (e SubscriptionCreated) Type() event.Type { return SubscriptionCreatedType }
 func NewSubscriptionCreated(id, name, createdBy string) SubscriptionCreated {
-	return SubscriptionCreated{Name: name, CreatedBy: createdBy, BaseEvent: event.NewEvent(id, SubscriptionCreatedType, false, map[string]any{"name": name, "created_by": createdBy}, aggregate.Name("backoffice.subscription"))}
+	return SubscriptionCreated{Name: name,
+		CreatedBy: createdBy,
+		BaseEvent: event.NewEvent(id,
+			SubscriptionCreatedType,
+			false,
+			map[string]any{"name": name,
+				"created_by": createdBy},
+			aggregate.Name("backoffice.subscription"))}
 }

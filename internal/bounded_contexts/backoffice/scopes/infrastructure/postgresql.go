@@ -60,7 +60,8 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresScopeRepository) SearchById(ctx context.Context, id ids.ScopeId) (*scopes.Scope, error) {
-	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version, author_id, author_role FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, protected_resource_id, subscription_id, allowed_client_ids, is_system, enabled, version, author_id, author_role
+		FROM backoffice.scopes WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 

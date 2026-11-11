@@ -47,10 +47,22 @@ func RegisterSecurity(
 	keyPairGenerator := keyPairInfra.NewPEMKeyGenerator()
 	createKeyPairService := keyPairCreate.NewService(keyPairRepo, evtBus, keyPairGenerator)
 	cmdBus.Register(keyPairCreate.CommandType, keyPairCreate.NewCommandHandler(createKeyPairService))
-	cmdBus.Register(clientAssertionKeyCreate.CommandType, clientAssertionKeyCreate.NewCommandHandler(clientAssertionKeyCreate.NewService(clientFinder, clientAssertionKeyRepo, evtBus, subscriptionAuthorizer)))
-	cmdBus.Register(clientAssertionKeyHardDelete.CommandType, clientAssertionKeyHardDelete.NewCommandHandler(clientAssertionKeyHardDelete.NewService(clientAssertionKeyFinder, clientAssertionKeyRepo, subscriptionAuthorizer)))
+	cmdBus.Register(clientAssertionKeyCreate.CommandType,
+		clientAssertionKeyCreate.NewCommandHandler(clientAssertionKeyCreate.NewService(clientFinder,
+			clientAssertionKeyRepo,
+			evtBus,
+			subscriptionAuthorizer)))
+	cmdBus.Register(clientAssertionKeyHardDelete.CommandType,
+		clientAssertionKeyHardDelete.NewCommandHandler(clientAssertionKeyHardDelete.NewService(clientAssertionKeyFinder,
+			clientAssertionKeyRepo,
+			subscriptionAuthorizer)))
 	clientSecretHasher := clientSecretInfra.NewArgon2SecretHasher()
-	cmdBus.Register(clientSecretCreate.CommandType, clientSecretCreate.NewCommandHandler(clientSecretCreate.NewService(clientFinder, clientSecretRepo, clientSecretHasher, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(clientSecretCreate.CommandType,
+		clientSecretCreate.NewCommandHandler(clientSecretCreate.NewService(clientFinder,
+			clientSecretRepo,
+			clientSecretHasher,
+			evtBus,
+			subscriptionAuthorizer)))
 	cmdBus.Register(clientSecretHardDelete.CommandType, clientSecretHardDelete.NewCommandHandler(clientSecretHardDelete.NewService(clientSecretRepo, subscriptionAuthorizer)))
 
 	clientSecretVerifier := clientSecretInfra.NewArgon2SecretVerifier(clientSecretRepo)

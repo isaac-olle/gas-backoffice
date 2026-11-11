@@ -41,7 +41,7 @@ func (f *HttpKeyFetcher) FetchAll(ctx context.Context, jwksUri string) (map[stri
 	if err != nil {
 		return nil, fmt.Errorf("fetch jwks: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

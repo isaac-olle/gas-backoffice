@@ -97,7 +97,20 @@ func (r *PostgresClientRepository) HardDelete(ctx context.Context, id ids.Client
 
 func (r *PostgresClientRepository) fromRow(row pgx.Row) (*clients.Client, error) {
 	var p clients.ClientPrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.Enabled, &p.Public, &p.IsSystem, &p.AllowedGrantTypes, &p.RedirectUris, &p.AssertionKeyIds, &p.SecretIds, &p.AllowedScopes, &p.Version, &p.AuthorId, &p.AuthorRole)
+	err := row.Scan(&p.Id,
+		&p.Name,
+		&p.SubscriptionId,
+		&p.Enabled,
+		&p.Public,
+		&p.IsSystem,
+		&p.AllowedGrantTypes,
+		&p.RedirectUris,
+		&p.AssertionKeyIds,
+		&p.SecretIds,
+		&p.AllowedScopes,
+		&p.Version,
+		&p.AuthorId,
+		&p.AuthorRole)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
