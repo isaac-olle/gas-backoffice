@@ -6,6 +6,8 @@ import "time"
 // per managed AppError via the create use case, and list reads them back. It
 // is not an aggregate — there is nothing to validate and no domain events.
 type ErrorLog struct {
+	AuthorId    string         `json:"author_id"`
+	AuthorRole  string         `json:"author_role"`
 	ErrorId     string         `json:"error_id"`
 	Type        string         `json:"type"`
 	Code        string         `json:"code"`

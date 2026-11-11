@@ -23,8 +23,9 @@ func NewPostgresErrorLogRepository(db *pgxpool.Pool) *PostgresErrorLogRepository
 
 func (r *PostgresErrorLogRepository) Save(ctx context.Context, errorLog error_logs.ErrorLog) error {
 	query := `
-		INSERT INTO public.errors (error_id, type, code, description, details, cause, stack_trace, request_id, occurred_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO public.errors (error_id, type, code, description, details, cause, stack_trace, request_id, occurred_at,
+			author_id, author_role)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF($10, ''), NULLIF($11, ''))
 		ON CONFLICT (error_id) DO NOTHING
 	`
 	details, err := json.Marshal(errorLog.Details)
@@ -39,11 +40,13 @@ func (r *PostgresErrorLogRepository) Save(ctx context.Context, errorLog error_lo
 	return r.postgres.Save(ctx, query,
 		errorLog.ErrorId, errorLog.Type, errorLog.Code, errorLog.Description,
 		details, errorLog.Cause, stackTrace, errorLog.RequestId, errorLog.OccurredAt,
+		errorLog.AuthorId, errorLog.AuthorRole,
 	)
 }
 
 func (r *PostgresErrorLogRepository) Latest(ctx context.Context, limit int) ([]error_logs.ErrorLog, error) {
-	query := `SELECT error_id, type, code, description, details, request_id, occurred_at
+	query := `SELECT error_id, type, code, description, details, request_id, occurred_at,
+		COALESCE(author_id, ''), COALESCE(author_role, '')
 		FROM public.errors
 		ORDER BY occurred_at DESC NULLS LAST
 		LIMIT $1`
@@ -53,7 +56,8 @@ func (r *PostgresErrorLogRepository) Latest(ctx context.Context, limit int) ([]e
 func (r *PostgresErrorLogRepository) fromRow(row pgx.Row) (error_logs.ErrorLog, error) {
 	var e error_logs.ErrorLog
 	var requestId *string
-	if err := row.Scan(&e.ErrorId, &e.Type, &e.Code, &e.Description, &e.Details, &requestId, &e.OccurredAt); err != nil {
+	if err := row.Scan(&e.ErrorId, &e.Type, &e.Code, &e.Description, &e.Details, &requestId, &e.OccurredAt,
+		&e.AuthorId, &e.AuthorRole); err != nil {
 		return error_logs.ErrorLog{}, fmt.Errorf("error scanning error log: %w", err)
 	}
 	if requestId != nil {

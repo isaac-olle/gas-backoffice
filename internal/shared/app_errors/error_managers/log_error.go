@@ -1,6 +1,7 @@
 package error_managers
 
 import (
+	"context"
 	"time"
 
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
@@ -15,7 +16,7 @@ func NewLogErrorPresenter(logger shared_logger.Logger) *LogErrorPresenter {
 	return &LogErrorPresenter{logger: logger}
 }
 
-func (p *LogErrorPresenter) Manage(err *app_errors.AppError) {
+func (p *LogErrorPresenter) Manage(_ context.Context, err *app_errors.AppError) {
 	trace := any(nil)
 	if err.StackTrace != nil {
 		trace = err.StackTrace.ToJSON()

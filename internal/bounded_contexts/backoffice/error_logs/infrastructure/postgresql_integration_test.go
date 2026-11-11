@@ -19,6 +19,7 @@ func TestPostgresErrorLogRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := infrastructure.NewPostgresErrorLogRepository(pool)
 	log := error_logs.ErrorLog{
+		AuthorId: "integration-author", AuthorRole: "subscription_user",
 		ErrorId: "integration-" + time.Now().UTC().Format("20060102150405.000000000"),
 		Type:    "bad_request", Code: "INTEGRATION_TEST", Description: "repository round trip",
 		Details: map[string]any{"component": "integration"}, Cause: []string{"root cause"},
@@ -41,6 +42,8 @@ func TestPostgresErrorLogRepository(t *testing.T) {
 	require.NotNil(t, persisted)
 	assert.Equal(t, log.Code, persisted.Code)
 	assert.Equal(t, log.RequestId, persisted.RequestId)
+	assert.Equal(t, log.AuthorId, persisted.AuthorId)
+	assert.Equal(t, log.AuthorRole, persisted.AuthorRole)
 	assert.Equal(t, "integration", persisted.Details["component"])
 }
 

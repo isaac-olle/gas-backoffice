@@ -1,6 +1,7 @@
 package middlewares_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -27,7 +28,7 @@ type stubManager struct {
 	called bool
 }
 
-func (s *stubManager) Manage(_ *app_errors.AppError) {
+func (s *stubManager) Manage(_ context.Context, _ *app_errors.AppError) {
 	s.called = true
 }
 

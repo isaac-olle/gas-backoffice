@@ -10,6 +10,8 @@ import (
 const CommandType command.Type = "command.backoffice.error_log.create"
 
 type Command struct {
+	authorId    string
+	authorRole  string
 	errorId     string
 	errorType   string
 	code        string
@@ -43,6 +45,11 @@ func NewCommand(
 }
 
 func (c *Command) Type() command.Type { return CommandType }
+
+func (c *Command) WithAuthor(authorId, authorRole string) *Command {
+	c.authorId, c.authorRole = authorId, authorRole
+	return c
+}
 
 type CommandHandler struct{ service *Service }
 

@@ -8,6 +8,7 @@ import (
 	errorLogCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/error_logs/application/create"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 )
 
 // PostgresErrorManager persists every managed AppError as a row in
@@ -22,7 +23,7 @@ func NewPostgresErrorManager(commandExecutor command.CommandExecutor) *PostgresE
 	return &PostgresErrorManager{commandExecutor: commandExecutor}
 }
 
-func (m *PostgresErrorManager) Manage(err *app_errors.AppError) {
+func (m *PostgresErrorManager) Manage(ctx context.Context, err *app_errors.AppError) {
 	var stackTrace any
 	if err.StackTrace != nil {
 		stackTrace = err.StackTrace.ToJSON()
@@ -34,10 +35,14 @@ func (m *PostgresErrorManager) Manage(err *app_errors.AppError) {
 	}
 
 	occurredAt := err.OccurredAt
+	var authorId, authorRole string
+	if author, ok := vo.AuthorFromContext(ctx); ok && author != nil {
+		authorId, authorRole = author.Id.String(), author.Role.String()
+	}
 	cmd := errorLogCreate.NewCommand(
 		err.ErrorId, err.Type.String(), string(err.Code), err.Description,
 		err.Details, causes, stackTrace, err.RequestId, &occurredAt,
-	)
+	).WithAuthor(authorId, authorRole)
 
 	if execErr := m.commandExecutor.SingleExecution(context.Background(), cmd); execErr != nil {
 		fmt.Fprintf(os.Stderr, "PostgresErrorManager: failed to persist error %s: %v\n", err.ErrorId, execErr)

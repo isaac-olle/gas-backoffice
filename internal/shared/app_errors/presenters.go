@@ -1,9 +1,12 @@
 package app_errors
 
-import "github.com/gin-gonic/gin"
+import (
+	"context"
+	"github.com/gin-gonic/gin"
+)
 
 type ErrorManager interface {
-	Manage(err *AppError)
+	Manage(ctx context.Context, err *AppError)
 }
 
 type ErrorPresenter interface {

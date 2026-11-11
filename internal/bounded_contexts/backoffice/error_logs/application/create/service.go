@@ -20,6 +20,8 @@ func NewService(repository error_logs.Repository) *Service {
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
 	errorLog := error_logs.ErrorLog{
+		AuthorId:    cmd.authorId,
+		AuthorRole:  cmd.authorRole,
 		ErrorId:     cmd.errorId,
 		Type:        cmd.errorType,
 		Code:        cmd.code,

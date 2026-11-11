@@ -30,7 +30,7 @@ func HttpError(
 		appError = appError.WithRequestId(c.GetString(RequestIDHeader))
 
 		for _, manager := range errorManagers {
-			manager.Manage(appError)
+			manager.Manage(c.Request.Context(), appError)
 		}
 		presenter.Present(c, appError)
 	}
