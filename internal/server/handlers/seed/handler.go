@@ -1,6 +1,7 @@
 package seed_handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
-	sharedSeed "github.com/isaac-olle/gas-backoffice/internal/shared/seed"
 )
 
 type seedRequest struct {
@@ -81,11 +81,16 @@ type seedResponse struct {
 }
 
 type Handler struct {
-	repo     *sharedSeed.Repository
+	repo     seedRepository
 	executor command.CommandExecutor
 }
 
-func NewHandler(repo *sharedSeed.Repository, executor command.CommandExecutor) *Handler {
+type seedRepository interface {
+	IsSeeded(context.Context) (bool, error)
+	MarkSeeded(context.Context) error
+}
+
+func NewHandler(repo seedRepository, executor command.CommandExecutor) *Handler {
 	return &Handler{repo: repo, executor: executor}
 }
 

@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
+	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresClientRepository struct {
-	pool *pgxpool.Pool
+	postgres *sharedInfrastructure.PostgresRepository[*session.Client]
 }
 
 func NewPostgresClientRepository(pool *pgxpool.Pool) *PostgresClientRepository {
-	return &PostgresClientRepository{pool: pool}
+	return &PostgresClientRepository{postgres: sharedInfrastructure.NewPostgresRepository[*session.Client](pool)}
 }
 
 func (r *PostgresClientRepository) FindById(ctx context.Context, clientID string) (*session.Client, error) {
-	rows, err := r.pool.Query(ctx, `
+	rows, err := r.postgres.Query(ctx, `
 		SELECT
 			c.id,
 			c.name,

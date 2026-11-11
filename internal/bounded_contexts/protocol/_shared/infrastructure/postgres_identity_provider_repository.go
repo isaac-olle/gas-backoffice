@@ -7,17 +7,18 @@ import (
 
 	protocolShared "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/_shared"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
+	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresIdentityProviderRepository struct {
-	pool      *pgxpool.Pool
+	postgres  *sharedInfrastructure.PostgresRepository[*protocolShared.IdentityProviderConfig]
 	encrypter persistance.Encrypter
 }
 
 func NewPostgresIdentityProviderRepository(pool *pgxpool.Pool, encrypter persistance.Encrypter) *PostgresIdentityProviderRepository {
-	return &PostgresIdentityProviderRepository{pool: pool, encrypter: encrypter}
+	return &PostgresIdentityProviderRepository{postgres: sharedInfrastructure.NewPostgresRepository[*protocolShared.IdentityProviderConfig](pool), encrypter: encrypter}
 }
 
 func (r *PostgresIdentityProviderRepository) FindByReferenceName(ctx context.Context, referenceName string) (*protocolShared.IdentityProviderConfig, error) {
@@ -26,7 +27,7 @@ func (r *PostgresIdentityProviderRepository) FindByReferenceName(ctx context.Con
 		clientSecret, backofficeRedirectUri                                       *string
 		scopes                                                                    []string
 	)
-	err := r.pool.QueryRow(ctx, `
+	err := r.postgres.QueryRow(ctx, `
 		SELECT id, name, issuer, client_id, client_secret, authorization_endpoint, token_endpoint, jwks_uri, scopes, backoffice_redirect_uri
 		FROM backoffice.identity_providers
 		WHERE reference_name = $1 AND enabled = TRUE

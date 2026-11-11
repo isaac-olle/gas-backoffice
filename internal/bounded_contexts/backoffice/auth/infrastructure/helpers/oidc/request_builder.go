@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 type RequestBuilder struct {
@@ -39,7 +40,7 @@ func (r *RequestBuilder) Build(
 	params := url.Values{}
 	params.Set("response_type", "code")
 	params.Set("client_id", clientId)
-	params.Set("redirect_uri", redirectUri)
+	params.Set("redirect_uri", strings.ReplaceAll(redirectUri, ":idp_reference_name", idpReferenceName))
 	params.Set("scope", "openid email profile")
 	params.Set("state", state)
 	params.Set("idp_reference_name", idpReferenceName)

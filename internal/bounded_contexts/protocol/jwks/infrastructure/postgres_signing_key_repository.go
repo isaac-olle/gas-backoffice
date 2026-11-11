@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/jwks"
+	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,15 +14,15 @@ import (
 // so keys of disabled or deleted protected resources are not published. It
 // never touches the private_key column.
 type PostgresSigningKeyRepository struct {
-	pool *pgxpool.Pool
+	postgres *sharedInfrastructure.PostgresRepository[*jwks.SigningKeyProjection]
 }
 
 func NewPostgresSigningKeyRepository(pool *pgxpool.Pool) *PostgresSigningKeyRepository {
-	return &PostgresSigningKeyRepository{pool: pool}
+	return &PostgresSigningKeyRepository{postgres: sharedInfrastructure.NewPostgresRepository[*jwks.SigningKeyProjection](pool)}
 }
 
 func (r *PostgresSigningKeyRepository) SearchActive(ctx context.Context) ([]*jwks.SigningKeyProjection, error) {
-	rows, err := r.pool.Query(ctx, `
+	rows, err := r.postgres.Query(ctx, `
 		SELECT kp.id, kp.algorithm, kp.public_key
 		FROM security.key_pairs kp
 		JOIN backoffice.protected_resources pr ON pr.id = kp.protected_resource_id

@@ -14,19 +14,17 @@ import (
 
 type PostgresIdentityProviderRepository struct {
 	postgres *infrastructure.PostgresRepository[*identity_providers.IdentityProvider]
-	pool     *pgxpool.Pool
 }
 
 func NewPostgresIdentityProviderRepository(db *pgxpool.Pool) *PostgresIdentityProviderRepository {
 	return &PostgresIdentityProviderRepository{
 		postgres: infrastructure.NewPostgresRepository[*identity_providers.IdentityProvider](db),
-		pool:     db,
 	}
 }
 
 func (r *PostgresIdentityProviderRepository) Save(ctx context.Context, idp *identity_providers.IdentityProvider) error {
 	p := idp.ToPrimitives()
-	_, err := r.pool.Exec(ctx, `
+	_, err := r.postgres.Exec(ctx, `
 		INSERT INTO backoffice.identity_providers (
 			id, reference_name, name, issuer,
 			client_id, client_secret,

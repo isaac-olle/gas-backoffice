@@ -14,9 +14,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepository struct{ db *pgxpool.Pool }
+type PostgresRepository struct {
+	postgres *pginfra.PostgresRepository[*subscriptions.Subscription]
+}
 
-func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository { return &PostgresRepository{db: db} }
+func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
+	return &PostgresRepository{postgres: pginfra.NewPostgresRepository[*subscriptions.Subscription](db)}
+}
 
 func (r *PostgresRepository) Save(ctx context.Context, aggregate *subscriptions.Subscription) error {
 	// Join the ambient transaction (set by the UnitOfWork around MultipleExecution)
@@ -28,19 +32,7 @@ func (r *PostgresRepository) Save(ctx context.Context, aggregate *subscriptions.
 		return r.save(ctx, tx, aggregate)
 	}
 
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin subscription transaction: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-
-	if err = r.save(ctx, tx, aggregate); err != nil {
-		return err
-	}
-	if err = tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit subscription: %w", err)
-	}
-	return nil
+	return r.postgres.WithTx(ctx, func(tx pgx.Tx) error { return r.save(ctx, tx, aggregate) })
 }
 
 func (r *PostgresRepository) save(ctx context.Context, q pginfra.Querier, aggregate *subscriptions.Subscription) error {
@@ -73,7 +65,7 @@ func (r *PostgresRepository) save(ctx context.Context, q pginfra.Querier, aggreg
 func (r *PostgresRepository) SearchById(ctx context.Context, id ids.SubscriptionId) (*subscriptions.Subscription, error) {
 	var p subscriptions.SubscriptionPrimitives
 	var memberIds, memberRoles []string
-	err := r.db.QueryRow(ctx, `SELECT s.id,s.name,s.owner_id,s.is_system,
+	err := r.postgres.QueryRow(ctx, `SELECT s.id,s.name,s.owner_id,s.is_system,
 		COALESCE(array_agg(m.user_id) FILTER (WHERE m.user_id IS NOT NULL),'{}'),
 		COALESCE(array_agg(m.subscription_role) FILTER (WHERE m.user_id IS NOT NULL),'{}'),s.version
 		FROM backoffice.subscriptions s LEFT JOIN backoffice.subscription_members m ON m.subscription_id=s.id
@@ -108,7 +100,7 @@ func (r *PostgresRepository) List(ctx context.Context, subscriptionIds []ids.Sub
 	}
 	query += ` ORDER BY name, id`
 
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.postgres.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list subscriptions: %w", err)
 	}

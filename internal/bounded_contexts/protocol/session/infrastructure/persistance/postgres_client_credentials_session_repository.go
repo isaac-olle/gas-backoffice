@@ -7,22 +7,23 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresClientCredentialsSessionRepository struct {
-	pool *pgxpool.Pool
+	postgres *sharedInfrastructure.PostgresRepository[*session.ClientCredentialsSession]
 }
 
 func NewPostgresClientCredentialsSessionRepository(pool *pgxpool.Pool) *PostgresClientCredentialsSessionRepository {
-	return &PostgresClientCredentialsSessionRepository{pool: pool}
+	return &PostgresClientCredentialsSessionRepository{postgres: sharedInfrastructure.NewPostgresRepository[*session.ClientCredentialsSession](pool)}
 }
 
 func (r *PostgresClientCredentialsSessionRepository) Save(ctx context.Context, sess *session.ClientCredentialsSession) error {
 	p := sess.ToPrimitives()
 
-	_, err := r.pool.Exec(ctx, `
+	_, err := r.postgres.Exec(ctx, `
 		INSERT INTO protocol.client_credentials_sessions (
 			id, client_id, user_id, scope, issued_at, protected_resource_id
 		) VALUES ($1,$2,$3,$4,$5,$6)
@@ -34,7 +35,7 @@ func (r *PostgresClientCredentialsSessionRepository) Save(ctx context.Context, s
 }
 
 func (r *PostgresClientCredentialsSessionRepository) FindById(ctx context.Context, id ids.SessionId) (*session.ClientCredentialsSession, error) {
-	row := r.pool.QueryRow(ctx, `
+	row := r.postgres.QueryRow(ctx, `
 		SELECT id, client_id, user_id, scope, issued_at, protected_resource_id
 		FROM protocol.client_credentials_sessions WHERE id = $1
 	`, id.String())

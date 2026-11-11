@@ -26,6 +26,21 @@ func NewPostgresRepository[T any](db *pgxpool.Pool) *PostgresRepository[T] {
 
 func (r *PostgresRepository[T]) DB() *pgxpool.Pool { return r.db }
 
+// Exec executes a statement through the pool or the transaction carried by ctx.
+func (r *PostgresRepository[T]) Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
+	return r.querier(ctx).Exec(ctx, query, args...)
+}
+
+// Query executes a query through the pool or the transaction carried by ctx.
+func (r *PostgresRepository[T]) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	return r.querier(ctx).Query(ctx, query, args...)
+}
+
+// QueryRow executes a row query through the pool or the transaction carried by ctx.
+func (r *PostgresRepository[T]) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	return r.querier(ctx).QueryRow(ctx, query, args...)
+}
+
 func (r *PostgresRepository[T]) Save(ctx context.Context, query string, args ...any) error {
 	_, err := r.querier(ctx).Exec(ctx, query, args...)
 	return err

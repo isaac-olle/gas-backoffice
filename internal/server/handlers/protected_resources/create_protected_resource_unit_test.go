@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/isaac-olle/gas-backoffice/internal/server/handlers/handlerstest"
-
+	prHandlers "github.com/isaac-olle/gas-backoffice/internal/server/handlers/protected_resources"
 )
 
 func TestCreateProtectedResourceHandler(t *testing.T) {

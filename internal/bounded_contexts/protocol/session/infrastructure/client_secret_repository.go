@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/jackc/pgx/v5"
@@ -12,17 +13,17 @@ import (
 )
 
 type PostgresSessionClientSecretRepository struct {
-	pool *pgxpool.Pool
+	postgres *sharedInfrastructure.PostgresRepository[*session.Client]
 }
 
 func NewPostgresSessionClientSecretRepository(pool *pgxpool.Pool) *PostgresSessionClientSecretRepository {
-	return &PostgresSessionClientSecretRepository{pool: pool}
+	return &PostgresSessionClientSecretRepository{postgres: sharedInfrastructure.NewPostgresRepository[*session.Client](pool)}
 }
 
 func (r *PostgresSessionClientSecretRepository) FindHashByClientId(ctx context.Context, clientID string) (string, error) {
 	var hash string
-	err := r.pool.QueryRow(ctx,
-		`SELECT secret_hash FROM client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`,
+	err := r.postgres.QueryRow(ctx,
+		`SELECT secret_hash FROM security.client_secrets WHERE client_id = $1 AND deleted_at IS NULL LIMIT 1`,
 		clientID,
 	).Scan(&hash)
 	if errors.Is(err, pgx.ErrNoRows) {

@@ -20,7 +20,7 @@ func NewPostgresSessionRepository(db *pgxpool.Pool) *PostgresSessionRepository {
 
 func (r *PostgresSessionRepository) SaveSession(ctx context.Context, session *auth.Session) error {
 	p := session.ToPrimitives()
-	_, err := r.postgres.DB().Exec(ctx, `
+	_, err := r.postgres.Exec(ctx, `
 		INSERT INTO backoffice.sessions (id, user_id, user_role)
 		VALUES ($1, $2, $3)
 	`, p.SessionId, p.UserId, p.Role)
@@ -32,7 +32,7 @@ func (r *PostgresSessionRepository) SaveSession(ctx context.Context, session *au
 
 func (r *PostgresSessionRepository) IsActive(ctx context.Context, id ids.SessionId) (bool, error) {
 	var active bool
-	err := r.postgres.DB().QueryRow(ctx, `
+	err := r.postgres.QueryRow(ctx, `
 		SELECT EXISTS(
 			SELECT 1 FROM backoffice.sessions
 			WHERE id = $1 AND logged_out_at IS NULL
@@ -45,7 +45,7 @@ func (r *PostgresSessionRepository) IsActive(ctx context.Context, id ids.Session
 }
 
 func (r *PostgresSessionRepository) Logout(ctx context.Context, id ids.SessionId) error {
-	_, err := r.postgres.DB().Exec(ctx, `
+	_, err := r.postgres.Exec(ctx, `
 		UPDATE backoffice.sessions
 		SET logged_out_at = NOW()
 		WHERE id = $1 AND logged_out_at IS NULL
