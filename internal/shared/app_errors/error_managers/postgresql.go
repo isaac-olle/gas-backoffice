@@ -57,5 +57,5 @@ func logPersistenceFailure(writer io.Writer, errorId string, err error) {
 	if errors.As(err, &appError) {
 		details = appError.ToPrimitives()
 	}
-	fmt.Fprintf(writer, "PostgresErrorManager: failed to persist error %s: %+v\n", errorId, details)
+	_, _ = fmt.Fprintf(writer, "PostgresErrorManager: failed to persist error %s: %+v\n", errorId, details)
 }
