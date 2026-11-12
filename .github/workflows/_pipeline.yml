@@ -103,27 +103,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Detect pre-deploy job changes
-        id: changes
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "run_migrations=true" >> $GITHUB_OUTPUT
-          else
-            if [ -z "$BEFORE_SHA" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
-              echo "run_migrations=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            CHANGED=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA")
-            echo "Changed files: $CHANGED"
-            if echo "$CHANGED" | grep -q "^deploy/golang-migrate/"; then
-              echo "run_migrations=true" >> $GITHUB_OUTPUT
-            else
-              echo "run_migrations=false" >> $GITHUB_OUTPUT
-            fi
-          fi
-
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -139,7 +118,8 @@ jobs:
       - name: Update app spec
         env:
           DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', inputs.environment)] }}
-          RUN_MIGRATIONS: ${{ steps.changes.outputs.run_migrations }}
+          # Pending migrations must also run after an earlier pipeline failed.
+          RUN_MIGRATIONS: "true"
           IMAGE_TAG: sha-${{ github.sha }}
         run: |
           doctl apps spec get $DO_APP_ID > /tmp/spec.yaml
@@ -158,9 +138,13 @@ jobs:
           for job in spec.get('jobs', []):
               job['image']['tag'] = tag
               if job['name'] == 'pre-deploy':
-                  for env in job.get('envs', []):
+                  job_envs = job.setdefault('envs', [])
+                  for env in job_envs:
                       if env['key'] == 'RUN_MIGRATIONS':
                           env['value'] = run_migrations
+                          break
+                  else:
+                      job_envs.append({'key': 'RUN_MIGRATIONS', 'value': run_migrations, 'scope': 'RUN_TIME'})
 
           with open('/tmp/spec.yaml', 'w') as f:
               yaml.dump(spec, f, default_flow_style=False, allow_unicode=True)

@@ -2,7 +2,9 @@ package error_managers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	errorLogCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/error_logs/application/create"
@@ -45,6 +47,15 @@ func (m *PostgresErrorManager) Manage(ctx context.Context, err *app_errors.AppEr
 	).WithAuthor(authorId, authorRole)
 
 	if execErr := m.commandExecutor.SingleExecution(context.Background(), cmd); execErr != nil {
-		fmt.Fprintf(os.Stderr, "PostgresErrorManager: failed to persist error %s: %v\n", err.ErrorId, execErr)
+		logPersistenceFailure(os.Stderr, err.ErrorId, execErr)
 	}
+}
+
+func logPersistenceFailure(writer io.Writer, errorId string, err error) {
+	var details any = err
+	var appError *app_errors.AppError
+	if errors.As(err, &appError) {
+		details = appError.ToPrimitives()
+	}
+	fmt.Fprintf(writer, "PostgresErrorManager: failed to persist error %s: %+v\n", errorId, details)
 }
