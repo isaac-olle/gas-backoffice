@@ -25,6 +25,8 @@ import (
 	errorLogCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/error_logs/application/create"
 	errorLogList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/error_logs/application/list"
 	errorLogInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/error_logs/infrastructure"
+	eventLogList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/event_logs/application/list"
+	eventLogInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/event_logs/infrastructure"
 	idpCreate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/application/create"
 	idpGet "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/application/get"
 	idpDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/identity_providers/domain_services"
@@ -91,6 +93,7 @@ func RegisterBackoffice(
 	clientProjectionRepo := scopeInfra.NewClientProjectionRepository(pool)
 	idpRepo := idpInfra.NewPostgresIdentityProviderRepository(pool)
 	errorLogRepo := errorLogInfra.NewPostgresErrorLogRepository(pool)
+	eventLogRepo := eventLogInfra.NewPostgresEventLogRepository(pool)
 
 	userFinder := userDomainServices.NewUserFinder(userRepo)
 	prFinder := prDomainServices.NewProtectedResourceFinder(prRepo)
@@ -170,6 +173,7 @@ func RegisterBackoffice(
 	qryBus.Register(userList.QueryType, userList.NewQueryHandler(userList.NewService(userRepo)))
 	qryBus.Register(prList.QueryType, prList.NewQueryHandler(prList.NewService(prRepo, subscriptionAuthorizer)))
 	qryBus.Register(errorLogList.QueryType, errorLogList.NewQueryHandler(errorLogList.NewService(errorLogRepo)))
+	qryBus.Register(eventLogList.QueryType, eventLogList.NewQueryHandler(eventLogList.NewService(eventLogRepo)))
 	qryBus.Register(clientList.QueryType, clientList.NewQueryHandler(clientList.NewService(clientRepo, subscriptionAuthorizer)))
 	qryBus.Register(subscriptionList.QueryType, subscriptionList.NewQueryHandler(subscriptionList.NewService(subscriptionRepo)))
 

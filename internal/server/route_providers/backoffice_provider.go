@@ -48,5 +48,6 @@ func (p *Backoffice) Register(root *gin.RouterGroup) {
 	registerSubscriptionResources(g, p)
 	registerIdentityProviders(g, p)
 	registerErrorLogs(g, p)
+	registerEventLogs(g, p)
 	registerAuth(g, p)
 }
