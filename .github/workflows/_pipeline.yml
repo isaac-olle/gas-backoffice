@@ -103,6 +103,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Detect migration changes
+        id: changes
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_migrations=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "$BEFORE_SHA" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "run_migrations=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE_SHA" "$GITHUB_SHA" -- deploy/golang-migrate/; then
+            echo "run_migrations=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_migrations=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -118,8 +133,7 @@ jobs:
       - name: Update app spec
         env:
           DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', inputs.environment)] }}
-          # Pending migrations must also run after an earlier pipeline failed.
-          RUN_MIGRATIONS: "true"
+          RUN_MIGRATIONS: ${{ steps.changes.outputs.run_migrations }}
           IMAGE_TAG: sha-${{ github.sha }}
         run: |
           doctl apps spec get $DO_APP_ID > /tmp/spec.yaml
