@@ -91,6 +91,12 @@ func TestCallbackHandler(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, h.Success(c, result))
 			assert.Contains(t, w.Header().Get("Set-Cookie"), authenticators.AccessTokenCookieName+"=the-token")
+			require.Len(t, w.Result().Cookies(), 2)
+			for _, cookie := range w.Result().Cookies() {
+				assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
+				assert.True(t, cookie.Secure)
+				assert.True(t, cookie.HttpOnly)
+			}
 		})
 	}
 }

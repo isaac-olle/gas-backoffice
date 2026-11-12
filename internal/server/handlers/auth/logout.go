@@ -56,8 +56,9 @@ func (h *LogoutHandler) sessionID(c *gin.Context, cookieName, tokenType string) 
 }
 
 func (h *LogoutHandler) Success(c *gin.Context, _ any) error {
-	c.SetCookie(authenticators.AccessTokenCookieName, "", -1, "/", "", false, true)
-	c.SetCookie(authenticators.RefreshTokenCookieName, "", -1, "/", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(authenticators.AccessTokenCookieName, "", -1, "/", "", true, true)
+	c.SetCookie(authenticators.RefreshTokenCookieName, "", -1, "/", "", true, true)
 	c.Status(http.StatusNoContent)
 	return nil
 }

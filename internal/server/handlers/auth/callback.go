@@ -33,8 +33,9 @@ func (h *CallbackHandler) Execute(c *gin.Context) (any, error) {
 
 func (h *CallbackHandler) Success(c *gin.Context, result any) error {
 	res := result.(create_session.Result)
-	c.SetCookie(authenticators.AccessTokenCookieName, res.AccessToken, 3600, "/", "", false, true)
-	c.SetCookie(authenticators.RefreshTokenCookieName, res.RefreshToken, 30*24*60*60, "/", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(authenticators.AccessTokenCookieName, res.AccessToken, 3600, "/", "", true, true)
+	c.SetCookie(authenticators.RefreshTokenCookieName, res.RefreshToken, 30*24*60*60, "/", "", true, true)
 	c.Status(http.StatusOK)
 	return nil
 }
