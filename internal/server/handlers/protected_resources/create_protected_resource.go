@@ -32,6 +32,7 @@ func NewCreateProtectedResourceHandler(
 }
 
 type createProtectedResourceRequest struct {
+	URL  string `json:"url"`
 	Name string `json:"name" binding:"required"`
 }
 
@@ -52,7 +53,7 @@ func (h *CreateProtectedResourceHandler) Execute(c *gin.Context) (any, error) {
 	}
 
 	prOwnership := protected_resources.NewOwnership(subscriptionId)
-	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership, false))
+	return nil, h.commandExecutor.SingleExecution(c.Request.Context(), prCreate.NewCommand(prId, req.Name, prOwnership, false).WithURL(req.URL))
 }
 
 func (h *CreateProtectedResourceHandler) Success(c *gin.Context, _ any) error {

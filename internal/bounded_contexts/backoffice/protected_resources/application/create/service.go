@@ -20,7 +20,7 @@ func NewService(duplicateNameChecker *prDomainServices.DuplicateNameChecker, rep
 }
 
 func (s *Service) Create(ctx context.Context, cmd *Command) error {
-	pr, err := protected_resources.NewProtectedResource(cmd.id, cmd.name, cmd.ownership, cmd.isSystem)
+	pr, err := protected_resources.NewProtectedResourceWithURL(cmd.id, cmd.name, cmd.ownership, cmd.isSystem, cmd.url)
 	if err != nil {
 		return app_errors.BadRequestError(protected_resources.ErrProtectedResourceNotCreated).
 			WithDescription("failed to create protected resource").WithCause(err, false)

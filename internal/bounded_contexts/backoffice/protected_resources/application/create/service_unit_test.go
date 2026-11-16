@@ -27,7 +27,7 @@ func TestCreate(t *testing.T) {
 		repo := prmocks.NewMockRepository(t)
 		bus := eventmocks.NewMockBus(t)
 		duplicateNameChecker := domain_services.NewDuplicateNameChecker(repo)
-		cmd := aCommand(t, withCmdName("My-Resource"))
+		cmd := aCommand(t, withCmdName("My-Resource")).WithURL("https://api.example.com")
 
 		var saved *protected_resources.ProtectedResource
 		repo.EXPECT().
@@ -48,6 +48,7 @@ func TestCreate(t *testing.T) {
 		require.NoError(t, create.NewService(duplicateNameChecker, repo, bus).Create(context.Background(), cmd))
 		require.NotNil(t, saved)
 		assert.Equal(t, "My-Resource", saved.ToPrimitives().Name)
+		assert.Equal(t, "https://api.example.com", saved.ToPrimitives().URL)
 	})
 
 	errCases := []struct {
@@ -56,6 +57,21 @@ func TestCreate(t *testing.T) {
 		setupRepo func(repo *prmocks.MockRepository)
 		wantCode  app_errors.ErrorCode
 	}{
+		{
+			desc:     "rejects a relative resource URL",
+			cmd:      func(t *testing.T) *create.Command { return aCommand(t).WithURL("/api") },
+			wantCode: protected_resources.ErrProtectedResourceNotCreated,
+		},
+		{
+			desc:     "rejects a resource URL with a fragment",
+			cmd:      func(t *testing.T) *create.Command { return aCommand(t).WithURL("https://api.example.com#section") },
+			wantCode: protected_resources.ErrProtectedResourceNotCreated,
+		},
+		{
+			desc:     "rejects a non HTTP resource URL",
+			cmd:      func(t *testing.T) *create.Command { return aCommand(t).WithURL("ftp://api.example.com") },
+			wantCode: protected_resources.ErrProtectedResourceNotCreated,
+		},
 		{
 			desc:     "returns bad request error for empty name",
 			cmd:      func(t *testing.T) *create.Command { return aCommand(t, withCmdName("")) },

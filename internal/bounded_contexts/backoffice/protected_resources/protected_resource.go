@@ -15,6 +15,7 @@ type ProtectedResource struct {
 	*aggregate2.Root
 	id         ids2.ProtectedResourceId
 	name       vos.ProtectedResourceName
+	url        vos.ProtectedResourceURL
 	ownership  Ownership
 	isSystem   bool
 	enabled    bool
@@ -37,9 +38,17 @@ func (pr *ProtectedResource) EnsureSubscriptionAccess(allowed []ids2.Subscriptio
 }
 
 func NewProtectedResource(prId ids2.ProtectedResourceId, name string, ownership Ownership, isSystem bool) (*ProtectedResource, error) {
+	return NewProtectedResourceWithURL(prId, name, ownership, isSystem, "")
+}
+
+func NewProtectedResourceWithURL(prId ids2.ProtectedResourceId, name string, ownership Ownership, isSystem bool, rawURL string) (*ProtectedResource, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 
 	prName, err := vos.NewProtectedResourceName(name)
+	if err != nil {
+		errArr.AddError(err)
+	}
+	prURL, err := vos.NewProtectedResourceURL(rawURL)
 	if err != nil {
 		errArr.AddError(err)
 	}
@@ -52,6 +61,7 @@ func NewProtectedResource(prId ids2.ProtectedResourceId, name string, ownership 
 		Root:      aggregate2.NewRoot(protectedResourceAggregateName),
 		id:        prId,
 		name:      prName,
+		url:       prURL,
 		ownership: ownership,
 		isSystem:  isSystem,
 		enabled:   true,
@@ -76,6 +86,10 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 	}
 
 	name := vos.ProtectedResourceNameFromPrimitives(p.Name)
+	prURL, err := vos.NewProtectedResourceURL(p.URL)
+	if err != nil {
+		errArr.AddError(err)
+	}
 
 	ownership, err := NewOwnershipFromStrings(p.SubscriptionId)
 	if err != nil {
@@ -126,6 +140,7 @@ func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 		Root:       aggregate2.NewRoot(protectedResourceAggregateName),
 		id:         id,
 		name:       name,
+		url:        prURL,
 		ownership:  ownership,
 		isSystem:   p.IsSystem,
 		enabled:    p.Enabled,

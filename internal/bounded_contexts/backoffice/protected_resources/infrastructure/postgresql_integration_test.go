@@ -25,7 +25,7 @@ func TestPostgresProtectedResourceRepository(t *testing.T) {
 	id := ids.NewProtectedResourceId()
 	t.Cleanup(func() { _ = repo.HardDelete(ctx, id) })
 
-	resource, err := protected_resources.NewProtectedResource(id, "Integration Resource", protected_resources.NewOwnership(subscriptionID), false)
+	resource, err := protected_resources.NewProtectedResourceWithURL(id, "Integration Resource", protected_resources.NewOwnership(subscriptionID), false, "https://api.example.com")
 	require.NoError(t, err)
 	scopeID := ids.NewScopeId()
 	resource.AddScopeId(scopeID)
@@ -35,11 +35,13 @@ func TestPostgresProtectedResourceRepository(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, loaded)
 	assert.Equal(t, subscriptionID, loaded.SubscriptionId())
+	assert.Equal(t, "https://api.example.com", loaded.ToPrimitives().URL)
 	assert.Equal(t, []string{scopeID.String()}, loaded.ToPrimitives().ScopeIds)
 
 	matched, err := repo.Matching(ctx, criteria.Criteria{Filters: []criteria.Filter{{Field: "id", Operator: criteria.Equals, Value: id.String()}}})
 	require.NoError(t, err)
 	require.Len(t, matched, 1)
+	assert.Equal(t, "https://api.example.com", matched[0].ToPrimitives().URL)
 
 	require.NoError(t, repo.SoftDelete(ctx, id))
 	deleted, err := repo.SearchById(ctx, id)

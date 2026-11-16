@@ -3,6 +3,7 @@ package protected_resources
 import "github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 
 type ProtectedResourcePrimitives struct {
+	URL            string   `json:"url"`
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
 	SubscriptionId string   `json:"subscription_id"`
@@ -31,6 +32,7 @@ func (pr *ProtectedResource) ToPrimitives() ProtectedResourcePrimitives {
 	return ProtectedResourcePrimitives{
 		Id:             pr.id.String(),
 		Name:           pr.name.String(),
+		URL:            pr.url.String(),
 		SubscriptionId: pr.ownership.SubscriptionId.String(),
 		IsSystem:       pr.isSystem,
 		Enabled:        pr.enabled,

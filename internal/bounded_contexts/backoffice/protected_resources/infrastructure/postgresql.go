@@ -29,17 +29,18 @@ func (r *PostgresProtectedResourceRepository) Save(ctx context.Context, pr *prot
 	p := pr.ToPrimitives()
 	authorId, authorRole := authorPrimitives(ctx)
 	query := `
-		INSERT INTO backoffice.protected_resources (id, name, subscription_id, is_system, enabled, scope_ids, author_id, author_role, version)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO backoffice.protected_resources (id, name, subscription_id, is_system, enabled, scope_ids, author_id, author_role, version, url)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
+			url = EXCLUDED.url,
 			enabled = EXCLUDED.enabled,
 			scope_ids = EXCLUDED.scope_ids,
 			version = EXCLUDED.version + 1
 		WHERE backoffice.protected_resources.version = EXCLUDED.version
 	`
 	tag, err := r.postgres.SaveWithResult(ctx, query,
-		p.Id, p.Name, p.SubscriptionId, p.IsSystem, p.Enabled, p.ScopeIds, authorId, authorRole, p.Version)
+		p.Id, p.Name, p.SubscriptionId, p.IsSystem, p.Enabled, p.ScopeIds, authorId, authorRole, p.Version, p.URL)
 	if err != nil {
 		return fmt.Errorf("error saving protected resource: %w", err)
 	}
@@ -59,7 +60,7 @@ func authorPrimitives(ctx context.Context) (string, string) {
 }
 
 func (r *PostgresProtectedResourceRepository) SearchById(ctx context.Context, id ids.ProtectedResourceId) (*protected_resources.ProtectedResource, error) {
-	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role, url FROM backoffice.protected_resources WHERE id = $1 AND deleted_at IS NULL`
 	return r.postgres.Find(ctx, query, r.fromRow, id.String())
 }
 
@@ -68,7 +69,7 @@ func (r *PostgresProtectedResourceRepository) Matching(ctx context.Context, c cr
 	if err != nil {
 		return nil, err
 	}
-	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role FROM backoffice.protected_resources WHERE deleted_at IS NULL`
+	query := `SELECT id, name, subscription_id, is_system, enabled, scope_ids, version, author_id, author_role, url FROM backoffice.protected_resources WHERE deleted_at IS NULL`
 	if where != "" {
 		query += " AND " + where
 	}
@@ -87,7 +88,7 @@ func (r *PostgresProtectedResourceRepository) HardDelete(ctx context.Context, id
 
 func (r *PostgresProtectedResourceRepository) fromRow(row pgx.Row) (*protected_resources.ProtectedResource, error) {
 	var p protected_resources.ProtectedResourcePrimitives
-	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.IsSystem, &p.Enabled, &p.ScopeIds, &p.Version, &p.AuthorId, &p.AuthorRole)
+	err := row.Scan(&p.Id, &p.Name, &p.SubscriptionId, &p.IsSystem, &p.Enabled, &p.ScopeIds, &p.Version, &p.AuthorId, &p.AuthorRole, &p.URL)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

@@ -12,6 +12,7 @@ const CommandType command.Type = "command.backoffice.protected_resource.create"
 type Command struct {
 	id        ids.ProtectedResourceId
 	name      string
+	url       string
 	ownership protected_resources.Ownership
 	isSystem  bool
 }
@@ -26,6 +27,11 @@ func NewCommand(
 }
 
 func (c *Command) Type() command.Type { return CommandType }
+
+func (c *Command) WithURL(rawURL string) *Command {
+	c.url = rawURL
+	return c
+}
 
 type CommandHandler struct {
 	service *Service
