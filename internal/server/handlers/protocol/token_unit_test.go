@@ -87,9 +87,10 @@ func TestTokenHandler(t *testing.T) {
 			wantStatus: http.StatusOK,
 		},
 		{
-			name:    "client_credentials_missing_scope",
-			form:    url.Values{"grant_type": {"client_credentials"}},
-			wantErr: true,
+			name:       "client_credentials_missing_scope_is_delegated_to_service",
+			form:       url.Values{"grant_type": {"client_credentials"}},
+			resp:       tokenResp,
+			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "client_credentials_service_error",
@@ -128,6 +129,8 @@ func TestTokenHandler(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, h.Success(c, result))
 			assert.Equal(t, tt.wantStatus, w.Code)
+			assert.Equal(t, "no-store", w.Header().Get("Cache-Control"))
+			assert.Equal(t, "no-cache", w.Header().Get("Pragma"))
 		})
 	}
 }

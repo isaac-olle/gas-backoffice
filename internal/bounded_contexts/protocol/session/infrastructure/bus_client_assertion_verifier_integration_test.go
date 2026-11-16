@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure"
 )
 
-func TestBusClientAssertionVerifier_Verify(t *testing.T) {
+func TestIntegrationBusClientAssertionVerifier_Verify(t *testing.T) {
 	t.Parallel()
 
 	t.Run("dispatches to the query bus and returns its error", func(t *testing.T) {

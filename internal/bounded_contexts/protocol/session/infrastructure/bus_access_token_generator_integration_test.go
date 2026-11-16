@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -13,7 +15,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func newResolvedBaseSession(t *testing.T) *session.BaseSession {
+func newResolvedTokenClaims(t *testing.T) session.TokenClaims {
 	t.Helper()
 	sess, err := session.AuthorizationCodeSessionFromPrimitives(&session.AuthorizationCodeSessionPrimitives{
 		BaseSessionPrimitives: &session.BaseSessionPrimitives{
@@ -36,17 +38,19 @@ func newResolvedBaseSession(t *testing.T) *session.BaseSession {
 		},
 	})
 	require.NoError(t, err)
-	return sess.BaseSession
+	claims := sess.TokenClaims()
+	return claims
 }
 
-func TestBusAccessTokenGenerator_GenerateAccessToken(t *testing.T) {
+func TestIntegrationBusAccessTokenGenerator_GenerateAccessToken(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns error when authenticated user not resolved", func(t *testing.T) {
+	t.Run("returns query bus errors", func(t *testing.T) {
 		t.Parallel()
-		gen := infrastructure.NewBusAccessTokenGenerator(&mockQueryBus{})
+		gen := infrastructure.NewBusAccessTokenGenerator(&mockQueryBus{err: assert.AnError})
 
-		_, err := gen.GenerateAccessToken(context.Background(), newResolvedBaseSession(t), session.NewUserIdentityProjection("", ""))
+		claims := newResolvedTokenClaims(t)
+		_, err := gen.GenerateAccessToken(context.Background(), claims)
 
 		require.Error(t, err)
 	})
@@ -56,7 +60,7 @@ func TestBusAccessTokenGenerator_GenerateAccessToken(t *testing.T) {
 		bus := &mockQueryBus{result: "signed-jwt"}
 		gen := infrastructure.NewBusAccessTokenGenerator(bus)
 
-		token, err := gen.GenerateAccessToken(context.Background(), newResolvedBaseSession(t), session.NewUserIdentityProjection(uuid.New().String(), ""))
+		token, err := gen.GenerateAccessToken(context.Background(), newResolvedTokenClaims(t))
 
 		require.NoError(t, err)
 		assert.Equal(t, "signed-jwt", token)

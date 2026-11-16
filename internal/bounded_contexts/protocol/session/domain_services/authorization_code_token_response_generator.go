@@ -25,9 +25,17 @@ func NewAuthorizationCodeTokenResponseGenerator(
 func (g *AuthorizationCodeTokenResponseGenerator) Generate(
 	ctx context.Context,
 	sess *session.AuthorizationCodeSession,
-	identity *session.UserIdentityProjection,
 ) (*session.TokenResponse, error) {
-	accessToken, err := g.accessTokenGenerator.GenerateAccessToken(ctx, sess.BaseSession, identity)
+	claims := sess.TokenClaims()
+	if claims.Subject == "" {
+		return nil, app_errors.InternalError(session.ErrAuthenticatedUserNotResolved).
+			WithDescription("cannot generate tokens: authenticated user not resolved")
+	}
+	if claims.IdpID == "" {
+		return nil, app_errors.InternalError(session.ErrInvalidSessionParameters).
+			WithDescription("cannot generate tokens: identity provider not resolved")
+	}
+	accessToken, err := g.accessTokenGenerator.GenerateAccessToken(ctx, claims)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
@@ -36,23 +44,22 @@ func (g *AuthorizationCodeTokenResponseGenerator) Generate(
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
 		ExpiresIn:   int(session.AccessTokenTTL.Seconds()),
-		Scope:       sess.TokenClaims().Scope,
+		Scope:       claims.Scope,
 	}
 
-	return g.withIDToken(ctx, sess, identity, response)
+	return g.withIDToken(ctx, claims, response)
 }
 
 func (g *AuthorizationCodeTokenResponseGenerator) withIDToken(
 	ctx context.Context,
-	sess *session.AuthorizationCodeSession,
-	identity *session.UserIdentityProjection,
+	claims session.TokenClaims,
 	response *session.TokenResponse,
 ) (*session.TokenResponse, error) {
-	if !sess.HasScope("openid") {
+	if !claims.HasScope("openid") {
 		return response, nil
 	}
 
-	idToken, err := g.idTokenGenerator.GenerateIDToken(ctx, sess.BaseSession, identity)
+	idToken, err := g.idTokenGenerator.GenerateIDToken(ctx, claims)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}

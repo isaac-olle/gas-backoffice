@@ -12,11 +12,13 @@ import (
 )
 
 type stubAccessTokenGenerator struct {
-	token string
-	err   error
+	claims session.TokenClaims
+	token  string
+	err    error
 }
 
-func (s *stubAccessTokenGenerator) GenerateAccessToken(_ context.Context, _ *session.BaseSession, _ *session.UserIdentityProjection) (string, error) {
+func (s *stubAccessTokenGenerator) GenerateAccessToken(_ context.Context, claims session.TokenClaims) (string, error) {
+	s.claims = claims
 	return s.token, s.err
 }
 
@@ -25,14 +27,12 @@ type stubIDTokenGenerator struct {
 	err   error
 }
 
-func (s *stubIDTokenGenerator) GenerateIDToken(_ context.Context, _ *session.BaseSession, _ *session.UserIdentityProjection) (string, error) {
+func (s *stubIDTokenGenerator) GenerateIDToken(_ context.Context, _ session.TokenClaims) (string, error) {
 	return s.token, s.err
 }
 
 func TestAuthorizationCodeTokenResponseGenerator_Generate(t *testing.T) {
 	t.Parallel()
-
-	identity := session.NewUserIdentityProjection("user-subject", "")
 
 	tests := []struct {
 		name          string
@@ -78,12 +78,18 @@ func TestAuthorizationCodeTokenResponseGenerator_Generate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			sess := tt.makeSession(t)
+			accessGenerator := &stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr}
 			gen := domain_services.NewAuthorizationCodeTokenResponseGenerator(
-				&stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr},
+				accessGenerator,
 				&stubIDTokenGenerator{token: tt.idToken, err: tt.idErr},
 			)
 
-			resp, err := gen.Generate(context.Background(), sess, identity)
+			resp, err := gen.Generate(context.Background(), sess)
+			primitives := sess.ToPrimitives()
+			assert.Equal(t, primitives.Identity.Claims.Sub, accessGenerator.claims.Subject)
+			assert.Equal(t, primitives.Identity.IdpId, accessGenerator.claims.IdpID)
+			assert.Equal(t, primitives.Identity.Claims.Email, accessGenerator.claims.Email)
+			assert.Equal(t, primitives.Identity.Claims.Picture, accessGenerator.claims.Picture)
 
 			if tt.wantErr {
 				require.Error(t, err)

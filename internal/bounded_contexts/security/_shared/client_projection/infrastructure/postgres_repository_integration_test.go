@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/test/integrationtest"
 )
 
-func TestPostgresClientProjectionRepository(t *testing.T) {
+func TestIntegrationPostgresClientProjectionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()

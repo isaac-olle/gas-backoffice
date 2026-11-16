@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -15,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHttpTokenEndpointClientExchangeCode(t *testing.T) {
+func TestIntegrationHttpTokenEndpointClientExchangeCode(t *testing.T) {
 	tests := []struct {
 		name          string
 		status        int
@@ -72,7 +74,7 @@ func TestHttpTokenEndpointClientExchangeCode(t *testing.T) {
 	}
 }
 
-func TestTokenRedirectMatchesAuthorizationRedirect(t *testing.T) {
+func TestIntegrationTokenRedirectMatchesAuthorizationRedirect(t *testing.T) {
 	encoder := oidc.NewStateEncoder(time.Minute, stateTestEncrypter{})
 	builder := oidc.NewRequestBuilder(oidc.NewRandomCodeVerifierGenerator(), encoder)
 	const redirectTemplate = "https://app.example/callback/:idp_reference_name"

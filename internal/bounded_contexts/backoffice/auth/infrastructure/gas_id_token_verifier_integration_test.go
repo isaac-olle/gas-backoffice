@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -69,7 +71,7 @@ func validClaims() map[string]any {
 	}
 }
 
-func TestGasIdTokenVerifier(t *testing.T) {
+func TestIntegrationGasIdTokenVerifier(t *testing.T) {
 	t.Parallel()
 	header := map[string]any{"alg": "RS256", "typ": "JWT", "kid": gasKid}
 

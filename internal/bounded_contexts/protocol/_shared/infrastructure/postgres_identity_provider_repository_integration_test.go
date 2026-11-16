@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -28,7 +30,7 @@ func (integrationIdentityProviderEncrypter) Decrypt(value string) (string, error
 func (integrationIdentityProviderEncrypter) Seal(value []byte) ([]byte, error) { return value, nil }
 func (integrationIdentityProviderEncrypter) Open(value []byte) ([]byte, error) { return value, nil }
 
-func TestPostgresProtocolIdentityProviderRepository(t *testing.T) {
+func TestIntegrationPostgresProtocolIdentityProviderRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()

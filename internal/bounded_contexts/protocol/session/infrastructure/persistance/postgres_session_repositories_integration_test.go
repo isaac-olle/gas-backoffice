@@ -1,3 +1,5 @@
+//go:build integration
+
 package persistance_test
 
 import (
@@ -34,7 +36,7 @@ func (sessionIntegrationEncrypter) Decrypt(value string) (string, error) {
 func (sessionIntegrationEncrypter) Seal(value []byte) ([]byte, error) { return value, nil }
 func (sessionIntegrationEncrypter) Open(value []byte) ([]byte, error) { return value, nil }
 
-func TestPostgresAuthorizationCodeSessionRepository(t *testing.T) {
+func TestIntegrationPostgresAuthorizationCodeSessionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
@@ -132,12 +134,12 @@ func TestPostgresAuthorizationCodeSessionRepository(t *testing.T) {
 	assert.Nil(t, deleted)
 }
 
-func TestPostgresClientCredentialsSessionRepository(t *testing.T) {
+func TestIntegrationPostgresClientCredentialsSessionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
 	id := ids.NewSessionId()
-	sessionID, err := session.NewClientCredentialsSession(id, ids.NewClientId().String(), ids.NewUserId().String(), "read write", ids.NewProtectedResourceId().String())
+	sessionID, err := session.NewClientCredentialsSession(id, ids.NewClientId().String(), "read write", ids.NewProtectedResourceId().String())
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		_, _ = pool.Exec(ctx, `DELETE FROM protocol.client_credentials_sessions WHERE id=$1`, id.String())
@@ -150,6 +152,7 @@ func TestPostgresClientCredentialsSessionRepository(t *testing.T) {
 	require.NotNil(t, loaded)
 	assert.Equal(t, "read write", loaded.TokenClaims().Scope)
 	assert.Equal(t, id.String(), loaded.ToPrimitives().ID)
+	assert.Empty(t, loaded.ToPrimitives().UserId)
 
 	missing, err := repo.FindById(ctx, ids.NewSessionId())
 	require.NoError(t, err)

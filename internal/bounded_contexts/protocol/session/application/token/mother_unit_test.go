@@ -54,7 +54,7 @@ type mockAccessTokenGenerator struct {
 	err   error
 }
 
-func (m *mockAccessTokenGenerator) GenerateAccessToken(_ context.Context, _ *session.BaseSession, _ *session.UserIdentityProjection) (string, error) {
+func (m *mockAccessTokenGenerator) GenerateAccessToken(_ context.Context, _ session.TokenClaims) (string, error) {
 	return m.token, m.err
 }
 
@@ -63,7 +63,7 @@ type mockIDTokenGenerator struct {
 	err   error
 }
 
-func (m *mockIDTokenGenerator) GenerateIDToken(_ context.Context, _ *session.BaseSession, _ *session.UserIdentityProjection) (string, error) {
+func (m *mockIDTokenGenerator) GenerateIDToken(_ context.Context, _ session.TokenClaims) (string, error) {
 	return m.token, m.err
 }
 
@@ -100,7 +100,7 @@ func newAuthCodeClientMother(clientID string) *session.Client {
 
 func newCCClientMother(clientID string) *session.Client {
 	return session.NewClient(
-		clientID, "CC Client", uuid.New().String(),
+		clientID, "CC Client", "",
 		[]string{"client_credentials"},
 		nil,
 		[]*session.Scope{session.NewScope("scope-1", "openid", "pr-001", "PR")},

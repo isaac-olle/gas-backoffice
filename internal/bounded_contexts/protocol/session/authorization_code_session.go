@@ -385,10 +385,15 @@ func (s *AuthorizationCodeSession) MarkPersisted(version int64) {
 }
 
 func (s *AuthorizationCodeSession) TokenClaims() TokenClaims {
+	identityClaims := s.identity.Claims()
 	return TokenClaims{
 		Scope:               s.scope.String(),
 		ClientID:            s.clientID.String(),
-		UserID:              s.clientOwnerUserId,
+		Subject:             identityClaims.Sub,
+		GrantType:           s.grantType.String(),
+		IdpID:               s.identity.IdpId().String(),
+		Email:               identityClaims.Email,
+		Picture:             identityClaims.Picture,
 		ProtectedResourceId: s.protectedResourceId,
 	}
 }

@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -14,7 +16,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/test/integrationtest"
 )
 
-func TestPostgresSubscriptionRepositorySaveUsesAmbientTransaction(t *testing.T) {
+func TestIntegrationPostgresSubscriptionRepositorySaveUsesAmbientTransaction(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
@@ -66,7 +68,7 @@ func TestPostgresSubscriptionRepositorySaveUsesAmbientTransaction(t *testing.T) 
 	}
 }
 
-func TestPostgresSubscriptionRepositoryList(t *testing.T) {
+func TestIntegrationPostgresSubscriptionRepositoryList(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()

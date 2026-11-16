@@ -15,6 +15,8 @@ func NewOAuth2TokenErrorPresenter() *OAuth2TokenErrorPresenter {
 }
 
 func (p *OAuth2TokenErrorPresenter) Present(c *gin.Context, err *app_errors2.AppError) {
+	c.Header("Cache-Control", "no-store")
+	c.Header("Pragma", "no-cache")
 	oauthCode, status := toOAuth2TokenError(err)
 	body := gin.H{
 		"error":             oauthCode,

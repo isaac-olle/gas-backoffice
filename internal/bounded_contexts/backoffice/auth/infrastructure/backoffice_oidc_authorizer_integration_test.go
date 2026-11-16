@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -45,7 +47,7 @@ func newAuthorizer(endpoint string, encryptErr error) *infrastructure.OidcAuthor
 	return infrastructure.NewOidcAuthorizer(builder, endpoint, "backoffice-client", "https://app.example/callback")
 }
 
-func TestOidcAuthorizerConnect(t *testing.T) {
+func TestIntegrationOidcAuthorizerConnect(t *testing.T) {
 	tests := []struct {
 		name        string
 		status      int

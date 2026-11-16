@@ -1,25 +1,26 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure"
 )
 
-func TestBusIDTokenGenerator_GenerateIDToken(t *testing.T) {
+func TestIntegrationBusIDTokenGenerator_GenerateIDToken(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns error when authenticated user not resolved", func(t *testing.T) {
+	t.Run("returns query bus errors", func(t *testing.T) {
 		t.Parallel()
-		gen := infrastructure.NewBusIDTokenGenerator(&mockQueryBus{})
+		gen := infrastructure.NewBusIDTokenGenerator(&mockQueryBus{err: assert.AnError})
 
-		_, err := gen.GenerateIDToken(context.Background(), newResolvedBaseSession(t), session.NewUserIdentityProjection("", ""))
+		claims := newResolvedTokenClaims(t)
+		_, err := gen.GenerateIDToken(context.Background(), claims)
 
 		require.Error(t, err)
 	})
@@ -29,7 +30,7 @@ func TestBusIDTokenGenerator_GenerateIDToken(t *testing.T) {
 		bus := &mockQueryBus{result: "signed-id-token"}
 		gen := infrastructure.NewBusIDTokenGenerator(bus)
 
-		token, err := gen.GenerateIDToken(context.Background(), newResolvedBaseSession(t), session.NewUserIdentityProjection(uuid.New().String(), ""))
+		token, err := gen.GenerateIDToken(context.Background(), newResolvedTokenClaims(t))
 
 		require.NoError(t, err)
 		assert.Equal(t, "signed-id-token", token)

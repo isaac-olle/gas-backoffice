@@ -36,6 +36,8 @@ func TestOAuth2TokenErrorPresenterVersionConflict(t *testing.T) {
 	ctx, _ := gin.CreateTestContext(recorder)
 	NewOAuth2TokenErrorPresenter().Present(ctx, app_errors.ConflictError("SESSION_VERSION_CONFLICT"))
 	require.Equal(t, http.StatusConflict, recorder.Code)
+	require.Equal(t, "no-store", recorder.Header().Get("Cache-Control"))
+	require.Equal(t, "no-cache", recorder.Header().Get("Pragma"))
 	var body map[string]any
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 	require.Equal(t, "invalid_grant", body["error"])

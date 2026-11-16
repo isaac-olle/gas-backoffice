@@ -29,7 +29,7 @@ type authorizationCodeRequest struct {
 }
 
 type clientCredentialsRequest struct {
-	Scope string `form:"scope" binding:"required"`
+	Scope string `form:"scope"`
 }
 
 type TokenHandler struct {
@@ -74,6 +74,8 @@ func (h *TokenHandler) Execute(c *gin.Context) (any, error) {
 }
 
 func (h *TokenHandler) Success(c *gin.Context, result any) error {
+	c.Header("Cache-Control", "no-store")
+	c.Header("Pragma", "no-cache")
 	resp := result.(*session.TokenResponse)
 	response := gin.H{
 		"access_token": resp.AccessToken,

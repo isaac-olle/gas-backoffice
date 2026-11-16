@@ -1,4 +1,4 @@
-.PHONY: env up down migrate seed local-token dev-token run build test lint coverage
+.PHONY: env up down migrate seed local-token dev-token run build test integration-test integration-test-up integration-test-down lint coverage
 
 env:
 	@test -n "$(ENV)" || (echo 'Usage: make env ENV=dev' >&2; exit 1)
@@ -27,6 +27,16 @@ build:
 
 test:
 	go test ./...
+
+integration-test-up:
+	docker compose -f test/integrationtest/docker-compose.yml up -d --wait --wait-timeout 90
+
+integration-test: integration-test-up
+	MIGRATIONS_DSN='postgresql://gas_admin:integration-admin@127.0.0.1:55432/gas_backoffice?sslmode=disable' RUN_MIGRATIONS=true go run ./scripts/migrate
+	TEST_POSTGRES_DSN='postgresql://gas-backoffice-user:integration-app@127.0.0.1:55432/gas_backoffice?sslmode=disable' go test -tags=integration -run '^TestIntegration' -count=1 -timeout=5m ./... ./internal/bounded_contexts/security/_shared/client_projection/infrastructure ./internal/bounded_contexts/protocol/_shared/infrastructure
+
+integration-test-down:
+	docker compose -f test/integrationtest/docker-compose.yml down --volumes --remove-orphans
 
 coverage:
 	go test -coverprofile=coverage.out -covermode=atomic ./...

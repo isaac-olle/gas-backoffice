@@ -3,6 +3,7 @@ package flows
 import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
+	"strings"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
@@ -51,6 +52,12 @@ func (h *ClientCredentialsGrantHandler) Execute(ctx context.Context, req token.R
 			WithDescription("unsupported grant_type: " + ClientCredentialsGrantType)
 	}
 
+	// GAS requires explicitly requested scopes; it grants no implicit defaults.
+	if len(strings.Fields(req.Scope)) == 0 {
+		return nil, app_errors.BadRequestError(session.ErrInvalidScope).
+			WithDescription("at least one explicit scope is required for client_credentials")
+	}
+
 	sessionID := ids.NewSessionId()
 	var ccSess *session.ClientCredentialsSession
 
@@ -65,7 +72,7 @@ func (h *ClientCredentialsGrantHandler) Execute(ctx context.Context, req token.R
 			return app_errors.AddTrace(err)
 		}
 
-		ccSess, err = session.NewClientCredentialsSession(sessionID, client.ClientID, client.UserId, req.Scope, protectedResourceId)
+		ccSess, err = session.NewClientCredentialsSession(sessionID, client.ClientID, req.Scope, protectedResourceId)
 		if err != nil {
 			return app_errors.AddTrace(err)
 		}
@@ -81,6 +88,5 @@ func (h *ClientCredentialsGrantHandler) Execute(ctx context.Context, req token.R
 		return nil, app_errors.AddTrace(err)
 	}
 
-	identity := session.NewUserIdentityProjection(ccSess.ClientID().String(), "")
-	return h.tokenGenerator.Generate(ctx, ccSess, identity)
+	return h.tokenGenerator.Generate(ctx, ccSess)
 }

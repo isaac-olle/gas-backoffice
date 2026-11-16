@@ -11,12 +11,12 @@ import (
 )
 
 // Postgres returns a connection to a database migrated with deploy/golang-migrate.
-// Integration tests are skipped unless TEST_POSTGRES_DSN points to a disposable test database.
+// TEST_POSTGRES_DSN must point to a migrated, disposable test database.
 func Postgres(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	dsn := os.Getenv("TEST_POSTGRES_DSN")
 	if dsn == "" {
-		t.Skip("set TEST_POSTGRES_DSN to a migrated, disposable PostgreSQL test database")
+		t.Fatal("set TEST_POSTGRES_DSN to a migrated, disposable PostgreSQL test database")
 	}
 
 	pool, err := pgxpool.New(context.Background(), dsn)

@@ -80,9 +80,9 @@ type ClientCredentialsSessionRepository interface {
 }
 
 type AccessTokenGenerator interface {
-	GenerateAccessToken(ctx context.Context, session *BaseSession, identity *UserIdentityProjection) (string, error)
+	GenerateAccessToken(ctx context.Context, claims TokenClaims) (string, error)
 }
 
 type IDTokenGenerator interface {
-	GenerateIDToken(ctx context.Context, session *BaseSession, identity *UserIdentityProjection) (string, error)
+	GenerateIDToken(ctx context.Context, claims TokenClaims) (string, error)
 }

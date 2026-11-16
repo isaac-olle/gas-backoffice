@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -17,7 +19,7 @@ import (
 
 // Verify that records written by the existing audit subscriber's repository
 // can be read through the backoffice projection, including nullable authors.
-func TestPostgresEventLogRepository(t *testing.T) {
+func TestIntegrationPostgresEventLogRepository(t *testing.T) {
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
 	writer := eventinfra.NewPostgresAuditRepository(pool)

@@ -19,15 +19,15 @@ func NewBusAccessTokenGenerator(queryBus query.Bus) *BusAccessTokenGenerator {
 
 func (g *BusAccessTokenGenerator) GenerateAccessToken(
 	ctx context.Context,
-	sess *session.BaseSession,
-	identity *session.UserIdentityProjection,
+	claims session.TokenClaims,
 ) (string, error) {
-	if identity.Subject == "" {
-		return "", fmt.Errorf("cannot generate token: authenticated user not resolved")
-	}
-	claims := sess.ToPrimitives()
-	qry := generateJwtByPrId.NewQuery(claims.ProtectedResourceId, claims.ClientID, session.AccessTokenTTL).
+	qry := generateJwtByPrId.NewQuery(claims.ProtectedResourceId, claims.Subject, session.AccessTokenTTL).
+		WithAudience(claims.ProtectedResourceId).
+		WithExtraClaim("client_id", claims.ClientID).
 		WithExtraClaim("scope", claims.Scope)
+	if claims.IdpID != "" {
+		qry.WithExtraClaim("idp_id", claims.IdpID)
+	}
 	result, err := g.queryBus.Dispatch(ctx, qry)
 	if err != nil {
 		return "", err

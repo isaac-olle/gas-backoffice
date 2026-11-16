@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -31,7 +33,7 @@ WQIDAQAB
 -----END PUBLIC KEY-----
 `
 
-func TestPostgresClientAssertionKeyRepository(t *testing.T) {
+func TestIntegrationPostgresClientAssertionKeyRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
@@ -64,7 +66,7 @@ func TestPostgresClientAssertionKeyRepository(t *testing.T) {
 	assert.Nil(t, missing)
 }
 
-func TestJwtAssertionVerifierWithPostgresKeyRepository(t *testing.T) {
+func TestIntegrationJwtAssertionVerifierWithPostgresKeyRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()

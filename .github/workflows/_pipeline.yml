@@ -22,7 +22,7 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Unit tests
     runs-on: ubuntu-latest
 
     steps:
@@ -42,6 +42,42 @@ jobs:
           name: coverage
           path: coverage.out
 
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    env:
+      MIGRATIONS_DSN: postgresql://gas_admin:integration-admin@127.0.0.1:55432/gas_backoffice?sslmode=disable
+      TEST_POSTGRES_DSN: postgresql://gas-backoffice-user:integration-app@127.0.0.1:55432/gas_backoffice?sslmode=disable
+      RUN_MIGRATIONS: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Start integration PostgreSQL
+        run: docker compose -f test/integrationtest/docker-compose.yml up -d --wait --wait-timeout 90
+
+      - name: Apply database migrations
+        run: go run ./scripts/migrate
+
+      - name: Run integration tests
+        run: >-
+          go test -tags=integration -run '^TestIntegration' -count=1 -timeout=5m
+          ./... ./internal/bounded_contexts/security/_shared/client_projection/infrastructure
+          ./internal/bounded_contexts/protocol/_shared/infrastructure
+
+      - name: Show PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f test/integrationtest/docker-compose.yml logs postgres
+
+      - name: Stop integration PostgreSQL
+        if: always()
+        run: docker compose -f test/integrationtest/docker-compose.yml down --volumes --remove-orphans
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -57,11 +93,12 @@ jobs:
       - uses: golangci/golangci-lint-action@v7
         with:
           version: latest
+          args: --build-tags=integration
 
   docker:
     name: Docker
     runs-on: ubuntu-latest
-    needs: [test, lint]
+    needs: [test, integration, lint]
     if: github.event_name != 'pull_request'
 
     steps:

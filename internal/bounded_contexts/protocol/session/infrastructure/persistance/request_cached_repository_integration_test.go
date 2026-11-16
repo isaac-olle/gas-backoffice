@@ -1,3 +1,5 @@
+//go:build integration
+
 package persistance_test
 
 import (
@@ -56,7 +58,7 @@ func aSession(t *testing.T) *session.AuthorizationCodeSession {
 	return sess
 }
 
-func TestRequestCachedSessionRepository_FindByCode(t *testing.T) {
+func TestIntegrationRequestCachedSessionRepository_FindByCode(t *testing.T) {
 	t.Parallel()
 
 	t.Run("hits the inner repository only once per cached context", func(t *testing.T) {

@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -38,7 +40,7 @@ func aPayload() session.IdpStatePayload {
 	}
 }
 
-func TestIdpStateCodec_RoundTrip(t *testing.T) {
+func TestIntegrationIdpStateCodec_RoundTrip(t *testing.T) {
 	t.Parallel()
 
 	codec := infrastructure.NewIdpStateCodec(10*time.Minute, newTestEncrypter(t))
@@ -59,7 +61,7 @@ func TestIdpStateCodec_RoundTrip(t *testing.T) {
 	assert.Equal(t, "google", decoded.IdpReferenceName)
 }
 
-func TestIdpStateCodec_RejectsExpired(t *testing.T) {
+func TestIntegrationIdpStateCodec_RejectsExpired(t *testing.T) {
 	t.Parallel()
 
 	codec := infrastructure.NewIdpStateCodec(-1*time.Minute, newTestEncrypter(t))
@@ -71,7 +73,7 @@ func TestIdpStateCodec_RejectsExpired(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestIdpStateCodec_RejectsTamperedState(t *testing.T) {
+func TestIntegrationIdpStateCodec_RejectsTamperedState(t *testing.T) {
 	t.Parallel()
 
 	codec := infrastructure.NewIdpStateCodec(10*time.Minute, newTestEncrypter(t))
@@ -93,7 +95,7 @@ func TestIdpStateCodec_RejectsTamperedState(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestIdpStateCodec_RejectsGarbage(t *testing.T) {
+func TestIntegrationIdpStateCodec_RejectsGarbage(t *testing.T) {
 	t.Parallel()
 
 	codec := infrastructure.NewIdpStateCodec(10*time.Minute, newTestEncrypter(t))

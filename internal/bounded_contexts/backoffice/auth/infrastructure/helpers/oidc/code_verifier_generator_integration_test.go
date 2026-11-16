@@ -1,3 +1,5 @@
+//go:build integration
+
 package oidc_test
 
 import (
@@ -9,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGenerateCodeVerifier(t *testing.T) {
+func TestIntegrationGenerateCodeVerifier(t *testing.T) {
 	t.Parallel()
 
 	t.Run("produces a verifier the value object accepts", func(t *testing.T) {

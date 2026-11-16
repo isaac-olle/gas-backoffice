@@ -19,9 +19,9 @@ func NewClientCredentialsTokenResponseGenerator(
 func (g *ClientCredentialsTokenResponseGenerator) Generate(
 	ctx context.Context,
 	sess *session.ClientCredentialsSession,
-	identity *session.UserIdentityProjection,
 ) (*session.TokenResponse, error) {
-	accessToken, err := g.accessTokenGenerator.GenerateAccessToken(ctx, sess.BaseSession, identity)
+	claims := sess.TokenClaims()
+	accessToken, err := g.accessTokenGenerator.GenerateAccessToken(ctx, claims)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +30,6 @@ func (g *ClientCredentialsTokenResponseGenerator) Generate(
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
 		ExpiresIn:   int(session.AccessTokenTTL.Seconds()),
-		Scope:       sess.TokenClaims().Scope,
+		Scope:       claims.Scope,
 	}, nil
 }

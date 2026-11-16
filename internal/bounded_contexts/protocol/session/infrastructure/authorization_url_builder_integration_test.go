@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -20,7 +22,7 @@ func aGoogleIDP() *protocolShared.IdentityProviderConfig {
 	)
 }
 
-func TestBuildAuthorizationURL(t *testing.T) {
+func TestIntegrationBuildAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	client := infrastructure.NewAuthorizationURLBuilder()
@@ -41,7 +43,7 @@ func TestBuildAuthorizationURL(t *testing.T) {
 	assert.Equal(t, "consent select_account", q.Get("prompt"))
 }
 
-func TestBuildAuthorizationURL_MisconfiguredIDP(t *testing.T) {
+func TestIntegrationBuildAuthorizationURL_MisconfiguredIDP(t *testing.T) {
 	t.Parallel()
 
 	idp := aGoogleIDP()

@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -13,7 +15,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-func TestJwtTokenAdapters(t *testing.T) {
+func TestIntegrationJwtTokenAdapters(t *testing.T) {
 	t.Parallel()
 	privateKey, publicKey, err := infrastructure.NewPEMKeyGenerator().Generate("ES256")
 	require.NoError(t, err)

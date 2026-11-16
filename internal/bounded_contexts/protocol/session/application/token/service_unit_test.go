@@ -199,6 +199,22 @@ func TestClientCredentialsGrantHandler(t *testing.T) {
 	}
 }
 
+func TestClientCredentialsRequiresExplicitScope(t *testing.T) {
+	for _, scope := range []string{"", " ", " \t\n "} {
+		t.Run(scope, func(t *testing.T) {
+			repository := &mockCCRepo{}
+			h := newClientCredentialsGrantHandler(&mockClientRepo{}, repository, &mockAccessTokenGenerator{})
+			response, err := h.Execute(context.Background(), token.Request{Scope: scope})
+			require.Nil(t, response)
+			var appError *app_errors.AppError
+			require.ErrorAs(t, err, &appError)
+			assert.Equal(t, session.ErrInvalidScope, appError.Code)
+			assert.Equal(t, app_errors.BadRequestErrorType, appError.Type)
+			assert.Nil(t, repository.saved)
+		})
+	}
+}
+
 func TestService(t *testing.T) {
 	t.Parallel()
 

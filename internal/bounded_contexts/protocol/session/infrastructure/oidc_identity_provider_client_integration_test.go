@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -23,7 +25,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/crypto/key_factory"
 )
 
-func TestOidcIdentityProviderClientExchangeCode(t *testing.T) {
+func TestIntegrationOidcIdentityProviderClientExchangeCode(t *testing.T) {
 	t.Parallel()
 	privatePEM, publicPEM, err := keyPairInfrastructure.NewPEMKeyGenerator().Generate("RS256")
 	require.NoError(t, err)

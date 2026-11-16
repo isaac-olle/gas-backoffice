@@ -18,7 +18,6 @@ func makeClientCredentialsSession(t *testing.T) *session.ClientCredentialsSessio
 	sess, err := session.NewClientCredentialsSession(
 		ids.NewSessionId(),
 		uuid.New().String(),
-		uuid.New().String(),
 		"read",
 		uuid.New().String(),
 	)
@@ -28,8 +27,6 @@ func makeClientCredentialsSession(t *testing.T) *session.ClientCredentialsSessio
 
 func TestClientCredentialsTokenResponseGenerator_Generate(t *testing.T) {
 	t.Parallel()
-
-	identity := session.NewUserIdentityProjection("client-subject", "")
 
 	tests := []struct {
 		name        string
@@ -52,11 +49,14 @@ func TestClientCredentialsTokenResponseGenerator_Generate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			sess := makeClientCredentialsSession(t)
+			accessGenerator := &stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr}
 			gen := domain_services.NewClientCredentialsTokenResponseGenerator(
-				&stubAccessTokenGenerator{token: tt.accessToken, err: tt.accessErr},
+				accessGenerator,
 			)
 
-			resp, err := gen.Generate(context.Background(), sess, identity)
+			resp, err := gen.Generate(context.Background(), sess)
+			assert.Equal(t, sess.ClientID().String(), accessGenerator.claims.Subject)
+			assert.Empty(t, accessGenerator.claims.IdpID)
 
 			if tt.wantErr {
 				require.Error(t, err)

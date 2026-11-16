@@ -1,3 +1,5 @@
+//go:build integration
+
 package infrastructure_test
 
 import (
@@ -18,7 +20,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/test/integrationtest"
 )
 
-func TestPostgresSessionRepository(t *testing.T) {
+func TestIntegrationPostgresSessionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
@@ -40,7 +42,7 @@ func TestPostgresSessionRepository(t *testing.T) {
 	assert.False(t, active)
 }
 
-func TestPostgresIdpConfigRepository(t *testing.T) {
+func TestIntegrationPostgresIdpConfigRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
@@ -65,7 +67,7 @@ func TestPostgresIdpConfigRepository(t *testing.T) {
 	assert.Nil(t, config)
 }
 
-func TestPostgresUserProjectionRepository(t *testing.T) {
+func TestIntegrationPostgresUserProjectionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()

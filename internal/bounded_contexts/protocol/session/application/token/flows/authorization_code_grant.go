@@ -89,8 +89,5 @@ func (h *AuthorizationCodeGrantHandler) Execute(ctx context.Context, req token.R
 		return nil, app_errors.AddTrace(err)
 	}
 
-	claims := sess.Identity().Claims()
-	identity := session.NewUserIdentityProjection(claims.Sub, claims.Email, claims.Picture)
-
-	return h.tokenGenerator.Generate(ctx, sess, identity)
+	return h.tokenGenerator.Generate(ctx, sess)
 }
