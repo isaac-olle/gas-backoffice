@@ -2,6 +2,7 @@ package session
 
 import (
 	"strings"
+	"time"
 
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/aggregate"
@@ -13,6 +14,8 @@ import (
 )
 
 type AuthorizationCodeSession struct {
+	expiresAt  time.Time
+	occVersion int64
 	*BaseSession
 	sessionID         ids.SessionId
 	redirectURI       sessionvos.RedirectURI
@@ -39,6 +42,7 @@ func newAuthorizationCodeSession(
 	identity sessionvos.ExternalOidcUserIdentity,
 ) *AuthorizationCodeSession {
 	sess := &AuthorizationCodeSession{
+		expiresAt:         time.Now().UTC().Add(15 * time.Minute),
 		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, protectedResourceId),
 		sessionID:         sessionID,
 		redirectURI:       redirectURI,
@@ -230,6 +234,8 @@ func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitive
 	}
 
 	return &AuthorizationCodeSession{
+		expiresAt:         p.ExpiresAt,
+		occVersion:        p.OccVersion,
 		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, p.ProtectedResourceId),
 		sessionID:         sessionID,
 		redirectURI:       redirectURI,
@@ -277,6 +283,8 @@ func (s *AuthorizationCodeSession) ToPrimitives() *AuthorizationCodeSessionPrimi
 	}
 
 	return &AuthorizationCodeSessionPrimitives{
+		ExpiresAt:             s.expiresAt,
+		OccVersion:            s.occVersion,
 		BaseSessionPrimitives: s.BaseSession.ToPrimitives(),
 		SessionID:             s.sessionID.String(),
 		ClientOwnerUserId:     s.clientOwnerUserId,
@@ -309,6 +317,10 @@ func (s *AuthorizationCodeSession) Identity() sessionvos.ExternalOidcUserIdentit
 }
 
 func (s *AuthorizationCodeSession) CheckExchangeParams(clientID, redirectURI string) error {
+	if !time.Now().Before(s.expiresAt) {
+		return app_errors.BadRequestError(ErrAuthorizationCodeExpired).
+			WithDescription("authorization code has expired")
+	}
 	if bool(s.consumed) {
 		return app_errors.BadRequestError(ErrSessionConsumed).
 			WithDescription("authorization code has already been used")
@@ -365,6 +377,11 @@ func (s *AuthorizationCodeSession) Consume() {
 
 func (s *AuthorizationCodeSession) IsConsumed() bool {
 	return bool(s.consumed)
+}
+
+// MarkPersisted tracks the version last written by the repository.
+func (s *AuthorizationCodeSession) MarkPersisted(version int64) {
+	s.occVersion = version
 }
 
 func (s *AuthorizationCodeSession) TokenClaims() TokenClaims {

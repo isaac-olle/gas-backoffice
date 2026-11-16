@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token/flows"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 )
 
 func newAuthorizationCodeGrantHandler(sessionRepo *mockSessionRepo, clientRepo *mockClientRepo, accessGen *mockAccessTokenGenerator, idGen *mockIDTokenGenerator) *flows.AuthorizationCodeGrantHandler {
@@ -96,6 +98,47 @@ func TestAuthorizationCodeGrantHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthorizationCodeGrantExpired(t *testing.T) {
+	clientID := uuid.NewString()
+	p := newAuthSessionMother(t, clientID, "https://example.com/cb", "authcode").ToPrimitives()
+	p.ExpiresAt = time.Now().Add(-time.Minute)
+	sess, err := session.AuthorizationCodeSessionFromPrimitives(p)
+	require.NoError(t, err)
+	repo := &mockSessionRepo{byCode: sess}
+	h := newAuthorizationCodeGrantHandler(repo,
+		&mockClientRepo{client: newAuthCodeClientMother(clientID)},
+		&mockAccessTokenGenerator{token: "must-not-be-issued"},
+		&mockIDTokenGenerator{token: "must-not-be-issued"})
+	response, err := h.Execute(context.Background(), token.Request{
+		ClientID: clientID, Code: "authcode", RedirectURI: "https://example.com/cb",
+	})
+	require.Nil(t, response)
+	var appError *app_errors.AppError
+	require.ErrorAs(t, err, &appError)
+	assert.Equal(t, session.ErrAuthorizationCodeExpired, appError.Code)
+	assert.Nil(t, repo.saved)
+	assert.False(t, sess.IsConsumed())
+}
+
+func TestAuthorizationCodeGrantVersionConflict(t *testing.T) {
+	clientID := uuid.NewString()
+	sess := newAuthSessionMother(t, clientID, "https://example.com/cb", "authcode")
+	h := newAuthorizationCodeGrantHandler(
+		&mockSessionRepo{byCode: sess, saveErr: persistance.ErrConcurrentModification},
+		&mockClientRepo{client: newAuthCodeClientMother(clientID)},
+		&mockAccessTokenGenerator{token: "must-not-be-issued"},
+		&mockIDTokenGenerator{token: "must-not-be-issued"},
+	)
+	response, err := h.Execute(context.Background(), token.Request{
+		ClientID: clientID, Code: "authcode", RedirectURI: "https://example.com/cb",
+	})
+	require.Nil(t, response)
+	var appError *app_errors.AppError
+	require.ErrorAs(t, err, &appError)
+	assert.Equal(t, app_errors.ConflictErrorType, appError.Type)
+	assert.Equal(t, session.ErrSessionVersionConflict, appError.Code)
 }
 
 func TestClientCredentialsGrantHandler(t *testing.T) {

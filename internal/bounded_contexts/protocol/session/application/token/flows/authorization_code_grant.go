@@ -2,6 +2,7 @@ package flows
 
 import (
 	"context"
+	"errors"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/application/token"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
@@ -74,6 +75,10 @@ func (h *AuthorizationCodeGrantHandler) Execute(ctx context.Context, req token.R
 		sess.Consume()
 
 		if err = h.sessionRepo.Save(ctx, sess); err != nil {
+			if errors.Is(err, persistance.ErrConcurrentModification) {
+				return app_errors.ConflictError(session.ErrSessionVersionConflict).
+					WithDescription("authorization code session changed during exchange")
+			}
 			return app_errors.InternalError(session.ErrCannotSaveSession).
 				WithDescription("failed to consume session").WithCause(err, false)
 		}

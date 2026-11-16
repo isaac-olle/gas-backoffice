@@ -30,3 +30,13 @@ func TestOAuth2TokenErrorPresenterRedirectDetails(t *testing.T) {
 	require.Equal(t, "invalid_request", body["error"])
 	require.Equal(t, details, body["details"])
 }
+
+func TestOAuth2TokenErrorPresenterVersionConflict(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	NewOAuth2TokenErrorPresenter().Present(ctx, app_errors.ConflictError("SESSION_VERSION_CONFLICT"))
+	require.Equal(t, http.StatusConflict, recorder.Code)
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	require.Equal(t, "invalid_grant", body["error"])
+}

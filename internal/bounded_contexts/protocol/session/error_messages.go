@@ -5,6 +5,8 @@ import (
 )
 
 var (
+	ErrAuthorizationCodeExpired     app_errors.ErrorCode = "AUTHORIZATION_CODE_EXPIRED"
+	ErrSessionVersionConflict       app_errors.ErrorCode = "SESSION_VERSION_CONFLICT"
 	ErrInvalidSessionParameters     app_errors.ErrorCode = "INVALID_SESSION_PARAMETERS"
 	ErrCannotSaveSession            app_errors.ErrorCode = "ERROR_CANNOT_SAVE_SESSION"
 	ErrSessionNotFound              app_errors.ErrorCode = "SESSION_NOT_FOUND"

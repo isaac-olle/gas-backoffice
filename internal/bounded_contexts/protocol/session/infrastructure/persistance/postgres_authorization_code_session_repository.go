@@ -28,6 +28,21 @@ func NewPostgresAuthorizationCodeSessionRepository(pool *pgxpool.Pool, encrypter
 
 func (r *PostgresAuthorizationCodeSessionRepository) Save(ctx context.Context, sess *session.AuthorizationCodeSession) error {
 	p := sess.ToPrimitives()
+	if p.OccVersion > 0 {
+		result, err := r.postgres.Exec(ctx, `UPDATE protocol.authorization_code_sessions
+			SET session_state = $2, consumed = $3, code = $4, occ_version = occ_version + 1
+			WHERE session_id = $1 AND occ_version = $5 AND consumed = false
+			AND deleted_at IS NULL AND expires_at > NOW()`,
+			p.SessionID, p.SessionState, p.Consumed, p.Code, p.OccVersion)
+		if err != nil {
+			return fmt.Errorf("update session: %w", err)
+		}
+		if result.RowsAffected() != 1 {
+			return persistance.ErrConcurrentModification
+		}
+		sess.MarkPersisted(p.OccVersion + 1)
+		return nil
+	}
 
 	pkceJSON, err := json.Marshal(p.Pkce)
 	if err != nil {
@@ -69,20 +84,22 @@ func (r *PostgresAuthorizationCodeSessionRepository) Save(ctx context.Context, s
 			response_types, code, pkce, session_state, grant_type, consumed,
 			protected_resource_id, idp_id, id_token, access_token, refresh_token,
 			claims, identity_expires_at, expires_at
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19, NOW() + interval '15 minutes')
-		ON CONFLICT (session_id) DO UPDATE SET
-			session_state = EXCLUDED.session_state,
-			consumed      = EXCLUDED.consumed,
-			code          = EXCLUDED.code
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19,$20)
+		ON CONFLICT (session_id) DO NOTHING
 	`
-	if err = r.postgres.Save(ctx, query,
+	result, err := r.postgres.SaveWithResult(ctx, query,
 		p.SessionID, p.ClientID, p.ClientOwnerUserId, p.RedirectURI, p.Scope, p.State,
 		responseTypesJSON, p.Code, pkceJSON, p.SessionState, p.GrantType, p.Consumed,
 		p.ProtectedResourceId, p.Identity.IdpId, encryptedIDToken, encryptedAccessToken, encryptedRefreshToken,
-		claimsJSON, p.Identity.ExpiresAt,
-	); err != nil {
+		claimsJSON, p.Identity.ExpiresAt, p.ExpiresAt,
+	)
+	if err != nil {
 		return fmt.Errorf("exec insert session: %w", err)
 	}
+	if result.RowsAffected() != 1 {
+		return persistance.ErrConcurrentModification
+	}
+	sess.MarkPersisted(1)
 	return nil
 }
 
@@ -90,7 +107,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) FindById(ctx context.Contex
 	query := `
 		SELECT session_id, client_id, client_owner_user_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, grant_type, consumed, protected_resource_id,
-		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at
+		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at, occ_version, expires_at
 		FROM protocol.authorization_code_sessions WHERE session_id = $1 AND deleted_at IS NULL
 	`
 	return r.postgres.Find(ctx, query, r.scanAuthorizationCodeSession, id.String())
@@ -100,8 +117,9 @@ func (r *PostgresAuthorizationCodeSessionRepository) FindByCode(ctx context.Cont
 	query := `
 		SELECT session_id, client_id, client_owner_user_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, grant_type, consumed, protected_resource_id,
-		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at
-		FROM protocol.authorization_code_sessions WHERE code = $1 AND deleted_at IS NULL
+		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at, occ_version, expires_at
+		FROM protocol.authorization_code_sessions
+		WHERE code = $1 AND deleted_at IS NULL
 	`
 	return r.postgres.Find(ctx, query, r.scanAuthorizationCodeSession, code)
 }
@@ -133,7 +151,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) scanAuthorizationCodeSessio
 		&responseTypesJSON, &p.Code, &pkceJSON, &p.SessionState, &p.GrantType, &p.Consumed,
 		&p.ProtectedResourceId,
 		&p.Identity.IdpId, &encryptedIDToken, &encryptedAccessToken, &encryptedRefreshToken,
-		&claimsJSON, &p.Identity.ExpiresAt,
+		&claimsJSON, &p.Identity.ExpiresAt, &p.OccVersion, &p.ExpiresAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

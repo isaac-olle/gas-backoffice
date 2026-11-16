@@ -10,6 +10,8 @@ type BaseSessionPrimitives struct {
 }
 
 type AuthorizationCodeSessionPrimitives struct {
+	ExpiresAt  time.Time
+	OccVersion int64
 	*BaseSessionPrimitives
 	SessionID         string
 	ClientOwnerUserId string

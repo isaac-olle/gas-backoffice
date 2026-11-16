@@ -30,6 +30,8 @@ func (p *OAuth2TokenErrorPresenter) Present(c *gin.Context, err *app_errors2.App
 
 func toOAuth2TokenError(err *app_errors2.AppError) (string, int) {
 	switch err.Type {
+	case app_errors2.ConflictErrorType:
+		return "invalid_grant", http.StatusConflict
 	case app_errors2.UnauthorizedErrorType:
 		return "invalid_client", http.StatusUnauthorized
 	case app_errors2.InternalErrorType:
@@ -40,7 +42,7 @@ func toOAuth2TokenError(err *app_errors2.AppError) (string, int) {
 			return "unsupported_grant_type", http.StatusBadRequest
 		case "INVALID_SCOPE":
 			return "invalid_scope", http.StatusBadRequest
-		case "CODE_NOT_FOUND", "SESSION_ALREADY_CONSUMED", "INVALID_CODE_VERIFIER", "INVALID_CLIENT_SECRET":
+		case "CODE_NOT_FOUND", "SESSION_ALREADY_CONSUMED", "AUTHORIZATION_CODE_EXPIRED", "INVALID_CODE_VERIFIER", "INVALID_CLIENT_SECRET":
 			return "invalid_grant", http.StatusBadRequest
 		default:
 			return "invalid_request", http.StatusBadRequest

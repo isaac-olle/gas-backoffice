@@ -111,6 +111,7 @@ func newCCClientMother(clientID string) *session.Client {
 func newAuthSessionMother(t *testing.T, clientID, redirectURI, code string) *session.AuthorizationCodeSession {
 	t.Helper()
 	sess, err := session.AuthorizationCodeSessionFromPrimitives(&session.AuthorizationCodeSessionPrimitives{
+		ExpiresAt: time.Now().UTC().Add(15 * time.Minute),
 		BaseSessionPrimitives: &session.BaseSessionPrimitives{
 			ClientID:  clientID,
 			Scope:     "openid",
