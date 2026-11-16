@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -41,11 +42,13 @@ func (r *PostgresClientCredentialsSessionRepository) FindById(ctx context.Contex
 	`, id.String())
 
 	p := session.ClientCredentialsSessionPrimitives{BaseSessionPrimitives: &session.BaseSessionPrimitives{}}
-	if err := row.Scan(&p.ID, &p.ClientID, &p.UserId, &p.Scope, &p.IssuedAt, &p.ProtectedResourceId); err != nil {
+	var issuedAt time.Time
+	if err := row.Scan(&p.ID, &p.ClientID, &p.UserId, &p.Scope, &issuedAt, &p.ProtectedResourceId); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("scan client credentials session: %w", err)
 	}
+	p.IssuedAt = issuedAt.UTC().Format(time.RFC3339)
 	return session.ClientCredentialsSessionFromPrimitives(&p)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/criteria"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
@@ -97,7 +96,7 @@ func (r *PostgresScopeRepository) fromRow(row pgx.Row) (*scopes.Scope, error) {
 	var p scopes.ScopePrimitives
 	err := row.Scan(&p.Id, &p.Name, &p.ProtectedResourceId, &p.SubscriptionId, &p.AllowedClientIds, &p.IsSystem, &p.Enabled, &p.Version, &p.AuthorId, &p.AuthorRole)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, app_errors.NotFoundError(scopes.ErrScopeNotFound).WithDescription("scope not found")
+		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error scanning scope: %w", err)

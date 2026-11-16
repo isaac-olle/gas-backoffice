@@ -152,6 +152,7 @@ func TestIntegrationPostgresClientCredentialsSessionRepository(t *testing.T) {
 	require.NotNil(t, loaded)
 	assert.Equal(t, "read write", loaded.TokenClaims().Scope)
 	assert.Equal(t, id.String(), loaded.ToPrimitives().ID)
+	assert.Equal(t, sessionID.ToPrimitives().IssuedAt, loaded.ToPrimitives().IssuedAt)
 	assert.Empty(t, loaded.ToPrimitives().UserId)
 
 	missing, err := repo.FindById(ctx, ids.NewSessionId())

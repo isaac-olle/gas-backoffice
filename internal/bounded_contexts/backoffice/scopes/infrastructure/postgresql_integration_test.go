@@ -49,6 +49,9 @@ func TestIntegrationPostgresScopeRepository(t *testing.T) {
 	matched, err := repo.Matching(ctx, criteria.Criteria{Filters: []criteria.Filter{{Field: "id", Operator: criteria.Equals, Value: id.String()}}})
 	require.NoError(t, err)
 	require.Len(t, matched, 1)
+	missing, err := repo.SearchById(ctx, ids.NewScopeId())
+	require.NoError(t, err)
+	assert.Nil(t, missing)
 
 	require.NoError(t, repo.SoftDelete(ctx, id))
 	deleted, err := repo.SearchById(ctx, id)
