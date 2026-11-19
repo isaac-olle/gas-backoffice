@@ -43,6 +43,8 @@ func TestIntegrationPostgresErrorLogRepository(t *testing.T) {
 	}
 	require.NotNil(t, persisted)
 	assert.Equal(t, log.Code, persisted.Code)
+	assert.Equal(t, log.Cause, persisted.Cause)
+	assert.Equal(t, []any{"frame"}, persisted.StackTrace)
 	assert.Equal(t, log.RequestId, persisted.RequestId)
 	assert.Equal(t, log.AuthorId, persisted.AuthorId)
 	assert.Equal(t, log.AuthorRole, persisted.AuthorRole)

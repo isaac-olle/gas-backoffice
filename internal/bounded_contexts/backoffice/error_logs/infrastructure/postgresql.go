@@ -45,7 +45,7 @@ func (r *PostgresErrorLogRepository) Save(ctx context.Context, errorLog error_lo
 }
 
 func (r *PostgresErrorLogRepository) Latest(ctx context.Context, limit int) ([]error_logs.ErrorLog, error) {
-	query := `SELECT error_id, type, code, description, details, request_id, occurred_at,
+	query := `SELECT error_id, type, code, description, details, cause, stack_trace, request_id, occurred_at,
 		COALESCE(author_id, ''), COALESCE(author_role, '')
 		FROM public.errors
 		ORDER BY occurred_at DESC NULLS LAST
@@ -56,7 +56,7 @@ func (r *PostgresErrorLogRepository) Latest(ctx context.Context, limit int) ([]e
 func (r *PostgresErrorLogRepository) fromRow(row pgx.Row) (error_logs.ErrorLog, error) {
 	var e error_logs.ErrorLog
 	var requestId *string
-	if err := row.Scan(&e.ErrorId, &e.Type, &e.Code, &e.Description, &e.Details, &requestId, &e.OccurredAt,
+	if err := row.Scan(&e.ErrorId, &e.Type, &e.Code, &e.Description, &e.Details, &e.Cause, &e.StackTrace, &requestId, &e.OccurredAt,
 		&e.AuthorId, &e.AuthorRole); err != nil {
 		return error_logs.ErrorLog{}, fmt.Errorf("error scanning error log: %w", err)
 	}
