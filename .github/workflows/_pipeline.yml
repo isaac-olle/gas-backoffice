@@ -170,7 +170,7 @@ jobs:
       - name: Update app spec
         env:
           DO_APP_ID: ${{ vars[format('{0}_DO_APP_ID', inputs.environment)] }}
-          RUN_MIGRATIONS: "true"
+          RUN_MIGRATIONS: ${{ steps.changes.outputs.run_migrations }}
           IMAGE_TAG: sha-${{ github.sha }}
         run: |
           doctl apps spec get $DO_APP_ID > /tmp/spec.yaml
