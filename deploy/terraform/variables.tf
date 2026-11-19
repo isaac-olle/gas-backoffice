@@ -10,7 +10,6 @@ variable "instance_size_slug" { type = string }
 variable "http_port" { type = number }
 variable "repository" { type = string }
 variable "image_tag" { type = string }
-variable "github_repo" { type = string }
 variable "source_branch" {
   type    = string
   default = "main"
