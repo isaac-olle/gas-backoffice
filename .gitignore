@@ -40,3 +40,6 @@ go.work.sum
 # .idea/
 # .vscode/
 scripts/google_idp.env
+scripts/identity-providers/*.env
+test/load/*.local.json
+test/load/results/

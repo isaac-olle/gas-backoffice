@@ -1,4 +1,5 @@
 .PHONY: env up down migrate seed local-token dev-token run build test integration-test integration-test-up integration-test-down lint coverage
+.PHONY: load-test stress-test
 
 env:
 	@test -n "$(ENV)" || (echo 'Usage: make env ENV=dev' >&2; exit 1)
@@ -27,6 +28,12 @@ build:
 
 test:
 	go test ./...
+
+load-test:
+	k6 run test/load/protocol.js
+
+stress-test:
+	k6 run -e PROFILE=stress test/load/protocol.js
 
 integration-test-up:
 	docker compose -f test/integrationtest/docker-compose.yml up -d --wait --wait-timeout 90
