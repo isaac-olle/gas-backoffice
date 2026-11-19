@@ -25,6 +25,7 @@ func RegisterEventBuilders(registry *event.BuilderRegistry) {
 	registry.Register(backoffice.ProtectedResourceCreatedType, backoffice.NewProtectedResourceCreatedBuilder())
 	registry.Register(backoffice.ProtectedResourceDeletedType, backoffice.NewProtectedResourceDeletedBuilder())
 	registry.Register(backoffice.ProtectedResourceNameUpdatedType, backoffice.NewProtectedResourceNameUpdatedBuilder())
+	registry.Register(backoffice.ProtectedResourceURLUpdatedType, backoffice.NewProtectedResourceURLUpdatedBuilder())
 	registry.Register(backoffice.ScopeCreatedType, backoffice.NewScopeCreatedBuilder())
 	registry.Register(backoffice.ScopeDeletedType, backoffice.NewScopeDeletedBuilder())
 	registry.Register(backoffice.ScopeClientAddedType, backoffice.NewScopeClientAddedBuilder())

@@ -39,6 +39,7 @@ import (
 	prList "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/list"
 	prSoftDelete "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/soft_delete"
 	prUpdateName "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/update_name"
+	prUpdateURL "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/application/update_url"
 	prDomainServices "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/domain_services"
 	prInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/protected_resources/infrastructure"
 	scopeEventHandlers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/scopes/application/_event_handlers"
@@ -122,6 +123,7 @@ func RegisterBackoffice(
 	// protected resources
 	cmdBus.Register(prCreate.CommandType, prCreate.NewCommandHandler(prCreate.NewService(prDuplicateChecker, prRepo, evtBus)))
 	cmdBus.Register(prUpdateName.CommandType, prUpdateName.NewCommandHandler(prUpdateName.NewService(prFinder, prDuplicateChecker, prRepo, evtBus, subscriptionAuthorizer)))
+	cmdBus.Register(prUpdateURL.CommandType, prUpdateURL.NewCommandHandler(prUpdateURL.NewService(prFinder, prRepo, evtBus, subscriptionAuthorizer)))
 	cmdBus.Register(prSoftDelete.CommandType, prSoftDelete.NewCommandHandler(prSoftDelete.NewService(prFinder, prRepo, evtBus, subscriptionAuthorizer)))
 	cmdBus.Register(prHardDelete.CommandType, prHardDelete.NewCommandHandler(prHardDelete.NewService(prFinder, prRepo, evtBus, subscriptionAuthorizer)))
 

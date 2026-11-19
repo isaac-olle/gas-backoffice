@@ -77,6 +77,11 @@ func (pr *ProtectedResource) UpdateName(newName vos.ProtectedResourceName) {
 	pr.Record(backoffice.NewProtectedResourceNameUpdated(pr.id.String(), pr.name.String()))
 }
 
+func (pr *ProtectedResource) UpdateURL(newURL vos.ProtectedResourceURL) {
+	pr.url = newURL
+	pr.Record(backoffice.NewProtectedResourceURLUpdated(pr.id.String(), pr.url.String()))
+}
+
 func FromPrimitives(p ProtectedResourcePrimitives) (*ProtectedResource, error) {
 	errArr := app_errors.NewEmptyErrorArray()
 

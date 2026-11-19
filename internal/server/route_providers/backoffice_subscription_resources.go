@@ -76,6 +76,9 @@ func registerSubscriptionResources(g *gin.RouterGroup, p *Backoffice) {
 	pr.PATCH("/name", p.executor.Run(prHandlers.NewUpdateProtectedResourceNameHandler(
 		p.commandExecutor, ids.ProtectedResourceIdFromContext,
 	)))
+	pr.PATCH("/url", p.executor.Run(prHandlers.NewUpdateProtectedResourceURLHandler(
+		p.commandExecutor, ids.ProtectedResourceIdFromContext,
+	)))
 	pr.DELETE("", p.executor.Run(prHandlers.NewSoftDeleteProtectedResourceHandler(
 		p.commandExecutor, ids.ProtectedResourceIdFromContext,
 	)))
