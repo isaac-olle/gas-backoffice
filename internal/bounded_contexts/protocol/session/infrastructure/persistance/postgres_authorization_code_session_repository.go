@@ -80,15 +80,15 @@ func (r *PostgresAuthorizationCodeSessionRepository) Save(ctx context.Context, s
 
 	query := `
 		INSERT INTO protocol.authorization_code_sessions (
-			session_id, client_id, client_owner_user_id, redirect_uri, scope, state,
+			session_id, client_id, redirect_uri, scope, state,
 			response_types, code, pkce, session_state, grant_type, consumed,
 			protected_resource_id, idp_id, id_token, access_token, refresh_token,
 			claims, identity_expires_at, expires_at
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19,$20)
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19)
 		ON CONFLICT (session_id) DO NOTHING
 	`
 	result, err := r.postgres.SaveWithResult(ctx, query,
-		p.SessionID, p.ClientID, p.ClientOwnerUserId, p.RedirectURI, p.Scope, p.State,
+		p.SessionID, p.ClientID, p.RedirectURI, p.Scope, p.State,
 		responseTypesJSON, p.Code, pkceJSON, p.SessionState, p.GrantType, p.Consumed,
 		p.ProtectedResourceId, p.Identity.IdpId, encryptedIDToken, encryptedAccessToken, encryptedRefreshToken,
 		claimsJSON, p.Identity.ExpiresAt, p.ExpiresAt,
@@ -105,7 +105,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) Save(ctx context.Context, s
 
 func (r *PostgresAuthorizationCodeSessionRepository) FindById(ctx context.Context, id ids.SessionId) (*session.AuthorizationCodeSession, error) {
 	query := `
-		SELECT session_id, client_id, client_owner_user_id, redirect_uri, scope, state,
+		SELECT session_id, client_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, grant_type, consumed, protected_resource_id,
 		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at, occ_version, expires_at
 		FROM protocol.authorization_code_sessions WHERE session_id = $1 AND deleted_at IS NULL
@@ -115,7 +115,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) FindById(ctx context.Contex
 
 func (r *PostgresAuthorizationCodeSessionRepository) FindByCode(ctx context.Context, code string) (*session.AuthorizationCodeSession, error) {
 	query := `
-		SELECT session_id, client_id, client_owner_user_id, redirect_uri, scope, state,
+		SELECT session_id, client_id, redirect_uri, scope, state,
 		       response_types, code, pkce, session_state, grant_type, consumed, protected_resource_id,
 		       idp_id, id_token, access_token, refresh_token, claims, identity_expires_at, occ_version, expires_at
 		FROM protocol.authorization_code_sessions
@@ -147,7 +147,7 @@ func (r *PostgresAuthorizationCodeSessionRepository) scanAuthorizationCodeSessio
 	var encryptedRefreshToken *string
 
 	err := row.Scan(
-		&p.SessionID, &p.ClientID, &p.ClientOwnerUserId, &p.RedirectURI, &p.Scope, &p.State,
+		&p.SessionID, &p.ClientID, &p.RedirectURI, &p.Scope, &p.State,
 		&responseTypesJSON, &p.Code, &pkceJSON, &p.SessionState, &p.GrantType, &p.Consumed,
 		&p.ProtectedResourceId,
 		&p.Identity.IdpId, &encryptedIDToken, &encryptedAccessToken, &encryptedRefreshToken,

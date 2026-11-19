@@ -13,16 +13,15 @@ type AuthorizationCodeSessionPrimitives struct {
 	ExpiresAt  time.Time
 	OccVersion int64
 	*BaseSessionPrimitives
-	SessionID         string
-	ClientOwnerUserId string
-	RedirectURI       string
-	State             string
-	ResponseTypes     []string
-	Code              string
-	Pkce              *PkcePrimitives
-	SessionState      string
-	Consumed          bool
-	Identity          UserIdentityPrimitives
+	SessionID     string
+	RedirectURI   string
+	State         string
+	ResponseTypes []string
+	Code          string
+	Pkce          *PkcePrimitives
+	SessionState  string
+	Consumed      bool
+	Identity      UserIdentityPrimitives
 }
 
 // UserIdentityPrimitives is the flattened persistence shape of

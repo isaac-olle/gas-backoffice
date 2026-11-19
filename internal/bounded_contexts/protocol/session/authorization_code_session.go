@@ -17,15 +17,14 @@ type AuthorizationCodeSession struct {
 	expiresAt  time.Time
 	occVersion int64
 	*BaseSession
-	sessionID         ids.SessionId
-	redirectURI       sessionvos.RedirectURI
-	state             sessionvos.State
-	responseType      responsetypes.ResponseType
-	pkce              *sessionvos.Pkce
-	sessionState      sessionvos.SessionState
-	consumed          sessionvos.Consumed
-	clientOwnerUserId string
-	identity          sessionvos.ExternalOidcUserIdentity
+	sessionID    ids.SessionId
+	redirectURI  sessionvos.RedirectURI
+	state        sessionvos.State
+	responseType responsetypes.ResponseType
+	pkce         *sessionvos.Pkce
+	sessionState sessionvos.SessionState
+	consumed     sessionvos.Consumed
+	identity     sessionvos.ExternalOidcUserIdentity
 }
 
 func newAuthorizationCodeSession(
@@ -38,21 +37,19 @@ func newAuthorizationCodeSession(
 	grantType sessionvos.GrantType,
 	pkce *sessionvos.Pkce,
 	protectedResourceId string,
-	clientOwnerUserId string,
 	identity sessionvos.ExternalOidcUserIdentity,
 ) *AuthorizationCodeSession {
 	sess := &AuthorizationCodeSession{
-		expiresAt:         time.Now().UTC().Add(15 * time.Minute),
-		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, protectedResourceId),
-		sessionID:         sessionID,
-		redirectURI:       redirectURI,
-		state:             state,
-		responseType:      responseType,
-		pkce:              pkce,
-		sessionState:      sessionvos.Authorizing,
-		consumed:          false,
-		clientOwnerUserId: clientOwnerUserId,
-		identity:          identity,
+		expiresAt:    time.Now().UTC().Add(15 * time.Minute),
+		BaseSession:  newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, protectedResourceId),
+		sessionID:    sessionID,
+		redirectURI:  redirectURI,
+		state:        state,
+		responseType: responseType,
+		pkce:         pkce,
+		sessionState: sessionvos.Authorizing,
+		consumed:     false,
+		identity:     identity,
 	}
 	sess.Record(protocolEvents.NewSessionCreated(
 		sessionID.String(),
@@ -145,7 +142,7 @@ func NewAuthorizationCodeSession(
 		return nil, err
 	}
 
-	return newAuthorizationCodeSession(sessionID, clientID, redirectURI, scope, state, responseType, sessionvos.AuthorizationCodeGrantType, pkce, protectedResourceId, client.UserId, identity), nil
+	return newAuthorizationCodeSession(sessionID, clientID, redirectURI, scope, state, responseType, sessionvos.AuthorizationCodeGrantType, pkce, protectedResourceId, identity), nil
 }
 
 func (s *AuthorizationCodeSession) ProtectedResourceId() string {
@@ -234,18 +231,17 @@ func AuthorizationCodeSessionFromPrimitives(p *AuthorizationCodeSessionPrimitive
 	}
 
 	return &AuthorizationCodeSession{
-		expiresAt:         p.ExpiresAt,
-		occVersion:        p.OccVersion,
-		BaseSession:       newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, p.ProtectedResourceId),
-		sessionID:         sessionID,
-		redirectURI:       redirectURI,
-		state:             state,
-		responseType:      responseType,
-		pkce:              pkce,
-		sessionState:      sessionState,
-		consumed:          sessionvos.Consumed(p.Consumed),
-		clientOwnerUserId: p.ClientOwnerUserId,
-		identity:          identity,
+		expiresAt:    p.ExpiresAt,
+		occVersion:   p.OccVersion,
+		BaseSession:  newBaseSession(clientID, scope, grantType, aggregate.AuthCodeSession, p.ProtectedResourceId),
+		sessionID:    sessionID,
+		redirectURI:  redirectURI,
+		state:        state,
+		responseType: responseType,
+		pkce:         pkce,
+		sessionState: sessionState,
+		consumed:     sessionvos.Consumed(p.Consumed),
+		identity:     identity,
 	}, nil
 }
 
@@ -287,7 +283,6 @@ func (s *AuthorizationCodeSession) ToPrimitives() *AuthorizationCodeSessionPrimi
 		OccVersion:            s.occVersion,
 		BaseSessionPrimitives: s.BaseSession.ToPrimitives(),
 		SessionID:             s.sessionID.String(),
-		ClientOwnerUserId:     s.clientOwnerUserId,
 		RedirectURI:           s.redirectURI.String(),
 		State:                 s.state.String(),
 		ResponseTypes:         responseTypes,
