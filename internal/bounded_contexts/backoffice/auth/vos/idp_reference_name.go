@@ -1,17 +1,18 @@
 package vos
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
-var allowedIdpReferenceNames = map[string]IdpReferenceName{
-	"google": IdpReferenceName("google"),
-}
+var idpReferenceNamePattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 type IdpReferenceName string
 
 func NewFromString(value string) (IdpReferenceName, error) {
 	idpReferenceName := IdpReferenceName(value)
 
-	if _, ok := allowedIdpReferenceNames[value]; !ok {
+	if !idpReferenceNamePattern.MatchString(value) {
 		return "", fmt.Errorf("invalid IdP reference name: %s", value)
 	}
 

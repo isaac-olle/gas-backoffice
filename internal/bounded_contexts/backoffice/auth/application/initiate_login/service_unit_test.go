@@ -18,8 +18,13 @@ func TestInitiate(t *testing.T) {
 		connectorErr  error
 		wantURL       string
 		wantCode      app_errors.ErrorCode
+		missing       bool
 	}{
 		{name: "connects to the configured provider", referenceName: "google", wantURL: "https://idp.example/authorize"},
+		{name: "connects to Microsoft", referenceName: "microsoft", wantURL: "https://idp.example/authorize"},
+		{name: "connects to another configured provider", referenceName: "company-sso", wantURL: "https://idp.example/authorize"},
+		{name: "rejects missing provider", referenceName: "missing", missing: true, wantCode: auth.ErrIdentityProviderNotFound},
+		{name: "rejects an empty provider name", referenceName: "", wantCode: auth.ErrInvalidIdpReferenceName},
 		{name: "rejects an invalid provider name", referenceName: "not valid", wantCode: auth.ErrInvalidIdpReferenceName},
 		{name: "wraps provider lookup failures", referenceName: "google", repoErr: errInitiateLogin, wantCode: auth.ErrInitiateLoginFailed},
 		{name: "wraps connector failures", referenceName: "google", connectorErr: errInitiateLogin, wantCode: auth.ErrInitiateLoginFailed},
@@ -27,6 +32,10 @@ func TestInitiate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &idpConfigRepositoryStub{idp: validIdp(), err: tt.repoErr}
+			repo.idp.IdpReferenceName = tt.referenceName
+			if tt.missing {
+				repo.idp = nil
+			}
 			connector := &idpConnectorStub{url: "https://idp.example/authorize", err: tt.connectorErr}
 			got, err := initiate_login.NewService(repo, connector).Initiate(context.Background(), initiate_login.NewQuery(tt.referenceName))
 			if tt.wantCode != "" {
@@ -34,6 +43,9 @@ func TestInitiate(t *testing.T) {
 				var appErr *app_errors.AppError
 				require.ErrorAs(t, err, &appErr)
 				require.Equal(t, tt.wantCode, appErr.Code)
+				if tt.missing {
+					require.Nil(t, connector.got)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -41,7 +53,7 @@ func TestInitiate(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, tt.wantURL, result.AuthorizationURL)
 			require.Same(t, repo.idp, connector.got)
-			require.Equal(t, "google", repo.gotName.String())
+			require.Equal(t, tt.referenceName, repo.gotName.String())
 		})
 	}
 }

@@ -42,6 +42,11 @@ func (s *Service) Initiate(ctx context.Context, qry *Query) (any, error) {
 			WithDescription("idp not found").WithCause(err, false)
 	}
 
+	if idp == nil {
+		return nil, app_errors.NotFoundError(auth.ErrIdentityProviderNotFound).
+			WithDescription("identity provider not found or disabled")
+	}
+
 	authURL, err := s.connector.Connect(ctx, idp)
 	if err != nil {
 		return nil, app_errors.InternalError(auth.ErrInitiateLoginFailed).

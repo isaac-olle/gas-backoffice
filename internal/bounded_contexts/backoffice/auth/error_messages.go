@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	ErrIdentityProviderNotFound app_errors.ErrorCode = "IDENTITY_PROVIDER_NOT_FOUND"
 	ErrLoginRequestNotFound     app_errors.ErrorCode = "SESSION_NOT_FOUND"
 	ErrLoginRequestNotCreated   app_errors.ErrorCode = "SESSION_NOT_CREATED"
 	ErrLoginRequestNotSaved     app_errors.ErrorCode = "SESSION_NOT_SAVED"
