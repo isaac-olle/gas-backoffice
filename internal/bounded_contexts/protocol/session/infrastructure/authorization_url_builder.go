@@ -3,17 +3,19 @@ package infrastructure
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	protocolShared "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/_shared"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/oidc_url_builders"
 )
 
 // AuthorizationURLBuilder builds the front-channel authorization URL for an
 // OIDC provider following RFC 6749 / OpenID Connect Core.
-type AuthorizationURLBuilder struct{}
+type AuthorizationURLBuilder struct {
+	factory *oidc_url_builders.OIDCAuthorizationURLBuilderFactory
+}
 
-func NewAuthorizationURLBuilder() *AuthorizationURLBuilder {
-	return &AuthorizationURLBuilder{}
+func NewAuthorizationURLBuilder(factory *oidc_url_builders.OIDCAuthorizationURLBuilderFactory) *AuthorizationURLBuilder {
+	return &AuthorizationURLBuilder{factory: factory}
 }
 
 func (b *AuthorizationURLBuilder) BuildAuthorizationURL(idp *protocolShared.IdentityProviderConfig, state string) (string, error) {
@@ -21,19 +23,11 @@ func (b *AuthorizationURLBuilder) BuildAuthorizationURL(idp *protocolShared.Iden
 		return "", fmt.Errorf("identity provider %q is missing authorization endpoint or client id", idp.Name)
 	}
 
-	q := url.Values{}
-	q.Set("response_type", "code")
-	q.Set("client_id", idp.ClientID)
-	q.Set("redirect_uri", idp.BackofficeRedirectUri)
-	q.Set("scope", strings.Join(idp.Scopes, " "))
-	q.Set("state", state)
-	// access_type=offline is required for Google to hand back a refresh_token;
-	// prompt=consent forces the consent screen every time so that refresh_token
-	// is actually included (Google only sends it the first time a user consents
-	// otherwise), and also lets users pick another account instead of silently
-	// reusing the browser's already-signed-in one.
-	q.Set("access_type", "offline")
-	q.Set("prompt", "consent select_account")
+	endpoint, err := url.Parse(idp.AuthorizationEndpoint)
+	if err != nil {
+		return "", fmt.Errorf("invalid authorization endpoint for identity provider %q: %w", idp.Name, err)
+	}
 
-	return idp.AuthorizationEndpoint + "?" + q.Encode(), nil
+	builder := b.factory.ForHost(endpoint.Hostname())
+	return builder.BuildURL(*endpoint, idp, state), nil
 }

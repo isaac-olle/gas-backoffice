@@ -16,6 +16,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/domain_services"
 	sessionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure"
 	sessionHelpers "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/helpers"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/oidc_url_builders"
 	sessionPersistance "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/protocol/session/infrastructure/persistance"
 	event2 "github.com/isaac-olle/gas-backoffice/internal/shared/buses/event"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
@@ -38,7 +39,8 @@ func RegisterProtocol(
 	clientRepo := sessionInfra.NewPostgresClientRepository(pool)
 	idpRepo := protocolSharedInfra.NewPostgresIdentityProviderRepository(pool, encrypter)
 	idpFinder := protocolSharedDS.NewIdentityProviderFinder(idpRepo)
-	sessionIdpClient := sessionInfra.NewAuthorizationURLBuilder()
+	authorizationURLBuilderFactory := oidc_url_builders.NewOIDCAuthorizationURLBuilderFactory()
+	sessionIdpClient := sessionInfra.NewAuthorizationURLBuilder(authorizationURLBuilderFactory)
 	oidcTokenVerifier := sessionHelpers.NewOidcTokenVerifier()
 	idpClient := sessionInfra.NewOidcIdentityProviderClient(oidcTokenVerifier)
 	idpStateCodec := sessionInfra.NewIdpStateCodec(idpStateTTL, encrypter)
