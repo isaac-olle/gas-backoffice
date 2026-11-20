@@ -3,9 +3,11 @@ package modules
 import (
 	"time"
 
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	sessionExchangeToken "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/create_session"
 	sessionInitiate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/initiate_login"
 	sessionRefresh "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/refresh_session"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/verify_csrf_token"
 	authInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure/helpers/oidc"
 	userProjectionInfra "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/infrastructure/user_projection"
@@ -84,6 +86,7 @@ func RegisterBackoffice(
 	backofficeClientId, backofficeProtectedResourceId,
 	backofficeClientRedirectUri string, backofficeClientSecret string, tokenEndpoint string,
 	authorizeEndpoint string, jwksEndpoint string,
+	requireCSRF bool,
 ) {
 	userRepo := userInfra.NewPostgresUserRepository(pool)
 	subscriptionRepo := subscriptionInfra.NewPostgresRepository(pool)
@@ -225,6 +228,11 @@ func RegisterBackoffice(
 			sessionRepo,
 			evtBus)))
 	refreshTokenVerifier := authInfra.NewRefreshTokenVerifier(qryBus, backofficeProtectedResourceId)
-	qryBus.Register(sessionRefresh.QueryType, sessionRefresh.NewQueryHandler(sessionRefresh.NewService(refreshTokenVerifier, tokenGenerator, tokenGenerator, sessionRepo, evtBus)))
+	var csrfVerifier auth.CSRFTokenVerifier
+	if requireCSRF {
+		csrfVerifier = verify_csrf_token.NewService(sessionRepo)
+	}
+	refreshService := sessionRefresh.NewService(refreshTokenVerifier, tokenGenerator, tokenGenerator, csrfVerifier, sessionRepo, evtBus)
+	qryBus.Register(sessionRefresh.QueryType, sessionRefresh.NewQueryHandler(refreshService))
 
 }

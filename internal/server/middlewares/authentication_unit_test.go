@@ -16,6 +16,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares/authenticators"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 const (
@@ -41,7 +42,18 @@ func (b *recordingBus) Dispatch(_ context.Context, q query.Query) (any, error) {
 func (b *recordingBus) Register(query.Type, query.Handler) {}
 
 func validClaims() map[string]any {
-	return map[string]any{"sub": userSub, "system_role": vo.SystemAdministratorClaim, "scope": "users:read"}
+	return map[string]any{"sub": userSub, "sid": userSub, "system_role": vo.SystemAdministratorClaim, "scope": "users:read"}
+}
+
+type csrfVerifier struct {
+	sessionID string
+	token     string
+	err       error
+}
+
+func (v *csrfVerifier) Verify(_ context.Context, id ids.SessionId, token string) error {
+	v.sessionID, v.token = id.String(), token
+	return v.err
 }
 
 func TestAuthentication(t *testing.T) {
@@ -56,9 +68,15 @@ func TestAuthentication(t *testing.T) {
 		busErr     error
 		wantNext   bool
 		wantVerify bool
+		method     string
+		csrf       string
+		csrfErr    error
+		wantCSRF   bool
 	}{
 		{name: "cookie_origin_uses_cookie", origin: frontendOrigin, cookie: "cookie-token", busResult: validClaims(), wantNext: true, wantVerify: true},
-		{name: "cookie_origin_ignores_bearer", origin: frontendOrigin, bearer: "bearer-token", wantNext: false},
+		{name: "explicit_bearer_skips_csrf_even_from_frontend", method: http.MethodPost, origin: frontendOrigin, bearer: "bearer-token", busResult: validClaims(), wantNext: true, wantVerify: true},
+		{name: "cookie_write_checks_csrf", method: http.MethodPost, origin: frontendOrigin, cookie: "cookie-token", csrf: "csrf-token", busResult: validClaims(), wantNext: true, wantVerify: true, wantCSRF: true},
+		{name: "csrf_failure_aborts_cookie_write", method: http.MethodPost, origin: frontendOrigin, cookie: "cookie-token", busResult: validClaims(), csrfErr: errors.New("missing CSRF token"), wantVerify: true, wantCSRF: true},
 		{name: "cookie_origin_without_cookie_aborts", origin: frontendOrigin, wantNext: false},
 		{name: "other_origin_uses_bearer", origin: "https://evil.example.com", bearer: "bearer-token", busResult: validClaims(), wantNext: true, wantVerify: true},
 		{name: "other_origin_ignores_cookie", origin: "https://evil.example.com", cookie: "cookie-token", wantNext: false},
@@ -74,17 +92,24 @@ func TestAuthentication(t *testing.T) {
 			t.Parallel()
 			gin.SetMode(gin.TestMode)
 			bus := &recordingBus{result: tt.busResult, err: tt.busErr}
+			csrf := &csrfVerifier{err: tt.csrfErr}
+			cookie := authenticators.NewCookieAuthenticator(csrf)
+			method := tt.method
+			if method == "" {
+				method = http.MethodGet
+			}
 
 			nextCalled := false
 			var gotAuthor *vo.UserAuthor
 			r := gin.New()
-			r.GET("/test", middlewares.Authentication(bus, "issuer", []string{frontendOrigin}), func(c *gin.Context) {
+			r.Handle(method, "/test", middlewares.Authentication(bus, "issuer", []string{frontendOrigin}, cookie), func(c *gin.Context) {
 				nextCalled = true
 				gotAuthor, _ = vo.AuthorFromContext(c.Request.Context())
 				c.Status(http.StatusOK)
 			})
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			req := httptest.NewRequest(method, "/test", nil)
+			req.Header.Set("X-CSRF-Token", tt.csrf)
 			if tt.origin != "" {
 				req.Header.Set("Origin", tt.origin)
 			}
@@ -98,6 +123,12 @@ func TestAuthentication(t *testing.T) {
 
 			assert.Equal(t, tt.wantNext, nextCalled)
 			assert.Equal(t, tt.wantVerify, bus.called)
+			if tt.wantCSRF {
+				assert.Equal(t, userSub, csrf.sessionID)
+				assert.Equal(t, tt.csrf, csrf.token)
+			} else {
+				assert.Empty(t, csrf.sessionID)
+			}
 			if tt.wantNext {
 				require.NotNil(t, gotAuthor)
 				assert.Equal(t, userSub, gotAuthor.Id.String())

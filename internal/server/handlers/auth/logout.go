@@ -13,22 +13,28 @@ import (
 )
 
 type LogoutHandler struct {
-	commands command.CommandExecutor
-	queries  query.Bus
-	issuer   string
+	commands            command.CommandExecutor
+	queries             query.Bus
+	issuer              string
+	cookieAuthenticator *authenticators.CookieAuthenticator
 }
 
-func NewLogoutHandler(commands command.CommandExecutor, queries query.Bus, issuer string) *LogoutHandler {
-	return &LogoutHandler{commands: commands, queries: queries, issuer: issuer}
+func NewLogoutHandler(commands command.CommandExecutor, queries query.Bus, issuer string, cookieAuthenticator *authenticators.CookieAuthenticator) *LogoutHandler {
+	return &LogoutHandler{commands: commands, queries: queries, issuer: issuer, cookieAuthenticator: cookieAuthenticator}
 }
 
 func (h *LogoutHandler) Execute(c *gin.Context) (any, error) {
-	if sessionID, ok := h.sessionID(c, authenticators.AccessTokenCookieName, ""); ok {
-		return nil, h.commands.SingleExecution(c.Request.Context(), logoutSession.NewCommand(sessionID))
-	} else if sessionID, ok := h.sessionID(c, authenticators.RefreshTokenCookieName, "backoffice_refresh"); ok {
-		return nil, h.commands.SingleExecution(c.Request.Context(), logoutSession.NewCommand(sessionID))
+	sessionID, ok := h.sessionID(c, authenticators.AccessTokenCookieName, "")
+	if !ok {
+		sessionID, ok = h.sessionID(c, authenticators.RefreshTokenCookieName, "backoffice_refresh")
 	}
-	return nil, nil
+	if !ok {
+		return nil, nil
+	}
+	if err := h.cookieAuthenticator.VerifyCSRF(c, sessionID.String()); err != nil {
+		return nil, err
+	}
+	return nil, h.commands.SingleExecution(c.Request.Context(), logoutSession.NewCommand(sessionID))
 }
 
 func (h *LogoutHandler) sessionID(c *gin.Context, cookieName, tokenType string) (ids.SessionId, bool) {
@@ -39,6 +45,7 @@ func (h *LogoutHandler) sessionID(c *gin.Context, cookieName, tokenType string) 
 	qry := verifyJwt.NewQuery(token).
 		WithExpectedClaim("iss", h.issuer).
 		WithExpectedClaim("aud", h.issuer).
+		WithVerifyExpiration().
 		WithClaimsToReturn(map[string]any{"sid": nil})
 	if tokenType != "" {
 		qry.WithExpectedClaim("typ", tokenType)

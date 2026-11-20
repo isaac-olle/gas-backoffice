@@ -63,3 +63,7 @@ type RefreshTokenClaims struct {
 type RefreshTokenVerifier interface {
 	Verify(ctx context.Context, token string) (*RefreshTokenClaims, error)
 }
+
+type CSRFTokenVerifier interface {
+	Verify(context.Context, ids.SessionId, string) error
+}

@@ -74,7 +74,7 @@ func TestCallbackHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bus := &stubQueryBus{result: create_session.Result{AccessToken: "the-token"}, err: tt.dispatchErr}
+			bus := &stubQueryBus{result: create_session.Result{AccessToken: "the-token", CSRFToken: "csrf-token"}, err: tt.dispatchErr}
 			h := authHandlers.NewCallbackHandler(bus)
 
 			w := httptest.NewRecorder()
@@ -90,6 +90,9 @@ func TestCallbackHandler(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NoError(t, h.Success(c, result))
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "no-store", w.Header().Get("Cache-Control"))
+			assert.JSONEq(t, `{"csrf_token":"csrf-token"}`, w.Body.String())
 			assert.Contains(t, w.Header().Get("Set-Cookie"), authenticators.AccessTokenCookieName+"=the-token")
 			require.Len(t, w.Result().Cookies(), 2)
 			for _, cookie := range w.Result().Cookies() {

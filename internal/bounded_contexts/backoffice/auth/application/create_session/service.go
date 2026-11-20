@@ -12,6 +12,7 @@ import (
 type Result struct {
 	AccessToken  string
 	RefreshToken string
+	CSRFToken    string
 }
 
 type Service struct {
@@ -85,5 +86,5 @@ func (s *Service) Exchange(ctx context.Context, qry *Query) (any, error) {
 
 	s.eventBus.Publish(ctx, session.PullDomainEvents())
 
-	return Result{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return Result{AccessToken: accessToken, RefreshToken: refreshToken, CSRFToken: session.ToPrimitives().CSRFToken}, nil
 }

@@ -14,17 +14,17 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
-// Authentication picks how the access token is read from the request origin:
-// requests from one of cookieOrigins (the backoffice frontend) are
-// authenticated with the HttpOnly cookie; any other request must carry a
-// Bearer token. Either way the token is then verified the same way.
-func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []string, sessionRepositories ...auth.SessionRepository) gin.HandlerFunc {
-	cookie := authenticators.NewCookieAuthenticator()
+// Authentication uses an explicit Bearer token when provided. Requests from
+// cookieOrigins can otherwise authenticate with the HttpOnly access cookie.
+func Authentication(
+	queryBus query.Bus, expectedIssuer string, cookieOrigins []string,
+	cookie *authenticators.CookieAuthenticator, sessionRepositories ...auth.SessionRepository,
+) gin.HandlerFunc {
 	bearer := authenticators.NewBearerAuthenticator()
 
 	return func(c *gin.Context) {
 		var authenticator authenticators.Authenticator = bearer
-		if slices.Contains(cookieOrigins, c.GetHeader("Origin")) {
+		if c.GetHeader("Authorization") == "" && slices.Contains(cookieOrigins, c.GetHeader("Origin")) {
 			authenticator = cookie
 		}
 
@@ -73,6 +73,14 @@ func Authentication(queryBus query.Bus, expectedIssuer string, cookieOrigins []s
 			active, checkErr := sessionRepositories[0].IsActive(c.Request.Context(), sessionID)
 			if checkErr != nil || !active {
 				_ = c.Error(app_errors.UnauthorizedError("SESSION_REVOKED"))
+				c.Abort()
+				return
+			}
+		}
+		if authenticator == cookie {
+			sessionID, _ := claims["sid"].(string)
+			if err := cookie.VerifyCSRF(c, sessionID); err != nil {
+				_ = c.Error(err)
 				c.Abort()
 				return
 			}

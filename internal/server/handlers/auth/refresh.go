@@ -31,7 +31,7 @@ func (h *RefreshHandler) Execute(c *gin.Context) (any, error) {
 			WithCause(cause, true).
 			WithDetails(map[string]any{"cookie_name": authenticators.RefreshTokenCookieName, "reason": reason})
 	}
-	return h.queryBus.Dispatch(c.Request.Context(), refreshSession.NewQuery(refreshToken))
+	return h.queryBus.Dispatch(c.Request.Context(), refreshSession.NewQuery(refreshToken, c.GetHeader("X-CSRF-Token")))
 }
 
 func (h *RefreshHandler) Success(c *gin.Context, result any) error {

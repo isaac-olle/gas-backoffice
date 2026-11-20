@@ -16,6 +16,7 @@ type Service struct {
 	refreshTokenVerifier  auth.RefreshTokenVerifier
 	accessTokenGenerator  auth.TokenGenerator
 	refreshTokenGenerator auth.RefreshTokenGenerator
+	csrfVerifier          auth.CSRFTokenVerifier
 	sessionRepository     auth.SessionRepository
 	eventBus              event.Bus
 }
@@ -23,11 +24,13 @@ type Service struct {
 func NewService(refreshTokenVerifier auth.RefreshTokenVerifier,
 	accessTokenGenerator auth.TokenGenerator,
 	refreshTokenGenerator auth.RefreshTokenGenerator,
+	csrfVerifier auth.CSRFTokenVerifier,
 	sessionRepository auth.SessionRepository,
 	eventBus event.Bus) *Service {
 	return &Service{refreshTokenVerifier: refreshTokenVerifier,
 		accessTokenGenerator:  accessTokenGenerator,
 		refreshTokenGenerator: refreshTokenGenerator,
+		csrfVerifier:          csrfVerifier,
 		sessionRepository:     sessionRepository,
 		eventBus:              eventBus}
 }
@@ -45,6 +48,12 @@ func (s *Service) Refresh(ctx context.Context, qry *Query) (any, error) {
 		active, checkErr := s.sessionRepository.IsActive(ctx, claims.SessionID)
 		if checkErr != nil || !active {
 			return nil, app_errors.UnauthorizedError("INVALID_REFRESH_TOKEN")
+		}
+	}
+
+	if s.csrfVerifier != nil {
+		if err := s.csrfVerifier.Verify(ctx, claims.SessionID, qry.csrfToken); err != nil {
+			return nil, err
 		}
 	}
 

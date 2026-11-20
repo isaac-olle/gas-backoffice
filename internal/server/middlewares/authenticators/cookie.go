@@ -1,8 +1,12 @@
 package authenticators
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
 )
 
 // AccessTokenCookieName is the HttpOnly cookie the backoffice login callback
@@ -10,12 +14,28 @@ import (
 const AccessTokenCookieName = "access_token"
 const RefreshTokenCookieName = "refresh_token"
 
-// CookieAuthenticator reads the access token from the HttpOnly cookie the
-// browser sends along with requests coming from the backoffice frontend.
-type CookieAuthenticator struct{}
+// CookieAuthenticator reads the HttpOnly access cookie and verifies CSRF for writes.
+type CookieAuthenticator struct {
+	csrfVerifier auth.CSRFTokenVerifier
+}
 
-func NewCookieAuthenticator() *CookieAuthenticator {
-	return &CookieAuthenticator{}
+func NewCookieAuthenticator(csrfVerifier auth.CSRFTokenVerifier) *CookieAuthenticator {
+	return &CookieAuthenticator{csrfVerifier: csrfVerifier}
+}
+
+func (a *CookieAuthenticator) VerifyCSRF(c *gin.Context, rawSessionID string) error {
+	switch c.Request.Method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return nil
+	}
+	if a.csrfVerifier == nil {
+		return nil
+	}
+	sessionID, err := ids.NewSessionIdFromString(rawSessionID)
+	if err != nil {
+		return app_errors.UnauthorizedError("INVALID_SESSION_ID")
+	}
+	return a.csrfVerifier.Verify(c.Request.Context(), sessionID, c.GetHeader("X-CSRF-Token"))
 }
 
 func (a *CookieAuthenticator) Token(c *gin.Context) (string, error) {

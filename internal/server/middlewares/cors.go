@@ -13,7 +13,7 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 		if origin != "" && slices.Contains(allowedOrigins, origin) {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization")
+			c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-CSRF-Token")
 			c.Header("Access-Control-Allow-Credentials", "true")
 		}
 		if c.Request.Method == http.MethodOptions {

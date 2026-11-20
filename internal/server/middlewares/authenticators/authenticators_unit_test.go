@@ -61,14 +61,14 @@ func TestCookieAuthenticator(t *testing.T) {
 	t.Run("missing_cookie_errors", func(t *testing.T) {
 		t.Parallel()
 		c := newCtx(t, func(r *http.Request) {})
-		_, err := authenticators.NewCookieAuthenticator().Token(c)
+		_, err := authenticators.NewCookieAuthenticator(nil).Token(c)
 		assert.Error(t, err)
 	})
 
 	t.Run("ignores_bearer_header", func(t *testing.T) {
 		t.Parallel()
 		c := newCtx(t, func(r *http.Request) { r.Header.Set("Authorization", "Bearer abc") })
-		_, err := authenticators.NewCookieAuthenticator().Token(c)
+		_, err := authenticators.NewCookieAuthenticator(nil).Token(c)
 		assert.Error(t, err)
 	})
 
@@ -77,7 +77,7 @@ func TestCookieAuthenticator(t *testing.T) {
 		c := newCtx(t, func(r *http.Request) {
 			r.AddCookie(&http.Cookie{Name: authenticators.AccessTokenCookieName, Value: "abc"})
 		})
-		token, err := authenticators.NewCookieAuthenticator().Token(c)
+		token, err := authenticators.NewCookieAuthenticator(nil).Token(c)
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token)
 	})

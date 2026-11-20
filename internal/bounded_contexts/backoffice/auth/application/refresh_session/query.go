@@ -8,10 +8,16 @@ import (
 
 const QueryType query.Type = "query.backoffice.auth.refresh_session"
 
-type Query struct{ refreshToken string }
+type Query struct {
+	refreshToken string
+	csrfToken    string
+}
 
-func NewQuery(refreshToken string) *Query { return &Query{refreshToken: refreshToken} }
-func (q *Query) Type() query.Type         { return QueryType }
+func NewQuery(refreshToken, csrfToken string) *Query {
+	return &Query{refreshToken: refreshToken, csrfToken: csrfToken}
+}
+
+func (q *Query) Type() query.Type { return QueryType }
 
 type QueryHandler struct{ service *Service }
 

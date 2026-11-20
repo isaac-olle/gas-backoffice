@@ -17,7 +17,7 @@ import (
 func registerUsers(g *gin.RouterGroup, p *Backoffice) {
 	u := g.Group("/users")
 	u.Use(
-		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins),
+		middlewares.Authentication(p.queryBus, p.jwtIssuer, p.cookieOrigins, p.cookieAuthenticator),
 		middlewares.RoleMiddleware(vo.SystemAdministratorRole, vo.SubscriptionUserRole),
 		path_params.UserIdFromAuthor(),
 	)

@@ -50,6 +50,17 @@ func (*refreshSessions) Logout(context.Context, ids.SessionId) error { return ni
 
 type refreshBus struct{ events int }
 
+type refreshCSRFVerifier struct {
+	sessionID ids.SessionId
+	token     string
+	err       error
+}
+
+func (v *refreshCSRFVerifier) Verify(_ context.Context, id ids.SessionId, token string) error {
+	v.sessionID, v.token = id, token
+	return v.err
+}
+
 func (b *refreshBus) Publish(_ context.Context, e []event.Event) { b.events += len(e) }
 
 func TestRefresh(t *testing.T) {
@@ -61,8 +72,10 @@ func TestRefresh(t *testing.T) {
 		active                                      bool
 		checkSession                                bool
 		wantErr                                     bool
+		csrfErr                                     error
 	}{
 		{name: "rotates tokens for an active session", claims: valid, active: true, checkSession: true},
+		{name: "rejects an invalid CSRF token", claims: valid, active: true, checkSession: true, csrfErr: errors.New("invalid CSRF token"), wantErr: true},
 		{name: "accepts valid claims without a session repository", claims: valid},
 		{name: "rejects invalid refresh tokens", claims: valid, verifyErr: errors.New("invalid token"), wantErr: true},
 		{name: "rejects missing user ids", claims: &auth.RefreshTokenClaims{SessionID: ids.NewSessionId(), SystemRole: "system_administrator"}, wantErr: true},
@@ -83,8 +96,17 @@ func TestRefresh(t *testing.T) {
 				sessionStub = &refreshSessions{active: tt.active, err: tt.activeErr}
 				sessions = sessionStub
 			}
-			result, err := refresh_session.NewService(verifier, access, refresh, sessions, bus).Refresh(context.Background(), refresh_session.NewQuery("refresh-token"))
+			csrfVerifier := &refreshCSRFVerifier{err: tt.csrfErr}
+			svc := refresh_session.NewService(verifier, access, refresh, csrfVerifier, sessions, bus)
+			result, err := svc.Refresh(context.Background(), refresh_session.NewQuery("refresh-token", "csrf-token"))
 			require.Equal(t, tt.wantErr, err != nil)
+			if tt.csrfErr != nil || !tt.wantErr {
+				require.Equal(t, tt.claims.SessionID, csrfVerifier.sessionID)
+				require.Equal(t, "csrf-token", csrfVerifier.token)
+			}
+			if tt.csrfErr != nil {
+				require.ErrorIs(t, err, tt.csrfErr)
+			}
 			require.Equal(t, "refresh-token", verifier.token)
 			if sessionStub != nil {
 				require.Equal(t, 1, sessionStub.checks)

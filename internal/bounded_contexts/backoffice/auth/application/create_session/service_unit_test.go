@@ -122,7 +122,7 @@ func TestExchange(t *testing.T) {
 			}
 			got, ok := result.(create_session.Result)
 			require.True(t, ok)
-			require.Equal(t, create_session.Result{AccessToken: "access-token", RefreshToken: "refresh-token"}, got)
+			require.Equal(t, create_session.Result{AccessToken: "access-token", RefreshToken: "refresh-token", CSRFToken: "csrf-token"}, got)
 			require.Equal(t, "pkce-verifier", client.verifier)
 			require.Equal(t, "google", client.idpReferenceName)
 			require.Equal(t, "ada@example.com", projection.email)
