@@ -4,6 +4,7 @@ package infrastructure_test
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,7 @@ import (
 	userInfrastructure "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/users/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	persistanceInfra "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/isaac-olle/gas-backoffice/test/integrationtest"
 )
 
@@ -24,14 +26,24 @@ func TestIntegrationPostgresSessionRepository(t *testing.T) {
 	t.Parallel()
 	pool := integrationtest.Postgres(t)
 	ctx := context.Background()
-	repo := infrastructure.NewPostgresSessionRepository(pool)
-	session, err := auth.NewSession(ids.NewUserId().String(), vo.SubscriptionUserRole.String(), ids.NewUserId().String())
+	encrypter, err := persistanceInfra.NewAESEncrypter(base64.StdEncoding.EncodeToString(make([]byte, 32)))
+	require.NoError(t, err)
+	repo := infrastructure.NewPostgresSessionRepository(pool, encrypter)
+	session, err := auth.NewSessionWithMembershipsAndPicture(
+		ids.NewUserId().String(), vo.SubscriptionUserRole.String(), ids.NewUserId().String(), "", nil, infrastructure.RandomCSRFTokenGenerator{},
+	)
 	require.NoError(t, err)
 	sessionID, err := ids.NewSessionIdFromString(session.ToPrimitives().SessionId)
 	require.NoError(t, err)
 	t.Cleanup(func() { _, _ = pool.Exec(ctx, `DELETE FROM backoffice.sessions WHERE id=$1`, sessionID.String()) })
 
 	require.NoError(t, repo.SaveSession(ctx, session))
+	var encryptedCSRFToken string
+	require.NoError(t, pool.QueryRow(ctx, `SELECT csrf_token FROM backoffice.sessions WHERE id=$1`, sessionID.String()).Scan(&encryptedCSRFToken))
+	assert.NotEqual(t, session.ToPrimitives().CSRFToken, encryptedCSRFToken)
+	decryptedCSRFToken, err := encrypter.Decrypt(encryptedCSRFToken)
+	require.NoError(t, err)
+	assert.Equal(t, session.ToPrimitives().CSRFToken, decryptedCSRFToken)
 	active, err := repo.IsActive(ctx, sessionID)
 	require.NoError(t, err)
 	assert.True(t, active)

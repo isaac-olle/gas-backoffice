@@ -87,7 +87,7 @@ func RegisterBackoffice(
 ) {
 	userRepo := userInfra.NewPostgresUserRepository(pool)
 	subscriptionRepo := subscriptionInfra.NewPostgresRepository(pool)
-	sessionRepo := authInfra.NewPostgresSessionRepository(pool)
+	sessionRepo := authInfra.NewPostgresSessionRepository(pool, encrypter)
 	prRepo := prInfra.NewPostgresProtectedResourceRepository(pool)
 	clientRepo := clientInfra.NewPostgresClientRepository(pool)
 	scopeRepo := scopeInfra.NewPostgresScopeRepository(pool)
@@ -221,6 +221,7 @@ func RegisterBackoffice(
 			userProjectionRepo,
 			tokenGenerator,
 			tokenGenerator,
+			authInfra.RandomCSRFTokenGenerator{},
 			sessionRepo,
 			evtBus)))
 	refreshTokenVerifier := authInfra.NewRefreshTokenVerifier(qryBus, backofficeProtectedResourceId)

@@ -13,6 +13,7 @@ type SessionPrimitives struct {
 	SubscriptionIds []string
 	Memberships     []vo.SubscriptionMembership
 	Picture         string
+	CSRFToken       string
 }
 
 func (s *Session) ToPrimitives() *SessionPrimitives {
@@ -29,5 +30,6 @@ func (s *Session) ToPrimitives() *SessionPrimitives {
 		SubscriptionIds: subscriptionIds,
 		Memberships:     s.memberships,
 		Picture:         s.picture,
+		CSRFToken:       s.csrfToken,
 	}
 }

@@ -6,24 +6,37 @@ import (
 
 	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/domain/vo/ids"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	sharedInfrastructure "github.com/isaac-olle/gas-backoffice/internal/shared/persistance/infrastructure"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PostgresSessionRepository struct {
-	postgres *sharedInfrastructure.PostgresRepository[*auth.Session]
+	postgres  *sharedInfrastructure.PostgresRepository[*auth.Session]
+	encrypter persistance.Encrypter
 }
 
-func NewPostgresSessionRepository(db *pgxpool.Pool) *PostgresSessionRepository {
-	return &PostgresSessionRepository{postgres: sharedInfrastructure.NewPostgresRepository[*auth.Session](db)}
+func NewPostgresSessionRepository(db *pgxpool.Pool, encrypter persistance.Encrypter) *PostgresSessionRepository {
+	return &PostgresSessionRepository{
+		postgres:  sharedInfrastructure.NewPostgresRepository[*auth.Session](db),
+		encrypter: encrypter,
+	}
 }
 
 func (r *PostgresSessionRepository) SaveSession(ctx context.Context, session *auth.Session) error {
 	p := session.ToPrimitives()
+	var encryptedCSRFToken *string
+	if p.CSRFToken != "" {
+		encrypted, err := r.encrypter.Encrypt(p.CSRFToken)
+		if err != nil {
+			return fmt.Errorf("encrypt backoffice session CSRF token: %w", err)
+		}
+		encryptedCSRFToken = &encrypted
+	}
 	_, err := r.postgres.Exec(ctx, `
-		INSERT INTO backoffice.sessions (id, user_id, user_role)
-		VALUES ($1, $2, $3)
-	`, p.SessionId, p.UserId, p.Role)
+		INSERT INTO backoffice.sessions (id, user_id, user_role, csrf_token)
+		VALUES ($1, $2, $3, $4)
+	`, p.SessionId, p.UserId, p.Role, encryptedCSRFToken)
 	if err != nil {
 		return fmt.Errorf("save backoffice session: %w", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/command"
 	"github.com/isaac-olle/gas-backoffice/internal/shared/buses/query"
+	"github.com/isaac-olle/gas-backoffice/internal/shared/persistance"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -27,6 +28,7 @@ func NewBackoffice(
 	pgxPool *pgxpool.Pool,
 	jwtIssuer string,
 	cookieOrigins []string,
+	encrypter persistance.Encrypter,
 ) *Backoffice {
 	return &Backoffice{
 		executor:          executor,
@@ -35,7 +37,7 @@ func NewBackoffice(
 		pgxPool:           pgxPool,
 		jwtIssuer:         jwtIssuer,
 		cookieOrigins:     cookieOrigins,
-		sessionRepository: authInfra.NewPostgresSessionRepository(pgxPool),
+		sessionRepository: authInfra.NewPostgresSessionRepository(pgxPool, encrypter),
 	}
 }
 

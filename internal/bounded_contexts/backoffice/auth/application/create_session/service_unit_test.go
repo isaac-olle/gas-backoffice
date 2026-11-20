@@ -64,13 +64,19 @@ func (g *createSessionRefreshGenerator) GenerateRefreshToken(context.Context, *a
 	return g.token, g.err
 }
 
+type createSessionCSRFGenerator struct{}
+
+func (createSessionCSRFGenerator) GenerateCSRFToken() string { return "csrf-token" }
+
 type createSessionRepository struct {
 	saveErr error
 	saved   int
+	session *auth.Session
 }
 
-func (r *createSessionRepository) SaveSession(context.Context, *auth.Session) error {
+func (r *createSessionRepository) SaveSession(_ context.Context, session *auth.Session) error {
 	r.saved++
+	r.session = session
 	return r.saveErr
 }
 func (*createSessionRepository) IsActive(context.Context, ids.SessionId) (bool, error) {
@@ -107,7 +113,7 @@ func TestExchange(t *testing.T) {
 			access := &createSessionTokenGenerator{token: "access-token", err: tt.accessErr}
 			refresh := &createSessionRefreshGenerator{token: "refresh-token", err: tt.refreshErr}
 			sessions, bus := &createSessionRepository{saveErr: tt.saveErr}, &createSessionBus{}
-			service := create_session.NewService(client, decoder, projection, access, refresh, sessions, bus)
+			service := create_session.NewService(client, decoder, projection, access, refresh, createSessionCSRFGenerator{}, sessions, bus)
 			result, err := service.Exchange(context.Background(), create_session.NewQuery("auth-code", "encoded-state"))
 			require.Equal(t, tt.wantErr, err != nil)
 			if tt.wantErr {
@@ -121,6 +127,7 @@ func TestExchange(t *testing.T) {
 			require.Equal(t, "google", client.idpReferenceName)
 			require.Equal(t, "ada@example.com", projection.email)
 			require.Equal(t, 1, sessions.saved)
+			require.Equal(t, "csrf-token", sessions.session.ToPrimitives().CSRFToken)
 			require.Equal(t, 1, bus.events)
 		})
 	}

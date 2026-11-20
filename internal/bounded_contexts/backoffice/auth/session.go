@@ -13,6 +13,10 @@ const SessionTTL = time.Hour * 24
 
 var sessionAggregateName aggregate.Name = aggregate.Session
 
+type CSRFTokenGenerator interface {
+	GenerateCSRFToken() string
+}
+
 type Session struct {
 	sessionId       ids.SessionId
 	userId          ids.UserId
@@ -22,38 +26,46 @@ type Session struct {
 	subscriptionIds []ids.SubscriptionId
 	memberships     []vo.SubscriptionMembership
 	picture         string
+	csrfToken       string
 	*aggregate.Root
 }
 
 func NewSession(userIdString, roleString, adminIdString string, rawSubscriptionIdArgs ...[]string) (*Session, error) {
-	return newSession(userIdString, roleString, adminIdString, nil, rawSubscriptionIdArgs...)
+	return newSession(userIdString, roleString, adminIdString, "", nil, rawSubscriptionIdArgs...)
 }
 
 func NewSessionWithMemberships(userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership) (*Session, error) {
-	return newSession(userIdString, roleString, adminIdString, memberships)
+	return newSession(userIdString, roleString, adminIdString, "", memberships)
 }
 
-func NewSessionWithMembershipsAndPicture(userIdString, roleString, adminIdString, picture string, memberships []vo.SubscriptionMembership) (*Session, error) {
-	session, err := newSession(userIdString, roleString, adminIdString, memberships)
+func NewSessionWithMembershipsAndPicture(
+	userIdString, roleString, adminIdString, picture string,
+	memberships []vo.SubscriptionMembership,
+	csrfTokenGenerator CSRFTokenGenerator,
+) (*Session, error) {
+	session, err := newSession(userIdString, roleString, adminIdString, picture, memberships)
 	if err != nil {
 		return nil, err
 	}
-	session.picture = picture
+	session.csrfToken = csrfTokenGenerator.GenerateCSRFToken()
 	return session, nil
 }
 
-func (s *Session) SetPicture(picture string) { s.picture = picture }
-
-func NewSessionWithIdAndMemberships(sessionId ids.SessionId, userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership) (*Session, error) {
-	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, memberships)
+func NewSessionWithIdAndMemberships(sessionId ids.SessionId, userIdString, roleString, adminIdString, picture string, memberships []vo.SubscriptionMembership) (*Session, error) {
+	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, picture, memberships)
 }
 
-func newSession(userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
+func newSession(userIdString, roleString, adminIdString, picture string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
 	sessionId := ids.NewSessionId()
-	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, memberships, rawSubscriptionIdArgs...)
+	return newSessionWithId(sessionId, userIdString, roleString, adminIdString, picture, memberships, rawSubscriptionIdArgs...)
 }
 
-func newSessionWithId(sessionId ids.SessionId, userIdString, roleString, adminIdString string, memberships []vo.SubscriptionMembership, rawSubscriptionIdArgs ...[]string) (*Session, error) {
+func newSessionWithId(
+	sessionId ids.SessionId,
+	userIdString, roleString, adminIdString, picture string,
+	memberships []vo.SubscriptionMembership,
+	rawSubscriptionIdArgs ...[]string,
+) (*Session, error) {
 	expiresAt := time.Now().Add(SessionTTL)
 
 	errorArray := app_errors.NewEmptyErrorArray()
@@ -107,6 +119,7 @@ func newSessionWithId(sessionId ids.SessionId, userIdString, roleString, adminId
 		role:            role,
 		subscriptionIds: subscriptionIds,
 		memberships:     memberships,
+		picture:         picture,
 	}
 	s.Record(backoffice.NewSessionCreated(sessionId.String(), userIdString, roleString, expiresAt))
 	return s, nil

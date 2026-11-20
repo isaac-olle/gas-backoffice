@@ -20,6 +20,7 @@ type Service struct {
 	userProjection        user_projection.Repository
 	tokenGenerator        auth.TokenGenerator
 	refreshTokenGenerator auth.RefreshTokenGenerator
+	csrfTokenGenerator    auth.CSRFTokenGenerator
 	sessionRepository     auth.SessionRepository
 	eventBus              event.Bus
 }
@@ -30,6 +31,7 @@ func NewService(
 	userProjection user_projection.Repository,
 	tokenGenerator auth.TokenGenerator,
 	refreshTokenGenerator auth.RefreshTokenGenerator,
+	csrfTokenGenerator auth.CSRFTokenGenerator,
 	sessionRepository auth.SessionRepository,
 	eventBus event.Bus,
 ) *Service {
@@ -39,6 +41,7 @@ func NewService(
 		userProjection:        userProjection,
 		tokenGenerator:        tokenGenerator,
 		refreshTokenGenerator: refreshTokenGenerator,
+		csrfTokenGenerator:    csrfTokenGenerator,
 		sessionRepository:     sessionRepository,
 		eventBus:              eventBus,
 	}
@@ -63,7 +66,7 @@ func (s *Service) Exchange(ctx context.Context, qry *Query) (any, error) {
 			WithDescription("user is not part of the system").WithCause(err, false)
 	}
 
-	session, err := auth.NewSessionWithMembershipsAndPicture(projection.UserId, projection.SystemRole, projection.AdminId, tokenResult.Picture, projection.Memberships)
+	session, err := auth.NewSessionWithMembershipsAndPicture(projection.UserId, projection.SystemRole, projection.AdminId, tokenResult.Picture, projection.Memberships, s.csrfTokenGenerator)
 	if err != nil {
 		return nil, app_errors.AddTrace(err)
 	}
