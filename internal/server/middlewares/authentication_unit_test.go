@@ -63,6 +63,7 @@ func TestAuthentication(t *testing.T) {
 		name       string
 		origin     string
 		bearer     string
+		authHeader *string
 		cookie     string
 		busResult  any
 		busErr     error
@@ -75,6 +76,7 @@ func TestAuthentication(t *testing.T) {
 	}{
 		{name: "cookie_origin_uses_cookie", origin: frontendOrigin, cookie: "cookie-token", busResult: validClaims(), wantNext: true, wantVerify: true},
 		{name: "explicit_bearer_skips_csrf_even_from_frontend", method: http.MethodPost, origin: frontendOrigin, bearer: "bearer-token", busResult: validClaims(), wantNext: true, wantVerify: true},
+		{name: "empty_authorization_does_not_fall_back_to_cookie", origin: frontendOrigin, authHeader: new(string), cookie: "cookie-token", busResult: validClaims()},
 		{name: "cookie_write_checks_csrf", method: http.MethodPost, origin: frontendOrigin, cookie: "cookie-token", csrf: "csrf-token", busResult: validClaims(), wantNext: true, wantVerify: true, wantCSRF: true},
 		{name: "csrf_failure_aborts_cookie_write", method: http.MethodPost, origin: frontendOrigin, cookie: "cookie-token", busResult: validClaims(), csrfErr: errors.New("missing CSRF token"), wantVerify: true, wantCSRF: true},
 		{name: "cookie_origin_without_cookie_aborts", origin: frontendOrigin, wantNext: false},
@@ -115,6 +117,9 @@ func TestAuthentication(t *testing.T) {
 			}
 			if tt.bearer != "" {
 				req.Header.Set("Authorization", "Bearer "+tt.bearer)
+			}
+			if tt.authHeader != nil {
+				req.Header.Set("Authorization", *tt.authHeader)
 			}
 			if tt.cookie != "" {
 				req.AddCookie(&http.Cookie{Name: authenticators.AccessTokenCookieName, Value: tt.cookie})

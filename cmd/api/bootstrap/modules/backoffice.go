@@ -3,7 +3,6 @@ package modules
 import (
 	"time"
 
-	"github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth"
 	sessionExchangeToken "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/create_session"
 	sessionInitiate "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/initiate_login"
 	sessionRefresh "github.com/isaac-olle/gas-backoffice/internal/bounded_contexts/backoffice/auth/application/refresh_session"
@@ -86,7 +85,6 @@ func RegisterBackoffice(
 	backofficeClientId, backofficeProtectedResourceId,
 	backofficeClientRedirectUri string, backofficeClientSecret string, tokenEndpoint string,
 	authorizeEndpoint string, jwksEndpoint string,
-	requireCSRF bool,
 ) {
 	userRepo := userInfra.NewPostgresUserRepository(pool)
 	subscriptionRepo := subscriptionInfra.NewPostgresRepository(pool)
@@ -228,10 +226,7 @@ func RegisterBackoffice(
 			sessionRepo,
 			evtBus)))
 	refreshTokenVerifier := authInfra.NewRefreshTokenVerifier(qryBus, backofficeProtectedResourceId)
-	var csrfVerifier auth.CSRFTokenVerifier
-	if requireCSRF {
-		csrfVerifier = verify_csrf_token.NewService(sessionRepo)
-	}
+	csrfVerifier := verify_csrf_token.NewService(sessionRepo)
 	refreshService := sessionRefresh.NewService(refreshTokenVerifier, tokenGenerator, tokenGenerator, csrfVerifier, sessionRepo, evtBus)
 	qryBus.Register(sessionRefresh.QueryType, sessionRefresh.NewQueryHandler(refreshService))
 

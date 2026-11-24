@@ -71,7 +71,6 @@ func Run() error {
 	tokenEndpoint := cfg.Application.ProtocolUrl + "/oidc/token"
 	authorizeEndpoint := cfg.Application.ProtocolUrl + "/oidc/authorize"
 	jwksEndpoint := cfg.Application.ProtocolUrl + "/oidc/jwks"
-	requireCSRF := config.EnvOr("BACKOFFICE_REQUIRE_CSRF", "false") == "true"
 	modules.RegisterBackoffice(
 		postgresPool,
 		cmdBus,
@@ -86,7 +85,6 @@ func Run() error {
 		tokenEndpoint,
 		authorizeEndpoint,
 		jwksEndpoint,
-		requireCSRF,
 	)
 	modules.RegisterSecurity(
 		postgresPool,
@@ -125,8 +123,8 @@ func Run() error {
 		managers,
 		cfg.Server.AllowedOrigins,
 		route_providers.NewBackoffice(
-			hm, qryBus, commandExecutor, postgresPool, cfg.Application.BackofficeProtectedResourceId, cfg.Server.CookieOrigins,
-			encrypter, requireCSRF,
+			hm, qryBus, commandExecutor, postgresPool, cfg.Application.BackofficeProtectedResourceId,
+			cfg.Server.AllowedOrigins, cfg.Server.CookieOrigins, encrypter,
 		),
 		route_providers.NewProtocol(hm, authorizeService, tokenService, authClientService, jwksService, createSessionService, managers...),
 		route_providers.NewSeed(postgresPool, commandExecutor, cfg.Application.SeedToken),

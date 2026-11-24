@@ -38,6 +38,11 @@ func (a *CookieAuthenticator) VerifyCSRF(c *gin.Context, rawSessionID string) er
 	return a.csrfVerifier.Verify(c.Request.Context(), sessionID, c.GetHeader("X-CSRF-Token"))
 }
 
+func (a *CookieAuthenticator) CanProcess(c *gin.Context) bool {
+	_, err := c.Request.Cookie(AccessTokenCookieName)
+	return err == nil
+}
+
 func (a *CookieAuthenticator) Token(c *gin.Context) (string, error) {
 	token, err := c.Cookie(AccessTokenCookieName)
 	if err != nil || token == "" {

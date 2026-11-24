@@ -6,5 +6,6 @@ import "github.com/gin-gonic/gin"
 // implementation reads it from a different transport; verifying the token is
 // not its concern.
 type Authenticator interface {
+	CanProcess(c *gin.Context) bool
 	Token(c *gin.Context) (string, error)
 }

@@ -8,33 +8,28 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/server/middlewares"
 )
 
-// registerAuth registers the federated-login (OIDC) routes: the IDP redirects
-// the browser to the frontend with ?code&state, the frontend POSTs them here,
-// and the backend exchanges the code (with the client secret), resolves the
-// user, creates the session and sets it as an HttpOnly cookie.
-//
-// PUBLIC (no AccessToken middleware): the browser reaches this unauthenticated.
+// registerLogin handles top-level browser navigation to start federated login.
 // Mounted under /v1/backoffice → /v1/backoffice/auth/...
-func registerAuth(g *gin.RouterGroup, p *Backoffice) {
-	auth := g.Group("/auth")
-	auth.GET("/login",
+func registerLogin(g *gin.RouterGroup, p *Backoffice) {
+	g.GET("/auth/login",
 		p.executor.Run(authHandlers.NewLoginHandler(p.queryBus)),
 	)
+}
+
+func registerAuth(g *gin.RouterGroup, p *Backoffice) {
+	auth := g.Group("/auth", middlewares.RequireAllowedOrigin(p.cookieOrigins))
 	auth.POST("/callback",
 		p.executor.Run(authHandlers.NewCallbackHandler(p.queryBus)),
 	)
 	csrfTokens := get_csrf_token.NewService(p.sessionRepository, authInfra.RandomCSRFTokenGenerator{})
 	refreshVerifier := authInfra.NewRefreshTokenVerifier(p.queryBus, p.jwtIssuer)
 	auth.GET("/csrf",
-		middlewares.RequireAllowedOrigin(p.cookieOrigins),
 		p.executor.Run(authHandlers.NewCSRFHandler(csrfTokens, refreshVerifier, p.queryBus, p.jwtIssuer)),
 	)
 	auth.POST("/refresh",
-		middlewares.RequireAllowedOrigin(p.cookieOrigins),
 		p.executor.Run(authHandlers.NewRefreshHandler(p.queryBus)),
 	)
 	auth.POST("/logout",
-		middlewares.RequireAllowedOrigin(p.cookieOrigins),
 		p.executor.Run(authHandlers.NewLogoutHandler(p.commandExecutor, p.queryBus, p.jwtIssuer, p.cookieAuthenticator)),
 	)
 }

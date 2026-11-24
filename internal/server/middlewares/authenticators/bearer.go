@@ -7,8 +7,6 @@ import (
 	"github.com/isaac-olle/gas-backoffice/internal/shared/app_errors"
 )
 
-const bearerPrefix = "Bearer "
-
 // BearerAuthenticator reads the access token from the Authorization header.
 type BearerAuthenticator struct{}
 
@@ -16,11 +14,18 @@ func NewBearerAuthenticator() *BearerAuthenticator {
 	return &BearerAuthenticator{}
 }
 
+func (a *BearerAuthenticator) CanProcess(c *gin.Context) bool {
+	return len(c.Request.Header.Values("Authorization")) > 0
+}
+
 func (a *BearerAuthenticator) Token(c *gin.Context) (string, error) {
-	header := c.GetHeader("Authorization")
-	token := strings.TrimPrefix(header, bearerPrefix)
-	if !strings.HasPrefix(header, bearerPrefix) || token == "" {
+	headers := c.Request.Header.Values("Authorization")
+	if len(headers) == 0 {
 		return "", app_errors.UnauthorizedError("MISSING_TOKEN").WithDescription("missing bearer token")
 	}
-	return token, nil
+	parts := strings.Fields(headers[0])
+	if len(headers) != 1 || len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return "", app_errors.UnauthorizedError("INVALID_AUTHORIZATION_HEADER").WithDescription("expected Authorization: Bearer <token>")
+	}
+	return parts[1], nil
 }

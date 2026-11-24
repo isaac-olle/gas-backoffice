@@ -23,9 +23,16 @@ func Authentication(
 	bearer := authenticators.NewBearerAuthenticator()
 
 	return func(c *gin.Context) {
-		var authenticator authenticators.Authenticator = bearer
-		if c.GetHeader("Authorization") == "" && slices.Contains(cookieOrigins, c.GetHeader("Origin")) {
+		var authenticator authenticators.Authenticator
+		switch {
+		case bearer.CanProcess(c):
+			authenticator = bearer
+		case cookie != nil && slices.Contains(cookieOrigins, c.GetHeader("Origin")) && cookie.CanProcess(c):
 			authenticator = cookie
+		default:
+			_ = c.Error(app_errors.UnauthorizedError("MISSING_TOKEN"))
+			c.Abort()
+			return
 		}
 
 		token, err := authenticator.Token(c)

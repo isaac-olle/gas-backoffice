@@ -33,7 +33,9 @@ func TestBearerAuthenticator(t *testing.T) {
 		{name: "missing_header_errors", header: "", wantErr: true},
 		{name: "non_bearer_header_errors", header: "Basic abc", wantErr: true},
 		{name: "empty_bearer_errors", header: "Bearer ", wantErr: true},
+		{name: "bearer_with_multiple_values_errors", header: "Bearer abc def", wantErr: true},
 		{name: "bearer_returns_token", header: "Bearer abc", want: "abc"},
+		{name: "bearer_scheme_is_case_insensitive", header: "bearer abc", want: "abc"},
 	}
 
 	for _, tt := range tests {
@@ -44,7 +46,9 @@ func TestBearerAuthenticator(t *testing.T) {
 					r.Header.Set("Authorization", tt.header)
 				}
 			})
-			token, err := authenticators.NewBearerAuthenticator().Token(c)
+			authenticator := authenticators.NewBearerAuthenticator()
+			assert.Equal(t, tt.header != "", authenticator.CanProcess(c))
+			token, err := authenticator.Token(c)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

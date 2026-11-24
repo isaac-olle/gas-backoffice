@@ -38,7 +38,7 @@ func (h *RefreshHandler) Success(c *gin.Context, result any) error {
 	res := result.(refreshSession.Result)
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(authenticators.AccessTokenCookieName, res.AccessToken, 3600, "/", "", true, true)
-	c.SetCookie(authenticators.RefreshTokenCookieName, res.RefreshToken, 30*24*60*60, "/", "", true, true)
+	setRefreshCookie(c, res.RefreshToken, 30*24*60*60)
 	c.Status(http.StatusNoContent)
 	return nil
 }

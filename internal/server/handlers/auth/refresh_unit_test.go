@@ -45,7 +45,8 @@ func TestRefreshHandler_Execute(t *testing.T) {
 			require.NoError(t, h.Success(c, result))
 			assert.Equal(t, http.StatusNoContent, c.Writer.Status())
 			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.AccessTokenCookieName+"=access-token; Path=/; Max-Age=3600; HttpOnly; Secure; SameSite=None")
-			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.RefreshTokenCookieName+"=new-refresh-token; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=None")
+			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.RefreshTokenCookieName+"=new-refresh-token; Path=/v1/backoffice/auth; Max-Age=2592000; HttpOnly; Secure; SameSite=None")
+			assert.Contains(t, c.Writer.Header().Values("Set-Cookie"), authenticators.RefreshTokenCookieName+"=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None")
 		})
 	}
 }

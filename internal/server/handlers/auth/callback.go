@@ -35,7 +35,7 @@ func (h *CallbackHandler) Success(c *gin.Context, result any) error {
 	res := result.(create_session.Result)
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(authenticators.AccessTokenCookieName, res.AccessToken, 3600, "/", "", true, true)
-	c.SetCookie(authenticators.RefreshTokenCookieName, res.RefreshToken, 30*24*60*60, "/", "", true, true)
+	setRefreshCookie(c, res.RefreshToken, 30*24*60*60)
 	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, gin.H{"csrf_token": res.CSRFToken})
 	return nil

@@ -94,7 +94,7 @@ func TestCallbackHandler(t *testing.T) {
 			assert.Equal(t, "no-store", w.Header().Get("Cache-Control"))
 			assert.JSONEq(t, `{"csrf_token":"csrf-token"}`, w.Body.String())
 			assert.Contains(t, w.Header().Get("Set-Cookie"), authenticators.AccessTokenCookieName+"=the-token")
-			require.Len(t, w.Result().Cookies(), 2)
+			require.Len(t, w.Result().Cookies(), 3)
 			for _, cookie := range w.Result().Cookies() {
 				assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
 				assert.True(t, cookie.Secure)
